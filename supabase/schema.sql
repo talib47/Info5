@@ -8,6 +8,7 @@
 -- 1. Neues Supabase-Projekt (Region Frankfurt), dieses Skript im SQL-Editor ausführen.
 -- 2. Authentication → Providers → Email: „Allow new users to sign up“ AUS.
 -- 3. Authentication → Users → „Add user“: eigene E-Mail und Passwort anlegen.
+-- Kinder legt nur die Lehrkraft an (Lehrer-Ansicht → Klassenliste und Tiere zuteilen); kind_neu ist für Kinder gesperrt.
 -- 4. Unten die letzte Zeile mit der eigenen E-Mail ausführen (macht dich zur Lehrkraft).
 -- 5. URL und anon-Schlüssel in src/daten.js bei ONLINE eintragen. Den service_role-Schlüssel NIE eintragen.
 -- Stundenplan und Ferien stehen in src/app.js; die Lehrer-Ansicht überträgt sie beim Öffnen automatisch hierher.
@@ -126,3 +127,4 @@ grant execute on function klasse_offen(text), offene_klassen(text[]), kind_tiere
 
 -- Zum Schluss mit der eigenen E-Mail:
 -- insert into lehrkraefte(user_id) select id from auth.users where email='DEINE@EMAIL.de';
+revoke execute on function kind_neu(text,text,text) from anon, authenticated, public;

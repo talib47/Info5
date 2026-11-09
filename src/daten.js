@@ -12,13 +12,13 @@ const CLOUD=!!(ONLINE.url&&ONLINE.key&&/github\.io$/.test(location.hostname)&&wi
 const sb=CLOUD?window.supabase.createClient(ONLINE.url,ONLINE.key):null;
 
 /* Tiere: Jedes Kind sucht sich beim ersten Mal ein Tier aus (in der Klasse einmalig) */
-const TIERE=[["🦊","Fuchs"],["🐼","Panda"],["🐸","Frosch"],["🦁","Löwe"],["🐯","Tiger"],["🐨","Koala"],["🐧","Pinguin"],["🦉","Eule"],
-  ["🐙","Krake"],["🦈","Hai"],["🐢","Schildkröte"],["🦒","Giraffe"],["🦓","Zebra"],["🐘","Elefant"],["🦔","Igel"],["🐝","Biene"],
-  ["🦋","Schmetterling"],["🐬","Delfin"],["🦜","Papagei"],["🦩","Flamingo"],["🐊","Krokodil"],["🦘","Känguru"],["🐿️","Eichhörnchen"],["🦦","Otter"],
-  ["🐞","Marienkäfer"],["🦄","Einhorn"],["🐉","Drache"],["🐳","Wal"],["🦀","Krabbe"],["🐌","Schnecke"],["🐺","Wolf"],["🐻","Bär"],
-  ["🐰","Hase"],["🐴","Pferd"],["🦅","Adler"],["🦖","Dino"]];
+/* Tiere: bewusst nur solche, die kein Schimpfwort und keine Angriffsfläche sind (kein Schwein, Hund, Esel, Affe, Schnecke …) */
+const TIERE=[["🦊","Fuchs"],["🐼","Panda"],["🦁","Löwe"],["🐯","Tiger"],["🐨","Koala"],["🐧","Pinguin"],["🦉","Eule"],["🦈","Hai"],
+  ["🐬","Delfin"],["🦜","Papagei"],["🦅","Adler"],["🐺","Wolf"],["🐻","Bär"],["🦔","Igel"],["🦦","Otter"],["🐆","Leopard"],
+  ["🦌","Hirsch"],["🦎","Gecko"],["🐊","Krokodil"],["🦘","Känguru"],["🦖","Dino"],["🐉","Drache"],["🦓","Zebra"],["🐿️","Eichhörnchen"],
+  ["🦇","Fledermaus"],["🦢","Schwan"],["🐙","Krake"],["🦂","Skorpion"],["🐴","Pferd"],["🦡","Dachs"],["🦝","Waschbär"],["🦞","Hummer"],["🦀","Krabbe"]];
 const tierInfo=n=>{const t=TIERE.find(x=>x[1]===n);return t?{emoji:t[0],name:t[1]}:{emoji:"❓",name:n}};
-const WEIBLICH=new Set(["Eule","Krake","Schildkröte","Giraffe","Biene","Schnecke","Krabbe"]),SAECHLICH=new Set(["Zebra","Känguru","Eichhörnchen","Einhorn","Krokodil","Pferd"]);
+const WEIBLICH=new Set(["Eule","Krake","Fledermaus","Krabbe"]),SAECHLICH=new Set(["Zebra","Känguru","Eichhörnchen","Krokodil","Pferd"]);
 const artikel=n=>WEIBLICH.has(n)?"die":SAECHLICH.has(n)?"das":"der";
 
 /* Gerätekennung (für „besetzt“): bleibt auf dem PC, auch nach dem Abmelden */
@@ -121,6 +121,12 @@ const db={
     }
     const d=vdb.lesen();
     return{kinder:d.kinder.map(k=>({...k,besetzt:vBesetzt(k)})),staende:d.staende,freigaben:d.freigaben};
+  },
+  /* Die Lehrkraft legt die Kinder an (Tier zuteilen); Kinder können sich nicht selbst neu anlegen */
+  async lKindAnlegen(klasse,tier){
+    if(CLOUD){const {data,error}=await sb.from("kinder").insert({klasse,tier}).select("id").single();if(error)throw error;return data.id}
+    const d=vdb.lesen();const k={id:Math.random().toString(36).slice(2,12),klasse,tier,token:null,geraet:null,aktiv:0,erstellt:jetztMs()};
+    d.kinder.push(k);vdb.schreiben(d);return k.id;
   },
   async lAbmeldenKind(id){
     if(CLOUD){const {error}=await sb.from("kinder").update({token:null,geraet:null}).eq("id",id);if(error)throw error;return}

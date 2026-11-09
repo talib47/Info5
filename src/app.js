@@ -206,8 +206,8 @@ async function seiteTier(klasse){
   $("#liste").innerHTML=(zt?`<div class="block vorschlag"><span class="e">${tierInfo(zt.tier).emoji}</span><div><p class="eyebrow">Letztes Mal an diesem Platz</p><h2 style="margin:0">Bist du ${artikel(zt.tier)} ${esc(zt.tier)}?</h2></div><button class="btn" id="dasbinich">Ja, das bin ich</button></div><p class="muted" style="margin:6px 2px 10px">Nein? Dann tippe auf dein Tier:</p>`:"")+
     (r.liste.length?`<div class="tiere">${r.liste.map(x=>{const t=tierInfo(x.tier);
     return`<button class="tier${x.besetzt?" zu":""}" data-t="${esc(x.tier)}" ${x.besetzt?"disabled":""}><span class="e">${t.emoji}</span><span>${esc(t.name)}</span>${x.besetzt?`<span class="chip">besetzt</span>`:""}</button>`}).join("")}</div>
-    <p class="muted small" style="margin-top:12px">Dein Tier ist grau? Dann sag sofort deiner Lehrkraft Bescheid.</p>`:`<p class="muted">Hier ist noch niemand. Sei die oder der Erste!</p>`)+
-    `<button class="btn ghost wide" id="ichneu" style="margin-top:16px">Ich bin neu hier – Tier aussuchen</button><div id="m"></div>`;
+    <p class="muted small" style="margin-top:12px">Dein Tier ist grau? Dann sag sofort deiner Lehrkraft Bescheid.</p>`:`<p class="muted">In dieser Klasse gibt es noch keine Tiere.</p>`)+
+    `<p class="muted" style="margin-top:16px">Du hast noch kein Tier oder weißt es nicht mehr? Frag deine Lehrkraft.</p><div id="m"></div>`;
   const rein=async tier=>{document.querySelectorAll("#app button").forEach(x=>x.disabled=true);
     let r;try{r=await db.anmelden(klasse,tier)}catch(e){r={fehler:"netz"}}
     anmeldeErgebnis(klasse,tier,r,()=>seiteTier(klasse))};
@@ -220,7 +220,6 @@ async function seiteTier(klasse){
       <p>Tippe nur auf „Ja“, wenn das <b>dein</b> Tier ist. Mit einem fremden Tier sammelst du Punkte für jemand anderen.</p></div>
       <div class="row"><button class="btn" id="ja">Ja, das bin ich</button><button class="btn ghost" id="nein">Nein, zurück</button></div><div id="m"></div>`;
     $("#nein").onclick=()=>seiteTier(klasse);$("#ja").onclick=()=>rein(b.dataset.t)});
-  $("#ichneu").onclick=()=>seiteNeuTier(klasse,new Set(r.liste.map(x=>x.tier)));
 }
 
 /* Neu: eigenes Tier aussuchen (in der Klasse noch frei) */
@@ -459,10 +458,14 @@ function lehrerZeigen(){
       ${zeilen.map(x=>`<tr class="${x.hinweis?"auff":""}"><td class="t">${esc(x.name)}</td><td>${esc(x.st)}</td><td>${x.fertig?"fertig":x.teil}</td><td class="c">${x.min}</td><td class="c">${x.fGes}</td><td>${x.hinweis?`<b>${x.hinweis}</b>`:""}</td><td class="c"><span class="chip ${zeichenKlasse(x.z)} gross-z">${x.z}</span></td></tr>`).join("")}</tbody></table></div>`})()}
   <div class="block" style="overflow-x:auto"><h2 style="margin-bottom:8px">Alle Stationen</h2>
     ${kinder.length?`<table class="liste"><thead><tr><th>Tier</th><th>Vorname <span class="muted small">(nur hier)</span></th><th>Status</th>${PFAD().map((st,i)=>`<th class="c" title="${esc(st.titel)}">${i+1}</th>`).join("")}<th></th></tr></thead><tbody>${kinder.map(zeile).join("")}</tbody></table>`
-      :`<p style="margin:0">Noch keine Kinder in ${kl}. In der ersten Stunde suchen sich die Kinder selbst ein Tier aus.</p>`}
+      :`<p style="margin:0">Noch keine Kinder in ${kl}. Trag unten die Klassenliste ein, dann bekommt jedes Kind ein Tier.</p>`}
     <datalist id="dl-${esc(kl)}">${(listen[kl]||[]).filter(n=>!kinder.some(k=>namen[k.id]===n)).map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
     ${(listen[kl]||[]).length?`<p class="muted small" style="margin:10px 0 0">${kinder.filter(k=>namen[k.id]).length} von ${listen[kl].length} Kindern zugeordnet.${(()=>{const fehlt=listen[kl].filter(n=>!kinder.some(k=>namen[k.id]===n));return fehlt.length&&fehlt.length<=8?" Noch ohne Tier: "+fehlt.map(esc).join(", "):""})()}</p>`:""}
   </div>
+  <details class="block noprint" ${kinder.length?"":"open"}><summary><b>Klassenliste und Tiere zuteilen</b> <span class="muted small">– ${kinder.length} Kinder haben ein Tier</span></summary>
+    <p class="small" style="margin:10px 0 6px">Ein Vorname pro Zeile. Jedes neue Kind bekommt ein freies Tier. Wer schon ein Tier hat, behält es. Die Namen bleiben nur in diesem Browser.</p>
+    <textarea class="uebfeld" id="kliste" style="min-height:160px" spellcheck="false">${esc([...new Set([...(listen[kl]||[]),...kinder.map(k=>namen[k.id]).filter(Boolean)])].join("\n"))}</textarea>
+    <div class="row" style="margin-top:10px"><button class="btn" id="zuteilen">Speichern und Tiere zuteilen</button><span class="muted small">Danach: Kärtchen drucken und verteilen.</span></div></details>
   <div class="row noprint">
     <button class="btn ghost" id="druck" ${kinder.length?"":"disabled"}>Kärtchen drucken</button>
     <button class="btn ghost" id="sichern">Namensliste sichern</button><label class="btn ghost">Namensliste laden<input type="file" id="laden" accept=".json" hidden></label>
@@ -480,6 +483,18 @@ function lehrerZeigen(){
     if(a==="freigeben")return lAktion(()=>db.lAbmeldenKind(id));
     if(a==="mehr")return lMehr(d.kinder.find(k=>k.id===id))});
   $("#druck").onclick=()=>lDruck(kinder);
+  $("#zuteilen").onclick=async()=>{const liste=[...new Set($("#kliste").value.split("\n").map(x=>x.trim()).filter(Boolean))];
+    listen[kl]=liste;lsSet("if5-listen",listen);
+    const neu=liste.filter(n=>!kinder.some(k=>namen[k.id]===n)),frei=TIERE.map(t=>t[1]).filter(t=>!kinder.some(k=>k.tier===t));
+    /* erst Kinder ohne Namen (z. B. alte Tiere) übernehmen, dann neue anlegen */
+    const ohne=kinder.filter(k=>!namen[k.id]);
+    if(neu.length-ohne.length>frei.length)return toast(`Zu viele Kinder: Es sind nur noch ${frei.length} Tiere frei.`);
+    $("#zuteilen").disabled=true;
+    try{for(const n of neu){let id;const k=ohne.shift();
+        if(k)id=k.id;else{const t=frei.splice(Math.floor(Math.random()*frei.length),1)[0];id=await db.lKindAnlegen(kl,t)}
+        namen[id]=n}
+      lsSet("if5-namen",namen);toast(neu.length?`${neu.length} Kinder haben ein Tier bekommen.`:"Liste gespeichert.");await lehrerLaden()}
+    catch(e){lsSet("if5-namen",namen);toast("Hat nicht geklappt: "+(e.message||e));await lehrerLaden()}};
   if($("#kopie"))$("#kopie").onclick=async()=>{try{await navigator.clipboard.writeText(window._noten);toast("Noten kopiert. Du kannst sie in eine Tabelle einfügen.")}catch(e){toast("Kopieren hat nicht geklappt")}};
   $("#sichern").onclick=()=>{const b=new Blob([JSON.stringify({art:"if5-namen",gesichert:new Date().toISOString(),namen,listen},null,1)],{type:"application/json"});
     const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`Informatik5-Namensliste-${new Date().toLocaleDateString("sv")}.json`;a.click();URL.revokeObjectURL(a.href)};
@@ -505,8 +520,8 @@ function lDruck(kinder){
     .e{font-size:40px;line-height:1}.n{font-size:20px;font-weight:700}.f{display:flex;align-items:center;gap:8px;font-weight:700}
     .f i{width:22px;height:22px;border-radius:50%;display:inline-block;-webkit-print-color-adjust:exact;print-color-adjust:exact}.s{color:#666;font-size:12px}
     </style></head><body><div class="g">${kinder.map(k=>{const t=tierInfo(k.tier);
-    return`<div class="k"><div style="display:flex;justify-content:space-between"><span class="e">${t.emoji}</span><span class="s">Informatik 5 · ${esc(k.klasse)}<br>${esc(namen[k.id]||"")}</span></div>
-    <div class="n">${esc(t.name)}</div><div class="f">Klasse ${esc(k.klasse)}</div></div>`}).join("")}</div>
+    return`<div class="k"><div style="display:flex;justify-content:space-between"><span class="e">${t.emoji}</span><span class="s">Informatik 5, Klasse ${esc(k.klasse)}</span></div>
+    <div class="n">${esc(namen[k.id]||"")}</div><div class="f">Dein Tier: ${esc(t.name)}</div></div>`}).join("")}</div>
     <script>onload=()=>print()<\/script></body></html>`);
   w.document.close();
 }
