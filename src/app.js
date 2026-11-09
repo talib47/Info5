@@ -1,6 +1,7 @@
 /* =====================================================================
    Informatik 5 — eigene Stunden-Seite für Jahrgang 5 (EKG Homberg, GNDO)
-   Kinder: Klasse → Tier antippen (beim ersten Mal selbst aussuchen), Station lösen, Ergebniskarte zeigen.
+   Kinder: Klasse → Tier antippen (beim ersten Mal selbst aussuchen), dann im Lernpfad die nächste Station lösen.
+   Lernpfad: Stationen der Reihe nach, höchstens eine neue pro Tag. Wer heute fertig ist, darf auf den Spielplatz.
    Anmelden geht nur während der eigenen Stunde (Stundenplan unten) oder wenn die Lehrkraft von Hand öffnet.
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
@@ -39,17 +40,12 @@ const FERIEN=[["2026-12-23","2027-01-06"],["2027-03-22","2027-04-03"],["2027-05-
 const STATIONEN=[];
 function station(s){STATIONEN.push(s)}
 
-/* Geplante Stunden, die noch nicht gebaut sind (erscheinen grau) */
-const BALD=[
-  {ico:"🔐",titel:"Passwort-Werkstatt",kurz:"Starke Passwörter bauen und knacken lassen"},
-  {ico:"⌨️",titel:"Tasten-Tricks",kurz:"Kopieren, Einfügen, Rückgängig – wie die Profis"},
-  {ico:"🗂️",titel:"Ordnung im Computer",kurz:"Dateien in die richtigen Ordner sortieren"},
-  {ico:"💬",titel:"Nett im Netz",kurz:"Welche Nachricht ist okay, welche nicht?"},
-  {ico:"⚡",titel:"Tipp-Training",kurz:"Schneller tippen mit allen Fingern"},
-  {ico:"🕵️",titel:"Echt oder Betrug?",kurz:"Gefälschte Nachrichten erkennen"},
-  {ico:"🤖",titel:"Robo-Labyrinth",kurz:"Einen Roboter mit Befehlen steuern"},
-  {ico:"0️⃣",titel:"Geheimsprache 0 und 1",kurz:"Zahlen und Wörter in Binär"}
-];
+/* Kapitel des Lernpfads (Reihenfolge = Reihenfolge im Schuljahr) */
+const KAPITEL={fit:"🖥️ Fit am Computer",netz:"🛡️ Sicher im Netz",daten:"🔢 Daten & Codes",algo:"🤖 Algorithmen",ki:"🧠 Automaten & KI",ich:"👣 Ich & meine Daten"};
+/* Höchstens eine NEUE Station pro Tag (sonst laufen schnelle Kinder der Klasse weit davon) */
+const EINE_PRO_TAG=true;
+/* Ränge nach gesammelten Sternen (= Punkte aller Stationen) */
+const RAENGE=[[0,"🌱","Neuling"],[150,"🖱️","Klick-Kenner"],[400,"💾","Daten-Detektiv"],[750,"🔐","Code-Knacker"],[1100,"🤖","Robo-Meister"],[1500,"🧠","Informatik-Ass"],[1900,"🏆","Informatik-Legende"]];
 
 /* Bewertung wie im Notenbuch: + / o / − aus den Prozent der Punkte (Grenzen hier anpassen) */
 const PLUS_AB=75,O_AB=40;
@@ -60,6 +56,28 @@ const zeit=ms=>{const m=Math.round((ms||0)/60000);return m<1?"unter 1 Min.":m+" 
 const maxPunkte=st=>st.schritte.reduce((a,s)=>a+(s.punkte||0),0);
 const summe=prog=>Object.values(prog?.punkte||{}).reduce((a,b)=>a+b,0);
 const prozent=(st,prog)=>{const m=maxPunkte(st);return m?Math.round(summe(prog)/m*100):100};
+const ABZEICHEN={"+":"🥇","o":"🥈","−":"🥉"};
+const heuteTag=()=>new Date().toDateString(),tagVon=ms=>new Date(ms).toDateString();
+const PFAD=()=>STATIONEN.filter(s=>!s.spiel),SPIELE=()=>STATIONEN.filter(s=>s.spiel);
+const sterne=()=>PFAD().reduce((a,s)=>a+summe(meineStaende()[s.id]),0);
+const rang=n=>{let r=RAENGE[0];for(const x of RAENGE)if(n>=x[0])r=x;return r};
+const naechsterRang=n=>RAENGE.find(x=>x[0]>n);
+/* Status einer Station im Lernpfad: fertig | offen | zu (vorherige fehlt) | morgen (heute schon eine geschafft) */
+function status(st){
+  const s=meineStaende(),p=s[st.id];
+  if(p?.fertig)return"fertig";
+  if(VS||st.spiel)return"offen";
+  const pfad=PFAD(),i=pfad.indexOf(st);if(i<=0)return"offen";
+  const vor=s[pfad[i-1].id];
+  if(!vor?.fertig)return"zu";
+  if(p)return"offen";
+  if(EINE_PRO_TAG&&tagVon(vor.fertig)===heuteTag())return"morgen";
+  return"offen";
+}
+const spielplatzOffen=()=>VS||PFAD().some(s=>{const p=meineStaende()[s.id];return p?.fertig&&tagVon(p.fertig)===heuteTag()});
+/* Aufräumen beim Verlassen eines Teils (z. B. Tastatur-Abhörer, Zeitgeber) */
+let aufraeumListe=[];
+function aufraeumen(){aufraeumListe.forEach(f=>{try{f()}catch(e){}});aufraeumListe=[]}
 
 /* ---------- Sitzung des Kindes ---------- */
 let sitzung=lsGet("if5-sitzung");      // {klasse, tier, token}
@@ -76,6 +94,7 @@ function speichern(sofort){
   if(!laufend)return;
   if(VS){vStaende[laufend.st.id]=laufend.prog;return}
   staende[laufend.st.id]=laufend.prog;staendeLokal();
+  if(laufend.st.spiel)return;   // Spielplatz bleibt nur auf diesem Gerät
   pushWarte.add(laufend.st.id);
   clearTimeout(pushTimer);pushTimer=setTimeout(hochladen,sofort?0:1500);
 }
@@ -107,10 +126,11 @@ setInterval(stundeVorbeiPruefen,60000);
 /* Aktive Zeit messen (nur wenn die Seite sichtbar ist) */
 let tick=Date.now();
 setInterval(()=>{const n=Date.now(),d=Math.min(n-tick,15000);tick=n;
-  if(laufend&&!document.hidden&&!laufend.prog.fertig){laufend.prog.aktiv=(laufend.prog.aktiv||0)+d;speichern()}},10000);
+  if(laufend&&!laufend.st.spiel&&!document.hidden&&!laufend.prog.fertig){laufend.prog.aktiv=(laufend.prog.aktiv||0)+d;speichern()}},10000);
 
 /* ---------- Seiten ---------- */
 function render(){
+  aufraeumen();
   let h=location.hash.slice(1);
   if(h==="lehrer"||h.startsWith("lehrer/"))return seiteLehrer();
   const vs=h==="v"||h.startsWith("v/");if(vs!==VS){VS=vs;laufend=null}
@@ -197,21 +217,49 @@ function anmeldeErgebnis(klasse,tier,r,nochmal){
 }
 
 function seiteStart(){
-  const karten=STATIONEN.map(s=>{const p=meineStaende()[s.id];
-    const st=p?.fertig?`<span class="chip good">fertig · ${summe(p)} Punkte</span>`:p?`<span class="chip">angefangen</span>`:"";
-    return`<button class="st" data-id="${s.id}"><span class="ico">${s.ico}</span><h3>${esc(s.titel)}</h3><span class="muted small">${esc(s.kurz)}</span><span class="meta"><span class="chip">${s.schritte.length} Teile</span>${st}</span></button>`}).join("");
-  const bald=BALD.filter(b=>!STATIONEN.some(s=>s.titel===b.titel)).map(b=>`<div class="st soon"><span class="ico">${b.ico}</span><h3>${esc(b.titel)}</h3><span class="muted small">${esc(b.kurz)}</span><span class="meta"><span class="chip">kommt bald</span></span></div>`).join("");
+  const s=meineStaende(),pfad=PFAD(),fertig=pfad.filter(x=>s[x.id]?.fertig).length;
+  const n=sterne(),[,rIco,rName]=rang(n),nr=naechsterRang(n);
+  const akt=pfad.find(x=>!s[x.id]?.fertig);
+  const stAkt=akt?status(akt):null;
+  const hero=!akt?`<div class="block hero fertig"><span class="hico">🏆</span><div><p class="eyebrow">Alles geschafft</p><h2>Du hast alle ${pfad.length} Stationen geschafft!</h2><p class="muted" style="margin:0">Wahnsinn. Ab auf den Spielplatz!</p></div></div>`
+    :stAkt==="morgen"?`<div class="block hero"><span class="hico">✅</span><div><p class="eyebrow">Heute geschafft</p><h2>Super! Deine Station für heute ist fertig.</h2><p class="muted" style="margin:0">Nächste Stunde geht es weiter mit ${akt.ico} <b>${esc(akt.titel)}</b>. Jetzt darfst du auf den 🎮 Spielplatz.</p></div></div>`
+    :`<button class="block hero los" data-id="${akt.id}"><span class="hico">${akt.ico}</span><div><p class="eyebrow">${s[akt.id]?"Weitermachen":"Deine Station heute"} · Station ${pfad.indexOf(akt)+1}</p><h2>${esc(akt.titel)}</h2><p class="muted" style="margin:0">${esc(akt.kurz)}</p></div><span class="btn">${s[akt.id]?"Weiter ▶":"Los geht's ▶"}</span></button>`;
+  const spOffen=spielplatzOffen();
+  const spiele=`<div class="block spielplatz${spOffen?"":" zu"}"><h2>🎮 Spielplatz</h2>
+    <p class="muted">${spOffen?"Du hast heute deine Station geschafft – hier darfst du frei spielen!":"🔒 Öffnet sich, sobald du heute deine Station geschafft hast."}</p>
+    <div class="spiele">${SPIELE().map(x=>`<button class="spiel" data-sp="${x.id}" ${spOffen?"":"disabled"}><span>${x.ico}</span><b>${esc(x.titel)}</b><small>${esc(x.kurz)}</small></button>`).join("")}</div></div>`;
+  let kap="";
+  const liste=pfad.map((x,i)=>{const p=s[x.id],stt=status(x);
+    const kopf=x.kapitel!==kap?(kap=x.kapitel,`<li class="kap">${KAPITEL[x.kapitel]||""}</li>`):"";
+    const z=p?.fertig?zeichenAus(prozent(x,p)):null;
+    const rechts=stt==="fertig"?`<span class="abz" title="Note ${z}">${ABZEICHEN[z]} <span class="chip ${zeichenKlasse(z)} gross-z">${z}</span></span>`
+      :stt==="offen"?`<span class="chip jetzt">${p?"angefangen":"jetzt"}</span>`:stt==="morgen"?`<span class="chip">nächste Stunde</span>`:`<span class="schloss">🔒</span>`;
+    return`${kopf}<li><button class="pfad ${stt}" data-id="${x.id}"><span class="nr">${i+1}</span><span class="pico">${x.ico}</span><span class="ptitel"><b>${esc(x.titel)}</b><small>${esc(x.kurz)}</small></span>${rechts}</button></li>`}).join("");
   $("#app").innerHTML=kopf()+`
-  ${VS?`<div class="plate"><p class="eyebrow">👀 Lehrer-Vorschau</p><h1>Alle Stationen ansehen</h1><p>So sehen die Kinder die Stationen. Du kannst jeden Teil frei anklicken, ohne ihn zu lösen. Nichts wird gespeichert.</p><button class="btn" id="vreset">Vorschau zurücksetzen</button></div>`
-    :`<div class="plate"><p class="eyebrow">Hallo ${ich()}</p><h1>Welche Station heute?</h1><p>Deine Lehrkraft sagt dir, welche Station dran ist. Löse alle Teile und zeig am Ende deine Ergebniskarte.</p></div>`}
-  <div class="grid-st">${karten}${bald}</div>
+  ${VS?`<div class="plate"><p class="eyebrow">👀 Lehrer-Vorschau</p><h1>Alle Stationen ansehen</h1><p>So sehen die Kinder ihren Lernpfad. In der Vorschau ist alles offen, du kannst jeden Teil frei anklicken. Nichts wird gespeichert.</p><button class="btn" id="vreset">Vorschau zurücksetzen</button></div>`
+    :`<div class="plate start"><p class="eyebrow">Hallo ${ich()}</p><h1>${rIco} ${rName}</h1>
+      <div class="sterne"><span>⭐ ${n} Sterne</span><span>🗺️ ${fertig} von ${pfad.length} Stationen</span>${nr?`<span>Nächster Rang: ${nr[1]} ${nr[2]} ab ${nr[0]} ⭐</span>`:""}</div>
+      <div class="balken"><i style="width:${Math.round(fertig/pfad.length*100)}%"></i></div></div>`}
+  ${VS?"":hero}
+  ${spiele}
+  <h2 style="margin:22px 0 10px">🗺️ Dein Lernpfad</h2>
+  <ol class="lernpfad">${liste}</ol>
   <p class="muted small" style="margin-top:22px">Version ${VERSION}</p>`;
   kopfAktiv();
-  document.querySelectorAll(".st[data-id]").forEach(b=>b.onclick=()=>location.hash=basis()+"s/"+b.dataset.id);
+  document.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{const x=STATIONEN.find(y=>y.id===b.dataset.id),stt=status(x);
+    if(stt==="zu")return toast("🔒 Erst die Station davor schaffen!");
+    if(stt==="morgen")return toast("Diese Station kommt nächste Stunde dran. 🎮 Geh doch auf den Spielplatz!");
+    location.hash=basis()+"s/"+x.id});
+  document.querySelectorAll("[data-sp]").forEach(b=>b.onclick=()=>location.hash=basis()+"s/"+b.dataset.sp);
   if($("#vreset"))$("#vreset").onclick=()=>{vStaende={};laufend=null;seiteStart();toast("Vorschau zurückgesetzt")};
 }
 
 function seiteStation(st){
+  aufraeumen();
+  const stt=status(st);
+  if(stt==="zu"||stt==="morgen"){location.hash=home();return}
+  if(st.spiel&&!spielplatzOffen()){toast("🔒 Der Spielplatz öffnet, wenn du heute deine Station geschafft hast.");location.hash=home();return}
+  const frei=VS||!!st.spiel;   // frei: „Weiter“ geht immer (Vorschau und Spielplatz)
   if(!laufend||laufend.st!==st){
     const prog=meineStaende()[st.id]||{schritt:0,punkte:{},daten:{},start:Date.now(),aktiv:0};
     laufend={st,prog};
@@ -224,7 +272,7 @@ function seiteStation(st){
   ${VS?`<div class="msg ok noprint" style="margin:0 0 12px">👀 Vorschau: Du kannst jeden Teil anklicken und ohne Lösen weitergehen. Nichts wird gespeichert.</div>`:""}
   <div class="steps noprint springen">${st.schritte.map((_,k)=>{const darf=VS||k in prog.punkte||k<=(prog.weitester||0);
     return`<i class="${k in prog.punkte?"ok":k===i?"now":""}${darf?"":" zu"}"${darf?` data-sp="${k}" title="Zu Teil ${k+1}"`:""}></i>`}).join("")}</div>
-  <div class="stephead"><p class="eyebrow">${st.ico} ${esc(st.titel)} · Teil ${i+1} von ${st.schritte.length}</p><span class="pts">⭐ ${summe(prog)} Punkte</span></div>
+  <div class="stephead"><p class="eyebrow">${st.ico} ${esc(st.titel)} · Teil ${i+1} von ${st.schritte.length}</p>${st.spiel?`<span class="pts">🎮 Spielplatz</span>`:`<span class="pts">⭐ ${summe(prog)} Punkte</span>`}</div>
   <h2>${esc(sch.titel)}</h2>
   ${sch.merke?`<div class="aha merke"><b>💡 Merke:</b> ${sch.merke}</div>`:""}
   <div id="body"></div>
@@ -246,21 +294,25 @@ function seiteStation(st){
         $(".pts").textContent=`⭐ ${summe(prog)} Punkte`;
         $(".steps").children[i].className="ok"}
       ctx.geloest=true},
-    pruefer:null,
-    loesung:null,   // Teil setzt hier eine Funktion, die die Lösung zeigt (nur Lehrer-Vorschau)   // Teil setzt hier eine Prüf-Funktion (true = richtig); „Weiter“ ruft sie auf
+    pruefer:null,   // Teil setzt hier eine Prüf-Funktion (true = richtig); „Weiter“ ruft sie auf
+    loesung:null,   // Teil setzt hier eine Funktion, die die Lösung zeigt (Lehrer-Vorschau)
+    beimVerlassen:f=>aufraeumListe.push(f),
   };
+  window._ctx=ctx;   // für automatische Tests
   sch.zeige($("#body"),ctx);
   if(VS&&ctx.loesung){$("#body").insertAdjacentHTML("beforebegin",`<button class="btn ghost noprint" id="loesung" style="margin:0 0 12px">🔑 Lösung zeigen</button>`);
     $("#loesung").onclick=()=>{ctx.loesung();$("#loesung").remove()}}
   document.querySelectorAll("[data-sp]").forEach(x=>x.onclick=()=>{prog.schritt=+x.dataset.sp;speichern();seiteStation(st);scrollTo(0,0)});
   $("#zur").onclick=()=>{if(i===0){location.hash=home()}else{prog.schritt=i-1;speichern();seiteStation(st);scrollTo(0,0)}};
-  const vor=()=>{if(i===st.schritte.length-1){prog.fertig=Date.now();speichern(true);seiteErgebnis(st,prog)}
+  const vor=()=>{if(i===st.schritte.length-1){
+      if(st.spiel){delete staende[st.id];staendeLokal();laufend=null;toast("Super gespielt! 🎉");location.hash=home();return}
+      prog.fertig=Date.now();speichern(true);seiteErgebnis(st,prog)}
     else{prog.schritt=i+1;speichern();seiteStation(st)}
     scrollTo(0,0)};
   /* „Weiter“ prüft automatisch: richtig → kurz Erfolg zeigen, dann weiter; falsch → bleiben, Rückmeldung steht da */
   let sperre=false;
   $("#weiter").onclick=()=>{if(sperre)return;
-    if(VS||i in prog.punkte)return vor();
+    if(frei||i in prog.punkte)return vor();
     if(ctx.pruefer){if(ctx.pruefer()){sperre=true;setTimeout(vor,900)}return}
     toast("Löse zuerst diesen Teil.")};
 }
@@ -273,6 +325,7 @@ function konfetti(){
   document.body.append(box);setTimeout(()=>box.remove(),3500);
 }
 function seiteErgebnis(st,prog){
+  aufraeumen();
   if(prog.fertig&&Date.now()-prog.fertig<5000&&zeichenAus(prozent(st,prog))!=="−")konfetti();
   const pz=prozent(st,prog);
   $("#app").innerHTML=kopf()+`
@@ -287,11 +340,12 @@ function seiteErgebnis(st,prog){
     <dt>Fertig am</dt><dd>${new Date(prog.fertig).toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</dd></dl>
   </div>
   ${st.ergebnis?`<div class="block">${st.ergebnis(prog.daten)}</div>`:""}
-  <div class="block"><p style="margin:0"><b>Zeig diese Karte deiner Lehrkraft.</b> ${st.kreativ?"Die Note für Kreativität gibt die Lehrkraft.":""}</p></div>
-  <div class="nav noprint"><button class="btn ghost" id="zur">Übersicht</button></div>`;
+  <div class="block abzeichen-box"><span class="gross-abz">${ABZEICHEN[zeichenAus(pz)]}</span><div><p style="margin:0 0 4px"><b>Neues Abzeichen: ${st.ico} ${esc(st.titel)}</b></p><p class="muted" style="margin:0">Zeig diese Karte deiner Lehrkraft.${st.kreativ?" Die Note für Kreativität gibt die Lehrkraft.":""}</p></div></div>
+  <div class="nav noprint"><button class="btn ghost" id="zur">🗺️ Lernpfad</button>${spielplatzOffen()?`<button class="btn" id="spielen">🎮 Zum Spielplatz</button>`:""}</div>`;
   kopfAktiv();
   if(st.nachErgebnis)st.nachErgebnis(prog.daten);
   $("#zur").onclick=()=>location.hash=home();
+  if($("#spielen"))$("#spielen").onclick=()=>{location.hash=home();setTimeout(()=>document.querySelector(".spielplatz")?.scrollIntoView({behavior:"smooth"}),100)};
   if(VS)$(".nav").insertAdjacentHTML("beforeend",`<button class="btn ghost" id="vnochmal">Station noch mal</button>`),$("#vnochmal").onclick=()=>{delete vStaende[st.id];laufend=null;seiteStation(st)};
 }
 
@@ -338,8 +392,8 @@ function lehrerZeigen(){
     :offen?"Nach Stundenplan offen.":`Nach Stundenplan zu.${naechste?" Nächste Stunde: "+naechste+".":""}`;
   const zeile=k=>{const t=tierInfo(k.tier),s=d.staende[k.id]||{};
     const status=k.besetzt?`<span class="chip good">angemeldet</span> <button class="link" data-a="freigeben" data-id="${k.id}">abmelden</button>`:`<span class="muted small">–</span>`;
-    const zellen=STATIONEN.map(st=>{const p=s[st.id];if(!p)return`<td class="muted">–</td>`;const pz=prozent(st,p);
-      return`<td>${p.fertig?`<span class="chip ${zeichenKlasse(zeichenAus(pz))} gross-z">${zeichenAus(pz)}</span>`:"<b>…</b>"} <span class="muted small">${pz} %${p.fertig?"":" · Teil "+((p.schritt||0)+1)}</span></td>`}).join("");
+    const zellen=PFAD().map(st=>{const p=s[st.id];if(!p)return`<td class="muted c">·</td>`;const pz=prozent(st,p);
+      return`<td class="c" title="${esc(st.titel)}: ${pz} %${p.fertig?"":" · Teil "+((p.schritt||0)+1)}">${p.fertig?`<span class="chip ${zeichenKlasse(zeichenAus(pz))} gross-z">${zeichenAus(pz)}</span>`:`<span class="muted small">…${pz}%</span>`}</td>`}).join("");
     return`<tr><td class="t"><span class="e">${t.emoji}</span>${esc(t.name)}</td>
       <td><input type="text" class="vn" data-id="${k.id}" value="${esc(namen[k.id]||"")}" placeholder="Wer ist das?" list="dl-${esc(kl)}"></td><td>${status}</td>${zellen}
       <td><button class="link" data-a="mehr" data-id="${k.id}" aria-label="Mehr">⋯</button></td></tr>`};
@@ -350,25 +404,28 @@ function lehrerZeigen(){
     <div class="row">${hand?`<button class="btn ghost" id="plan">Wieder nach Stundenplan</button>`:""}<button class="btn" id="frei">${offen?"Jetzt schließen":`Jetzt öffnen (${FREIGABE_MIN} Min.)`}</button></div>
   </div>
   <div class="block" style="overflow-x:auto">
-    ${kinder.length?`<table class="liste"><thead><tr><th>Tier</th><th>Vorname <span class="muted small">(nur hier)</span></th><th>Status</th>${STATIONEN.map(st=>`<th>${st.ico} ${esc(st.titel)}</th>`).join("")}<th></th></tr></thead><tbody>${kinder.map(zeile).join("")}</tbody></table>`
+    ${kinder.length?`<table class="liste"><thead><tr><th>Tier</th><th>Vorname <span class="muted small">(nur hier)</span></th><th>Status</th>${PFAD().map((st,i)=>`<th class="c" title="${esc(st.titel)}">${i+1}<br>${st.ico}</th>`).join("")}<th></th></tr></thead><tbody>${kinder.map(zeile).join("")}</tbody></table>`
       :`<p style="margin:0">Noch keine Kinder in ${kl}. In der ersten Stunde suchen sich die Kinder selbst ein Tier aus.</p>`}
     <datalist id="dl-${esc(kl)}">${(listen[kl]||[]).filter(n=>!kinder.some(k=>namen[k.id]===n)).map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
     ${(listen[kl]||[]).length?`<p class="muted small" style="margin:10px 0 0">${kinder.filter(k=>namen[k.id]).length} von ${listen[kl].length} Kindern zugeordnet.${(()=>{const fehlt=listen[kl].filter(n=>!kinder.some(k=>namen[k.id]===n));return fehlt.length&&fehlt.length<=8?" Noch ohne Tier: "+fehlt.map(esc).join(", "):""})()}</p>`:""}
   </div>
   ${(()=>{const heute=new Date().toDateString(),zeilen=[];
     kinder.forEach(k=>{const t=tierInfo(k.tier),s=d.staende[k.id]||{};
-      STATIONEN.forEach(st=>{const p=s[st.id];if(!p)return;
+      PFAD().forEach(st=>{const p=s[st.id];if(!p)return;
         const tag=new Date(p.fertig||p.start||0).toDateString();if(tag!==heute)return;
         const pz=prozent(st,p),z=zeichenAus(pz);
-        zeilen.push({name:namen[k.id]||`${t.emoji} ${t.name}`,z,st:st.titel,pz,fertig:!!p.fertig})})});
+        zeilen.push({name:namen[k.id]||`${t.emoji} ${t.name}`,z,st:st.ico+" "+st.titel,pz,fertig:!!p.fertig})})});
     if(!zeilen.length)return"";
     zeilen.sort((a,b)=>a.name.localeCompare(b.name,"de"));
     return`<div class="block"><h2 style="margin-bottom:4px">Für das Notenbuch · heute</h2><p class="muted small">Zeichen aus den Punkten von heute. Wer nicht fertig wurde, bekommt das Zeichen für das, was geschafft ist.</p>
-      <div class="heute">${zeilen.map(x=>`<div><span>${esc(x.name)}</span><span>${x.fertig?"":`<span class="muted small">nicht fertig · </span>`}<span class="chip ${zeichenKlasse(x.z)} gross-z">${x.z}</span></span></div>`).join("")}</div></div>`})()}
+      <div class="heute">${zeilen.map(x=>`<div><span>${esc(x.name)} <span class="muted small">${esc(x.st)}</span></span><span>${x.fertig?"":`<span class="muted small">nicht fertig · </span>`}<span class="chip ${zeichenKlasse(x.z)} gross-z">${x.z}</span></span></div>`).join("")}</div></div>`})()}
   <div class="row noprint">
     <button class="btn ghost" id="druck" ${kinder.length?"":"disabled"}>Kärtchen drucken</button>
     <button class="btn ghost" id="sichern">Namensliste sichern</button><label class="btn ghost">Namensliste laden<input type="file" id="laden" accept=".json" hidden></label>
   </div>
+  <details class="block plan"><summary><b>📚 Lernpfad & Lehrplan</b> <span class="muted small">– alle ${PFAD().length} Stationen mit Bezug zum Kernlehrplan NRW</span></summary>
+    <ol>${PFAD().map(st=>`<li><b>${st.ico} ${esc(st.titel)}</b> <span class="chip">${KAPITEL[st.kapitel]||""}</span><br><span class="small">${esc(st.kurz)}</span>${st.klp?`<br><span class="muted small">KLP: ${esc(st.klp)}</span>`:""}</li>`).join("")}</ol>
+    <p class="muted small">Ablauf: Jede Station ist eine Doppelstunde (60 Min.). Die Kinder gehen den Lernpfad der Reihe nach, höchstens eine neue Station pro Tag. Wer früher fertig ist, darf auf den 🎮 Spielplatz (Bonus-Spiele, ohne Note).</p></details>
   <p class="muted small" style="margin-top:14px">Die Vornamen werden nur in diesem Browser gespeichert, nie auf dem Server. Sichere die Namensliste ab und zu (z. B. auf IServ), damit sie bei einem neuen Gerät nicht fehlt.${db.online?"":" <b>Vorschau-Modus:</b> Alles liegt nur in diesem Browser."}</p>`;
 
   document.querySelectorAll("[data-kl]").forEach(b=>b.onclick=()=>{lKlasse=b.dataset.kl;lsSet("if5-lklasse",lKlasse);lehrerZeigen()});
@@ -390,7 +447,7 @@ async function lAktion(f){try{await f();await lehrerLaden()}catch(e){toast("Hat 
 function lMehr(k){
   const t=tierInfo(k.tier);
   const wahl=prompt(`${t.emoji} ${t.name}${namen[k.id]?" ("+namen[k.id]+")":""}\n\n1 = Stand einer Station löschen\n2 = Tier ganz löschen`);
-  if(wahl==="1"){const st=STATIONEN.length===1?STATIONEN[0]:STATIONEN[parseInt(prompt(STATIONEN.map((s,i)=>`${i+1} = ${s.titel}`).join("\n")),10)-1];
+  if(wahl==="1"){const P=PFAD(),st=P[parseInt(prompt(P.map((s,i)=>`${i+1} = ${s.titel}`).join("\n")),10)-1];
     if(st&&confirm(`Stand „${st.titel}“ von ${t.name} löschen?`))lAktion(()=>db.lStandLoeschen(k.id,st.id))}
   else if(wahl==="2"){if(confirm(`${t.name} mit allen Punkten löschen?`)){delete namen[k.id];lsSet("if5-namen",namen);lAktion(()=>db.lKindLoeschen(k.id))}}
 }

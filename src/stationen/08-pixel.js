@@ -247,7 +247,8 @@ function farbmischer(titel,punkte,merke){return{titel,punkte,merke,zeige(el,ctx)
 const MIN_PIXEL=40;
 let FREI=0; // Index des Teils „Dein eigenes Bild“ (wird unten gesetzt)
 station({
-  id:"pixel",nr:1,ico:"🎨",titel:"Pixel-Werkstatt",kreativ:true,
+  id:"pixel",nr:8,ico:"🎨",titel:"Pixel-Werkstatt",kreativ:true,kapitel:"daten",
+  klp:"Information und Daten: Information und Daten unterscheiden, Bilder codieren und decodieren (Binärcode, Farbcode, RGB), Daten komprimieren (Lauflängencodierung), Fehler erkennen (Paritätsbit)",
   kurz:"Bilder aus Kästchen – und wie der Computer sie als Zahlen speichert",
   schritte:[
     {titel:"Worum geht's?",punkte:0,zeige(el,ctx){
@@ -299,4 +300,6 @@ station({
   nachErgebnis(d){const f=d[FREI]||{};const box=document.getElementById("erg-bild");if(box)box.append(pixelRaster({w:16,h:16,werte:f.bild,palette:PAL}).el)}
 });
 FREI=STATIONEN.find(x=>x.id==="pixel").schritte.findIndex(x=>x.titel==="Dein eigenes Bild");
+/* für den Spielplatz */
+window.PIXEL={nonogramm,zauber,BILDER,PAL,NAMEN};
 })();

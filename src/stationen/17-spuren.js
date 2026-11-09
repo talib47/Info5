@@ -1,0 +1,40 @@
+/* Station 17 · Meine Daten-Spuren – Datenschutz, App-Berechtigungen, digitale Spuren, Abschluss-Mission */
+station({
+  id:"spuren",nr:17,ico:"👣",titel:"Meine Daten-Spuren",kapitel:"ich",
+  kurz:"Was das Netz über dich weiß – und die große Abschluss-Mission",
+  klp:"Informatik, Mensch und Gesellschaft: Datenschutz und Privatsphäre, personenbezogene Daten, digitale Spuren, App-Berechtigungen (Medienkompetenzrahmen NRW 4.3, 4.4); Wiederholung aller Inhaltsfelder",
+  schritte:[
+    fehlerSuche({titel:"Zu viel verraten",punkte:15,art:"👤 Profil in einer Spiele-App",
+      text:"Dieses Kind hat ein Profil in einer Spiele-App erstellt. Es hat aber <b>zu viel</b> verraten! Finde die 5 Angaben, die nicht ins Netz gehören.",
+      teile:[["Spitzname: Skaterkid"],["Echter Name: Lena Schmidt",true,"Mit dem echten Namen kann man dich finden. Nimm einen Spitznamen!"],["Hobby: Skaten"],["Schule: Gesamtschule, Klasse 5B",true,"Jetzt weiß jeder, wo du jeden Tag bist."],["Adresse: Rheinstraße 12",true,"Die Adresse ist privat!"],["Lieblingsfarbe: Grün"],["Handy: 0176 1234567",true,"Fremde könnten dich anrufen oder anschreiben."],["Profilbild: Foto vor meiner Haustür mit Hausnummer",true,"Auch auf Fotos kann man viel erkennen."],["Lieblingsessen: Pizza 🍕"]],
+      merke:"Je mehr du verrätst, desto leichter findet dich ein Fremder. Nimm <b>Spitznamen</b> statt echter Namen und Fotos ohne Gesicht oder Adresse."}),
+    sortieren({titel:"Braucht die App das?",punkte:10,text:"Apps fragen oft nach Erlaubnis (Berechtigungen). Braucht die App das wirklich?",
+      toepfe:[["ja","Ja, das braucht sie","✅"],["nein","Nein, wozu denn?","🚫"]],
+      karten:[["Wetter-App will deinen Standort","🌦️","ja"],["Taschenlampen-App will deine Kontakte","🔦","nein"],["Kamera-App will die Kamera","📷","ja"],["Puzzle-Spiel will dein Mikrofon","🧩","nein"],["Navi will deinen Standort","🗺️","ja"],["Rechner-App will deine Fotos","🧮","nein"]],
+      merke:"Apps wollen oft mehr Daten als nötig. Frag dich: <b>Wozu braucht die App das?</b> Im Zweifel: „Nicht erlauben“."}),
+    auswaehlen({titel:"Wo hinterlässt du Spuren?",punkte:10,text:"Im Netz hinterlässt du Spuren – wie Fußabdrücke im Schnee. Wo entstehen <b>digitale Spuren</b>? Tippe alles an.",
+      karten:[["🔎 Etwas im Internet suchen",true],["▶️ Ein Video anschauen",true],["👍 Ein Like geben",true],["📸 Ein Foto posten",true],["📍 Handy mit Standort an",true],["⚽ Mit Freunden draußen Fußball spielen",false],["📖 Ein Buch auf dem Sofa lesen",false]],
+      merke:"Das Internet vergisst nicht: Was einmal gepostet ist, bekommst du kaum zurück."}),
+    reihenfolge({titel:"Die Reise eines Fotos",punkte:10,text:"Du postest ein peinliches Foto und löschst es nach einer Stunde wieder. Was kann in der Zwischenzeit passieren? Bring es in die Reihenfolge.",
+      schritte:["Du postest das Foto","Deine Freunde sehen es","Jemand macht einen Screenshot","Der Screenshot wird weitergeschickt","Fremde sehen das Foto – auch nachdem du es gelöscht hast"],
+      merke:"<b>Erst denken, dann posten!</b> Frag dich: Wäre es okay, wenn das die ganze Schule sieht?"}),
+    entscheidung({titel:"Datenschutz-Profi",punkte:15,
+      szenen:[
+        {bild:"🍪",text:"Eine Webseite fragt: „Alle Cookies akzeptieren?“ Es gibt auch „Nur notwendige“.",optionen:[["„Nur notwendige“ wählen",true,"Richtig! Dann sammelt die Seite weniger Daten über dich."],["„Alle akzeptieren“ – geht schneller",false,"Dann darf die Seite dich überall im Netz verfolgen."]]},
+        {bild:"📍",text:"Eine App will deinen Standort mit allen Kontakten teilen.",optionen:[["Ablehnen – nur Eltern dürfen wissen, wo ich bin",true,"Genau! Wo du bist, geht Fremde nichts an."],["Zulassen, ist ja lustig",false,"Dann weiß jeder, wo du gerade bist – auch, wenn du allein bist."]]},
+        {bild:"📝",text:"Ein Gewinnspiel will Name, Adresse und Geburtstag – für einen Sticker.",optionen:[["Nicht mitmachen oder erst die Eltern fragen",true,"Super! Deine Daten sind mehr wert als ein Sticker."],["Schnell alles eintippen",false,"Firmen verkaufen solche Daten oft weiter."]]},
+      ],merke:"<b>Deine Daten gehören dir!</b> Du bestimmst, wer was über dich weiß. Das heißt <b>Datenschutz</b>."}),
+    paare({titel:"Rückblick: Informatik-Wörter",punkte:15,text:"Du hast dieses Jahr viel gelernt! Verbinde die Wörter mit ihrer Bedeutung.",
+      paare:[["EVA","Eingabe – Verarbeitung – Ausgabe"],["Bit","eine einzige 0 oder 1"],["Algorithmus","eine genaue Schritt-für-Schritt-Anleitung"],["Schleife","Befehle wiederholen"],["Automat","hat Zustände und Übergänge"],["KI","lernt aus Beispielen"],["Phishing","Betrug, um an Passwörter zu kommen"]]}),
+    sortieren({titel:"Rückblick: Wohin gehört das?",punkte:15,text:"Ordne jede Karte dem passenden Thema aus deinem Lernpfad zu.",
+      toepfe:[["netz","Sicher im Netz","🛡️"],["daten","Daten & Codes","🔢"],["algo","Algorithmen","🤖"],["ki","Automaten & KI","🧠"]],
+      karten:[["Starkes Passwort mit dem Satz-Trick","🔐","netz"],["Falsche E-Mail erkennen","🎣","netz"],["10110 = 22","0️⃣","daten"],["Caesar-Code","🕵️","daten"],["Roboter durchs Labyrinth","🤖","algo"],["🔁 5× ➡️","🔁","algo"],["Getränkeautomat","🥤","ki"],["Entscheidungsbaum","🌳","ki"]]}),
+    eingabe({titel:"Die Abschluss-Mission",punkte:20,
+      text:"Letzte Mission! Das Lösungswort ist doppelt geschützt. <b>1.</b> Rechne die Binärzahl aus – das ist der Caesar-Schlüssel. <b>2.</b> Entschlüssle damit das Geheimwort.",
+      html:`<div class="block" style="margin-top:12px"><p class="eyebrow">1. Schlüssel (binär)</p>${bitsHTML("00011")}
+        <p class="eyebrow" style="margin-top:14px">2. Geheimwort</p><p style="font:800 2rem ui-monospace,Menlo,Consolas,monospace;letter-spacing:.15em;margin:0">GLSORP</p>
+        <p class="muted small">Tipp: Jeden Buchstaben um den Schlüssel im Alphabet <b>zurück</b> schieben.</p></div>`,
+      antwort:"DIPLOM",platz:"Lösungswort",
+      merke:"Wer diese Mission knackt, hat den ganzen Lernpfad geschafft – und ist ein echtes <b>Informatik-Ass</b>! 🎓"}),
+  ],
+});

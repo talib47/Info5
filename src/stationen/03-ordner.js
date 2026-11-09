@@ -1,0 +1,50 @@
+/* Station 3 · Ordnung im Computer – Dateien, Endungen, Ordner, Pfade */
+{
+const SCHULE={"Bilder":{"Ferien":{},"Schule":{},"Haustiere":{}},"Dokumente":{"Schule":{"Deutsch":{},"Englisch":{},"Mathe":{},"Informatik":{},"Bio":{"Referat Igel":{}}},"Privat":{}},"Musik":{},"Videos":{}};
+station({
+  id:"ordner",nr:3,ico:"📁",titel:"Ordnung im Computer",kapitel:"fit",
+  kurz:"Dateien, Ordner und Pfade – damit du alles wiederfindest",
+  klp:"Informatiksysteme: Dateien und Ordner verwalten, Dateitypen an der Endung erkennen, Pfade lesen (hierarchische Ordnerstruktur)",
+  schritte:[
+    sortieren({titel:"Was steckt in der Datei?",punkte:10,
+      text:"Das Ende vom Dateinamen (nach dem Punkt) verrät, was drin ist. Sortiere die Dateien in den richtigen Ordner.",
+      toepfe:[["b","Bilder","🖼️"],["m","Musik","🎵"],["d","Dokumente","📄"],["v","Videos","🎬"]],
+      karten:[["urlaub.jpg","","b"],["lieblingslied.mp3","","m"],["hausaufgabe.docx","","d"],["geburtstag.mp4","","v"],["katze.png","","b"],["referat.pptx","","d"],["hörspiel.mp3","","m"],["tanz-video.mp4","","v"]],
+      merke:"Das Ende (<b>.jpg</b>, <b>.mp3</b> …) heißt <b>Dateiendung</b>. Sie sagt dem Computer, mit welchem Programm er die Datei öffnet."}),
+    paare({titel:"Dateiendungen",punkte:10,text:"Welche Endung gehört zu welcher Art von Datei?",
+      paare:[[".jpg / .png","🖼️ ein Bild"],[".mp3","🎵 Musik oder ein Hörspiel"],[".mp4","🎬 ein Video"],[".docx","📝 ein Text aus Word"],[".pdf","📄 ein Dokument zum Lesen und Drucken"],[".exe","⚙️ ein Programm – Vorsicht bei Fremden!"]],
+      merke:"Eine <b>.exe</b>-Datei startet ein Programm. Öffne nie eine .exe aus einer fremden E-Mail!"}),
+    ordnerPfad({titel:"Das Klassenfoto speichern",punkte:10,datei:"🖼️ klassenfoto.jpg",baum:SCHULE,ziel:["Bilder","Schule"],
+      text:"Speichere das Klassenfoto in <b>Bilder › Schule</b>. Klick auf die Ordner, um hineinzugehen. Mit ⬆️ gehst du zurück.",
+      merke:"Ordner können weitere Ordner enthalten – wie Schubladen in einem Schrank."}),
+    ordnerPfad({titel:"Wohin mit der Mathe-Hausaufgabe?",punkte:10,datei:"📄 bruchrechnen.docx",baum:SCHULE,ziel:["Dokumente","Schule","Mathe"],
+      text:"Diesmal sagt dir niemand den Weg. Wo gehört die Mathe-Hausaufgabe hin? Klick dich zum passenden Ordner und speichere."}),
+    ordnerPfad({titel:"Das Igel-Referat",punkte:15,datei:"🦔 igel-foto.jpg",baum:SCHULE,ziel:["Dokumente","Schule","Bio","Referat Igel"],
+      text:"Für dein Bio-Referat über Igel hast du ein Foto. Es soll zu den anderen Referat-Dateien. Such den Ordner – er ist gut versteckt!"}),
+    eingabe({titel:"Einen Pfad lesen",punkte:10,
+      text:"Der Weg zu einer Datei heißt <b>Pfad</b>. Man liest ihn von links nach rechts – wie eine Wegbeschreibung.",
+      html:`<div class="block" style="margin-top:12px;font:700 1.125rem ui-monospace,Menlo,Consolas,monospace">💻 Dieser PC › 📁 Dokumente › 📁 Schule › 📁 Englisch › 📄 my-family.pptx</div>
+        <p class="frage">In welchem Ordner liegt die Datei <b>my-family.pptx</b> direkt drin?</p>`,
+      antwort:["Englisch","📁 Englisch"],platz:"Name des Ordners",
+      merke:"Der letzte Ordner vor der Datei ist der Ordner, in dem sie liegt."}),
+    sortieren({titel:"Ordner nach Fächern",punkte:10,
+      text:"Dein Schulordner ist ein Chaos! Räum die Dateien in die richtigen Fach-Ordner.",
+      toepfe:[["de","Deutsch","📕"],["en","Englisch","📘"],["ma","Mathe","📐"],["bi","Bio","🌿"]],
+      karten:[["vokabeln-unit-3.docx","","en"],["bruchrechnen-blatt-2.pdf","","ma"],["igel-steckbrief.docx","","bi"],["gedicht-herbst.docx","","de"],["my-family.pptx","","en"],["dreiecke-messen.pdf","","ma"],["frosch-lebenszyklus.jpg","","bi"],["märchen-schluss.docx","","de"]]}),
+    auswaehlen({titel:"Gute Dateinamen",punkte:10,
+      text:"Stell dir vor, du suchst die Datei in einem Jahr wieder. Welche Namen sind <b>gut</b>? Tippe sie an.",
+      karten:[["referat-igel-bio.pptx",true],["Neues Dokument (3).docx",false],["asdfgh.docx",false],["gedicht-herbst-deutsch.docx",true],["bild.jpg",false],["klassenfahrt-tag-1.jpg",true],["dings.pdf",false],["mathe-brueche-blatt-2.pdf",true]],
+      merke:"Ein guter Dateiname verrät, <b>was drin ist</b> – auch noch in einem Jahr."}),
+    reihenfolge({titel:"Einen neuen Ordner anlegen",punkte:10,text:"So legst du am PC einen neuen Ordner an. Welche Reihenfolge stimmt?",
+      schritte:["Rechtsklick auf eine freie Stelle","„Neu“ auswählen","„Ordner“ anklicken","Namen für den Ordner eintippen","Enter drücken"]}),
+    paare({titel:"Symbole im Explorer",punkte:10,text:"Diese Symbole siehst du im Datei-Explorer. Was bedeuten sie?",
+      paare:[["📁 Ordner","enthält Dateien und andere Ordner"],["📄 Datei","ein Text, Bild, Lied oder Programm"],["🗑️ Papierkorb","gelöschte Dateien landen hier zuerst"],["🔍 Suche","findet Dateien nach ihrem Namen"],["🔌 USB-Stick","Dateien mitnehmen zu einem anderen PC"]]}),
+    entscheidung({titel:"Hilfe, meine Datei ist weg!",punkte:15,text:"Was machst du?",
+      szenen:[
+        {bild:"🔍",text:"Du hast deine Datei gespeichert, findest sie aber nicht mehr.",optionen:[["Mit der Suche 🔍 nach dem Namen suchen",true,"Richtig! Die Suche durchsucht alle Ordner für dich."],["Die Arbeit einfach noch mal machen",false,"Das kostet viel Zeit. Erst suchen!"],["Den PC neu starten",false,"Dadurch taucht die Datei nicht auf."]]},
+        {bild:"🗑️",text:"Du hast aus Versehen eine wichtige Datei gelöscht.",optionen:[["Im Papierkorb nachschauen und wiederherstellen",true,"Genau! Gelöschte Dateien liegen erst mal im Papierkorb."],["Weinen – sie ist für immer weg",false,"Keine Panik! Schau erst in den Papierkorb."],["Noch mehr Dateien löschen",false,"Bloß nicht!"]]},
+        {bild:"🏠",text:"Du hast am Schul-PC gearbeitet und brauchst die Datei zu Hause.",optionen:[["Die Datei in IServ hochladen oder auf einen USB-Stick speichern",true,"Super! So nimmst du die Datei mit."],["Den Bildschirm abfotografieren",false,"Dann hast du nur ein Foto, keine Datei zum Weiterarbeiten."],["Hoffen, dass sie zu Hause auch da ist",false,"Dateien wandern nicht von allein von PC zu PC."]]},
+      ],merke:"Gelöschte Dateien landen zuerst im <b>Papierkorb</b>. Erst wenn du ihn leerst, sind sie wirklich weg."}),
+  ],
+});
+}

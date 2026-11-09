@@ -23,18 +23,47 @@ Link für die Kinder: `talib47.github.io/Info5/` – eine bestimmte Station dire
 
 Quelltext in `src/`. Nach jeder Änderung `python3 build.py` ausführen und `index.html` **und** `version.txt` committen. Die Seite lädt neue Versionen von selbst.
 
+## Lernpfad (17 Stationen à 60 Minuten)
+
+Die Kinder gehen die Stationen der Reihe nach. Pro Tag öffnet sich höchstens **eine neue** Station (`EINE_PRO_TAG` in `src/app.js`), damit schnelle Kinder der Klasse nicht davonlaufen. Wer heute fertig ist, darf auf den **🎮 Spielplatz** (Bonus-Spiele ohne Note, Stand nur auf dem Gerät). Für jede Station gibt es ein Abzeichen 🥇🥈🥉 (= Note + / o / −), die gesammelten Punkte ergeben Sterne und einen Rang.
+
+| Nr. | Station | Kapitel | Kernlehrplan NRW (Inhaltsfeld) |
+|---|---|---|---|
+| 1 | 🖱️ Maus- & Tasten-Profi | Fit am Computer | Informatiksysteme |
+| 2 | 🖥️ Was steckt im Computer? (EVA, Hardware/Software) | Fit am Computer | Informatiksysteme |
+| 3 | 📁 Ordnung im Computer (Dateien, Ordner, Pfade) | Fit am Computer | Informatiksysteme |
+| 4 | ⌨️ Tipp-Training (Zehn-Finger) | Fit am Computer | Informatiksysteme |
+| 5 | 🔐 Passwort-Werkstatt | Sicher im Netz | Informatik, Mensch und Gesellschaft |
+| 6 | 🎣 Echt oder Fake? (Phishing, Falschmeldungen) | Sicher im Netz | Informatik, Mensch und Gesellschaft |
+| 7 | 💬 Nett im Netz (Cybermobbing, Recht am Bild) | Sicher im Netz | Informatik, Mensch und Gesellschaft |
+| 8 | 🎨 Pixel-Werkstatt (Bilder codieren, komprimieren, Prüfbit) | Daten & Codes | Information und Daten |
+| 9 | 0️⃣ Geheimsprache Binär (Bits, Bytes, Buchstaben-Code) | Daten & Codes | Information und Daten |
+| 10 | 🕵️ Geheimschrift (Caesar, Gartenzaun) | Daten & Codes | Information und Daten |
+| 11 | 🧭 Algorithmen im Alltag (Sequenz, Wiederholung, Verzweigung) | Algorithmen | Algorithmen |
+| 12 | 🤖 Robo-Labyrinth (Programmieren, Debugging) | Algorithmen | Algorithmen |
+| 13 | 🔁 Schleifen-Profi | Algorithmen | Algorithmen |
+| 14 | 🔍 Suchen & Sortieren (binäre Suche, Waage, Bubblesort) | Algorithmen | Algorithmen |
+| 15 | 🥤 Automaten überall (Zustände, Übergänge) | Automaten & KI | Automaten und KI |
+| 16 | 🧠 Wie lernt eine KI? (Entscheidungsbaum, Trainingsdaten) | Automaten & KI | Automaten und KI |
+| 17 | 👣 Meine Daten-Spuren (Datenschutz) + Abschluss-Mission | Ich & meine Daten | Informatik, Mensch und Gesellschaft |
+
+Spielplatz: Pixel-Atelier, Robo-Bonus, Rätsel-Ecke, Tipp-Rennen, KI-Zeichnen, Zahlen-Detektiv.
+
+Die Lehrer-Ansicht zeigt unter „📚 Lernpfad & Lehrplan“ alle Stationen mit KLP-Bezug.
+
 ## Neue Station anlegen
 
-Eine Datei `src/stationen/NN-name.js` mit `station({...})`:
+Eine Datei `src/stationen/NN-name.js` mit `station({...})` (Hilfs-Konstanten in `{ … }` einschließen, alle Dateien teilen sich einen Namensraum):
 
-- `id` (für den Link `#s/id`), `nr` (Reihenfolge), `ico`, `titel`, `kurz`, `kreativ` (true = Lehrkraft bewertet Kreativität)
-- `schritte`: Liste von `{titel, punkte, zeige(el, ctx)}`. `zeige` baut den Teil in `el`. Wenn gelöst: `ctx.geschafft(punkte)`. Eigene Daten in `ctx.daten` ablegen und `ctx.speichern()` aufrufen.
+- `id` (für den Link `#s/id`), `nr` (Reihenfolge), `ico`, `titel`, `kurz`, `kapitel` (`fit`, `netz`, `daten`, `algo`, `ki`, `ich`), `klp` (Lehrplanbezug), `kreativ` (true = Lehrkraft bewertet Kreativität), `spiel` (true = Spielplatz, ohne Note)
+- `schritte`: Liste von Teilen. Am einfachsten mit den fertigen Bausteinen:
+  - `src/stationen/00-bausteine.js`: `sortieren`, `reihenfolge`, `paare`, `fehlerSuche`, `entscheidung`, `ordnerPfad`, `eingabe`, `tippen`, `tastenMissionen`, `mausParcours`, `malRoboter` (auch mit Schleifen `3x(R M)`), `info`
+  - `src/stationen/00-spezial.js`: `auswaehlen`, `robo` (Labyrinth, Schleifen, `max`, `vorgabe` mit Bug), `binaerTresor`, `caesarRad`, `automat`, `ampelBauen`, `baumFolgen`, `baumBauen`, `kiTrainer`, `kiZeichnen`, `passwortTester`, `pinKnacker`, `zahlRaten`, `waage`, `tauschSortieren`
+- Jeder Teil hat `titel`, `punkte`, optional `merke` (gelber Merkkasten). Eigene Teile: `{titel, punkte, zeige(el, ctx)}`; `ctx.pruefer` (wird von „Weiter“ aufgerufen), `ctx.loesung` (Knopf „🔑 Lösung zeigen“ in der Vorschau), `ctx.geschafft(punkte)`, `ctx.fehler()` (−2 Punkte, höchstens die Hälfte), `ctx.daten` + `ctx.speichern()`.
 - optional `ergebnis(daten)` (HTML für die Ergebniskarte) und `nachErgebnis(daten)`.
 
-Bausteine in `src/app.js`: `pixelRaster`, `farbLeiste`, `toast`, `esc`.
-
-Klassenliste jedes Schuljahr oben in `src/app.js` (`KLASSEN`) anpassen. Geplante Stationen stehen in `BALD` und erscheinen grau.
+Klassenliste jedes Schuljahr oben in `src/app.js` (`KLASSEN`), dazu `STUNDENPLAN` und `FERIEN` anpassen.
 
 ## Bewertung
 
-Wie im Notenbuch: **+** ab 75 % der Punkte, **o** ab 40 %, sonst **−** (Grenzen `PLUS_AB`, `O_AB` in `src/app.js`). Die Lehrer-Ansicht zeigt unter „Für das Notenbuch · heute“ alle Zeichen des Tages zum Übertragen.
+Wie im Notenbuch: **+** ab 75 % der Punkte, **o** ab 40 %, sonst **−** (Grenzen `PLUS_AB`, `O_AB` in `src/app.js`). Jeder falsche Versuch kostet 2 Punkte (höchstens die Hälfte des Teils). Die Lehrer-Ansicht zeigt unter „Für das Notenbuch · heute“ alle Zeichen des Tages zum Übertragen.
