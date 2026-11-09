@@ -225,7 +225,7 @@ function seiteStation(st){
   <div class="steps noprint springen">${st.schritte.map((_,k)=>{const darf=VS||k in prog.punkte||k<=(prog.weitester||0);
     return`<i class="${k in prog.punkte?"ok":k===i?"now":""}${darf?"":" zu"}"${darf?` data-sp="${k}" title="Zu Teil ${k+1}"`:""}></i>`}).join("")}</div>
   <div class="stephead"><p class="eyebrow">${st.ico} ${esc(st.titel)} · Teil ${i+1} von ${st.schritte.length}</p><span class="pts">⭐ ${summe(prog)} Punkte</span></div>
-  <div class="titelzeile"><h2>${esc(sch.titel)}</h2><button class="vorlesen noprint" id="vorlesen" aria-label="Vorlesen">🔊 Vorlesen</button></div>
+  <h2>${esc(sch.titel)}</h2>
   <div id="body"></div>
   <div class="nav noprint">
     <button class="btn ghost pfeil" id="zur">${i===0?"🏠 Übersicht":"◀ Zurück"}</button>
@@ -248,10 +248,6 @@ function seiteStation(st){
     pruefer:null,   // Teil setzt hier eine Prüf-Funktion (true = richtig); „Weiter“ ruft sie auf
   };
   sch.zeige($("#body"),ctx);
-  stopVorlesen();
-  $("#vorlesen").onclick=()=>{if(speechSynthesis?.speaking)return stopVorlesen();
-    const teile=[sch.titel,...[...$("#body").querySelectorAll("p:not(.muted):not(.eyebrow),.frage,.antwort,.legende span")].map(x=>x.textContent)];
-    vorlesen(teile.join(". "))};
   document.querySelectorAll("[data-sp]").forEach(x=>x.onclick=()=>{prog.schritt=+x.dataset.sp;speichern();seiteStation(st);scrollTo(0,0)});
   $("#zur").onclick=()=>{if(i===0){location.hash=home()}else{prog.schritt=i-1;speichern();seiteStation(st);scrollTo(0,0)}};
   const vor=()=>{if(i===st.schritte.length-1){prog.fertig=Date.now();speichern(true);seiteErgebnis(st,prog)}
@@ -408,16 +404,6 @@ function lDruck(kinder){
     <script>onload=()=>print()<\/script></body></html>`);
   w.document.close();
 }
-
-/* ---------- Vorlesen (für Kinder, die noch nicht gut lesen): Sprachausgabe des Browsers, deutsch ---------- */
-function vorlesen(text){
-  if(!("speechSynthesis" in window))return toast("Vorlesen geht auf diesem Gerät leider nicht.");
-  stopVorlesen();const u=new SpeechSynthesisUtterance(text.replace(/\s+/g," "));u.lang="de-DE";u.rate=.92;
-  const v=speechSynthesis.getVoices().find(x=>x.lang&&x.lang.startsWith("de"));if(v)u.voice=v;
-  u.onend=()=>{const b=$("#vorlesen");if(b)b.textContent="🔊 Vorlesen"};
-  speechSynthesis.speak(u);const b=$("#vorlesen");if(b)b.textContent="⏹ Stopp";
-}
-function stopVorlesen(){try{speechSynthesis.cancel()}catch(e){}const b=$("#vorlesen");if(b)b.textContent="🔊 Vorlesen"}
 
 /* ---------- Bausteine für Stationen ---------- */
 

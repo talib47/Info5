@@ -137,9 +137,6 @@ label.btn{cursor:pointer}
 .vorschlag .e{font-size:3rem;line-height:1}
 .vorschlag .btn{margin-left:auto}
 .gross-tier .e{font-size:4.5rem;line-height:1;display:block;margin-bottom:6px}
-.titelzeile{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
-.titelzeile h2{margin:0}
-.vorlesen{border:0;border-radius:999px;background:var(--tint);color:var(--accent);font-weight:650;padding:8px 14px;min-height:42px;white-space:nowrap}
 .code li{border-radius:6px;transition:background .1s}
 .code li.an{background:color-mix(in srgb,var(--accent) 18%,transparent);outline:2px solid var(--accent)}
 .pal button.radierer{background:repeating-linear-gradient(45deg,#fff 0 6px,#eee 6px 12px)}
