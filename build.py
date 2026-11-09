@@ -2,7 +2,7 @@
 # Stationen: jede Datei in src/stationen/*.js wird in Dateinamen-Reihenfolge eingebaut.
 import hashlib, glob
 base=open('src/base.css').read(); stc=open('src/stationen.css').read()
-js=open('src/app.js').read()
+js=open('src/app.js').read().replace('/*@@DATEN@@*/',open('src/daten.js').read())
 teile=js.split('/* ---------- Start ---------- */')
 stat=''.join(open(f).read()+'\n' for f in sorted(glob.glob('src/stationen/*.js')))
 VER=hashlib.sha1((base+stc+js+stat).encode()).hexdigest()[:10]
@@ -25,6 +25,7 @@ html=f'''<!doctype html>
 </head>
 <body>
 <main id="app"></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
 {alles}
 </script>

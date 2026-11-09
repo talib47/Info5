@@ -1,8 +1,7 @@
 /* =====================================================================
    Informatik 5 — eigene Stunden-Seite für Jahrgang 5 (EKG Homberg, GNDO)
-   Ohne Login, ohne Datenbank: Vorname eintippen, Station wählen, Schritte
-   lösen, am Ende Ergebniskarte der Lehrkraft zeigen.
-   Alles bleibt nur auf diesem Gerät (localStorage, Präfix „if5-“).
+   Kinder: Klasse → Tier → Geheimtier antippen (beim ersten Mal selbst aussuchen), Station lösen, Ergebniskarte zeigen.
+   Lehrkraft (#lehrer): Klassen freischalten, Tiere vergeben, Stände sehen, Kärtchen drucken.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
 const VERSION="__VERSION__";
@@ -10,11 +9,15 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
-const lsClear=()=>{try{Object.keys(localStorage).filter(k=>k.startsWith("if5-")).forEach(k=>localStorage.removeItem(k))}catch(e){}};
-function toast(t){document.querySelectorAll(".toast").forEach(x=>x.remove());const el=document.createElement("div");el.className="toast";el.setAttribute("role","status");el.textContent=t;document.body.append(el);setTimeout(()=>el.remove(),2200)}
+const lsDel=k=>{try{localStorage.removeItem(k)}catch(e){}};
+function toast(t){document.querySelectorAll(".toast").forEach(x=>x.remove());const el=document.createElement("div");el.className="toast";el.setAttribute("role","status");el.textContent=t;document.body.append(el);setTimeout(()=>el.remove(),2400)}
 
 /* Klassen: hier jedes Schuljahr anpassen */
-const KLASSEN=["5A","5B","5C","5D","5E"];
+const KLASSEN=["5B","5D","5E"];
+/* So lange ist eine Klasse nach dem Freischalten offen */
+const FREIGABE_MIN=90;
+
+/*@@DATEN@@*/
 
 /* Alle Stationen tragen sich selbst hier ein (Dateien in src/stationen/) */
 const STATIONEN=[];
@@ -34,55 +37,140 @@ const BALD=[
 
 /* Notenvorschlag aus Prozent (nur Vorschlag, Lehrkraft entscheidet) */
 const noteAus=p=>p>=90?"1":p>=75?"2":p>=60?"3":p>=45?"4":p>=20?"5":"6";
-const zeit=ms=>{const m=Math.round(ms/60000);return m<1?"unter 1 Min.":m+" Min."};
-const jetzt=()=>new Date().toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+const zeit=ms=>{const m=Math.round((ms||0)/60000);return m<1?"unter 1 Min.":m+" Min."};
+const maxPunkte=st=>st.schritte.reduce((a,s)=>a+(s.punkte||0),0);
+const summe=prog=>Object.values(prog?.punkte||{}).reduce((a,b)=>a+b,0);
+const prozent=(st,prog)=>{const m=maxPunkte(st);return m?Math.round(summe(prog)/m*100):100};
 
-let profil=lsGet("if5-profil");
-let laufend=null; // {st, prog} der gerade offenen Station
+/* ---------- Sitzung des Kindes ---------- */
+let sitzung=lsGet("if5-sitzung");      // {klasse, tier, token}
+let staende=lsGet("if5-staende")||{};  // {stationId: prog}
+let laufend=null;                      // {st, prog}
 
-/* ---------- Aktive Zeit messen (nur wenn die Seite sichtbar ist) ---------- */
+function staendeLokal(){lsSet("if5-staende",staende)}
+let pushTimer=null,pushWarte=new Set();
+function speichern(sofort){
+  if(!laufend)return;
+  staende[laufend.st.id]=laufend.prog;staendeLokal();
+  pushWarte.add(laufend.st.id);
+  clearTimeout(pushTimer);pushTimer=setTimeout(hochladen,sofort?0:1500);
+}
+async function hochladen(){
+  if(!sitzung)return;
+  const ids=[...pushWarte];pushWarte.clear();
+  for(const id of ids){
+    try{const ok=await db.speichern(sitzung.token,id,staende[id]);
+      if(ok===false){rauswurf("Du wurdest abgemeldet. Bitte melde dich neu an.");return}}
+    catch(e){pushWarte.add(id);clearTimeout(pushTimer);pushTimer=setTimeout(hochladen,8000)}
+  }
+}
+function rauswurf(t){sitzung=null;staende={};laufend=null;lsDel("if5-sitzung");lsDel("if5-staende");toast(t);location.hash="";render()}
+
+/* Aktive Zeit messen (nur wenn die Seite sichtbar ist) */
 let tick=Date.now();
 setInterval(()=>{const n=Date.now(),d=Math.min(n-tick,15000);tick=n;
-  if(laufend&&!document.hidden&&!laufend.prog.fertig){laufend.prog.aktiv=(laufend.prog.aktiv||0)+d;speichern()}},5000);
-
-function speichern(){if(laufend)lsSet("if5-st-"+laufend.st.id,laufend.prog)}
+  if(laufend&&!document.hidden&&!laufend.prog.fertig){laufend.prog.aktiv=(laufend.prog.aktiv||0)+d;speichern()}},10000);
 
 /* ---------- Seiten ---------- */
 function render(){
   const h=location.hash.slice(1);
-  if(!profil)return seiteName();
+  if(h==="lehrer"||h.startsWith("lehrer/"))return seiteLehrer();
+  if(!sitzung)return seiteKlasse();
   if(h.startsWith("s/")){const st=STATIONEN.find(s=>s.id===h.slice(2));if(st)return seiteStation(st)}
   laufend=null;seiteStart();
 }
 window.addEventListener("hashchange",render);
 
 const LOGO=`<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="var(--accent)"/><g fill="var(--accent-ink)"><rect x="9" y="9" width="6" height="6" rx="1"/><rect x="17" y="9" width="6" height="6" rx="1" opacity=".45"/><rect x="25" y="9" width="6" height="6" rx="1"/><rect x="9" y="17" width="6" height="6" rx="1" opacity=".45"/><rect x="17" y="17" width="6" height="6" rx="1"/><rect x="25" y="17" width="6" height="6" rx="1" opacity=".45"/><rect x="9" y="25" width="6" height="6" rx="1"/><rect x="17" y="25" width="6" height="6" rx="1" opacity=".45"/><rect x="25" y="25" width="6" height="6" rx="1"/></g></svg>`;
-const kopf=()=>`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5</span></div>${profil?`<div class="row"><span class="who">${esc(profil.name)} · ${esc(profil.klasse)}</span><button class="link" id="wechsel">Nicht du?</button></div>`:""}</div>`;
-function kopfAktiv(){const b=$("#wechsel");if(b)b.onclick=()=>{if(confirm("Alles auf diesem Gerät löschen und neuen Namen eingeben?")){lsClear();profil=null;location.hash="";render()}}}
+const ich=()=>{const t=tierInfo(sitzung.tier);return`${t.emoji} ${esc(t.name)}`};
+const kopf=()=>`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5</span></div>${sitzung?`<div class="row"><span class="who">${ich()} · ${esc(sitzung.klasse)}</span><button class="link" id="raus">Abmelden</button></div>`:""}</div>`;
+function kopfAktiv(){const b=$("#raus");if(b)b.onclick=async()=>{
+  if(!confirm("Abmelden? Dein Stand ist gespeichert."))return;
+  clearTimeout(pushTimer);await hochladen();try{await db.abmelden(sitzung.token)}catch(e){}
+  sitzung=null;staende={};laufend=null;lsDel("if5-sitzung");lsDel("if5-staende");location.hash="";render()}}
+const vorschauHinweis=()=>db.online?"":`<p class="muted small" style="margin-top:18px">Vorschau: Alles wird nur in diesem Browser gespeichert.</p>`;
 
-function seiteName(){
+/* 1. Klasse wählen */
+function seiteKlasse(){
   $("#app").innerHTML=kopf()+`
-  <div class="plate"><p class="eyebrow">Willkommen</p><h1>Wie heißt du?</h1><p>Schreib deinen Vornamen und wähle deine Klasse. Dann geht es los.</p></div>
-  <form class="block" id="f" autocomplete="off">
-    <label class="f" for="n">Vorname</label><input type="text" id="n" maxlength="30" required>
-    <div style="height:14px"></div>
-    <label class="f" for="k">Klasse</label><select id="k" required><option value="">Bitte wählen</option>${KLASSEN.map(k=>`<option>${k}</option>`).join("")}</select>
-    <div style="height:18px"></div>
-    <button class="btn wide" type="submit">Los geht's</button>
-  </form>`;
-  $("#n").focus();
-  $("#f").onsubmit=e=>{e.preventDefault();const name=$("#n").value.trim().replace(/\s+/g," ");const klasse=$("#k").value;
-    if(!name||!klasse)return toast("Bitte Name und Klasse angeben");
-    lsClear();profil={name,klasse};lsSet("if5-profil",profil);render()};
+  <div class="plate"><p class="eyebrow">Willkommen</p><h1>In welche Klasse gehst du?</h1></div>
+  <div class="wahl">${KLASSEN.map(k=>`<button class="gross" data-k="${k}">${k}</button>`).join("")}</div>${vorschauHinweis()}`;
+  document.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>seiteTier(b.dataset.k));
+}
+
+/* 2. Tier wählen (oder neu anlegen) */
+async function seiteTier(klasse){
+  $("#app").innerHTML=kopf()+`<button class="link" id="zur">‹ Andere Klasse</button>
+  <div class="plate"><p class="eyebrow">Klasse ${esc(klasse)}</p><h1>Welches Tier bist du?</h1></div><div id="liste"><p class="muted">Einen Moment …</p></div>`;
+  $("#zur").onclick=seiteKlasse;
+  let r;try{r=await db.tiere(klasse)}catch(e){$("#liste").innerHTML=`<div class="msg no">Keine Verbindung. Versuch es gleich noch mal.</div><button class="btn ghost" id="neu" style="margin-top:12px">Noch mal</button>`;$("#neu").onclick=()=>seiteTier(klasse);return}
+  if(!r.offen){$("#liste").innerHTML=`<div class="block"><h2>Noch zu 🔒</h2><p>Deine Lehrkraft schaltet die Klasse gleich frei.</p><button class="btn" id="neu">Noch mal schauen</button></div>`;$("#neu").onclick=()=>seiteTier(klasse);return}
+  $("#liste").innerHTML=(r.liste.length?`<div class="tiere">${r.liste.map(x=>{const t=tierInfo(x.tier);const zu=x.besetzt||x.gesperrt;
+    return`<button class="tier${zu?" zu":""}" data-t="${esc(x.tier)}" data-n="${x.neuGeheim?1:0}" ${zu?"disabled":""}><span class="e">${t.emoji}</span><span>${esc(t.name)}</span>${x.gesperrt?`<span class="chip">🔒 gesperrt</span>`:x.besetzt?`<span class="chip">besetzt</span>`:""}</button>`}).join("")}</div>
+    <p class="muted small" style="margin-top:12px">Dein Tier ist grau? Dann sag sofort deiner Lehrkraft Bescheid.</p>`:`<p class="muted">Hier ist noch niemand. Sei die oder der Erste!</p>`)+
+    `<button class="btn ghost wide" id="ichneu" style="margin-top:16px">Ich bin neu hier – Tier aussuchen</button>`;
+  document.querySelectorAll(".tier[data-t]:not([disabled])").forEach(b=>b.onclick=()=>seiteGeheim(klasse,b.dataset.t,b.dataset.n==="1"));
+  $("#ichneu").onclick=()=>seiteNeuTier(klasse,new Set(r.liste.map(x=>x.tier)));
+}
+
+/* Raster mit allen Tieren */
+function tierRaster(sperre=new Set()){return`<div class="tiere klein">${TIERE.map(([e,n])=>`<button class="tier${sperre.has(n)?" zu":""}" data-w="${esc(n)}" ${sperre.has(n)?"disabled":""}><span class="e">${e}</span><span>${esc(n)}</span></button>`).join("")}</div>`}
+
+/* Neu: 1. eigenes Tier (in der Klasse noch frei) */
+function seiteNeuTier(klasse,vergeben){
+  $("#app").innerHTML=kopf()+`<button class="link" id="zur">‹ Zurück</button>
+  <div class="plate"><p class="eyebrow">Neu · Klasse ${esc(klasse)} · Schritt 1 von 2</p><h1>Such dir dein Tier aus</h1><p>Das ist ab jetzt dein Name hier. Alle können es sehen. Graue Tiere sind schon vergeben.</p></div>${tierRaster(vergeben)}`;
+  $("#zur").onclick=()=>seiteTier(klasse);
+  document.querySelectorAll("[data-w]:not([disabled])").forEach(b=>b.onclick=()=>seiteNeuGeheim(klasse,b.dataset.w));
+}
+/* Neu: 2. Geheimtier */
+function seiteNeuGeheim(klasse,tier,nurGeheim=false){
+  const t=tierInfo(tier);
+  $("#app").innerHTML=kopf()+`<button class="link" id="zur">‹ Zurück</button>
+  <div class="plate"><p class="eyebrow">${nurGeheim?"":"Neu · Schritt 2 von 2 · "}${t.emoji} ${esc(t.name)}</p><h1>Such dir dein Geheimtier aus</h1><p>Das weißt nur du! Sag es niemandem. Damit kommst du immer wieder rein.</p></div>${tierRaster()}<div id="m"></div>`;
+  $("#zur").onclick=()=>nurGeheim?seiteTier(klasse):seiteTier(klasse);
+  document.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{const g=tierInfo(b.dataset.w);
+    $("#app").innerHTML=kopf()+`<div class="plate"><p class="eyebrow">Merk dir gut</p><h1>${t.emoji} ${esc(t.name)} &nbsp;+&nbsp; ${g.emoji} ${esc(g.name)}</h1>
+      <p>Dein Tier: <b>${esc(t.name)}</b>. Dein Geheimtier: <b>${esc(g.name)}</b>. Das Geheimtier verrätst du niemandem.</p></div>
+      <div class="row"><button class="btn" id="ok">Ja, gemerkt!</button><button class="btn ghost" id="nein">Anderes Geheimtier</button></div><div id="m"></div>`;
+    $("#nein").onclick=()=>seiteNeuGeheim(klasse,tier,nurGeheim);
+    $("#ok").onclick=async()=>{$("#ok").disabled=true;let r;
+      try{r=nurGeheim?await db.anmelden(klasse,tier,b.dataset.w):await db.neu(klasse,tier,b.dataset.w)}catch(e){r={fehler:"netz"}}
+      anmeldeErgebnis(klasse,tier,r,()=>{$("#ok").disabled=false})};
+  });
+}
+
+/* 3. Geheimtier antippen */
+function seiteGeheim(klasse,tier,neuGeheim){
+  if(neuGeheim)return seiteNeuGeheim(klasse,tier,true);
+  const t=tierInfo(tier);
+  $("#app").innerHTML=kopf()+`<button class="link" id="zur">‹ Anderes Tier</button>
+  <div class="plate"><p class="eyebrow">Klasse ${esc(klasse)} · ${t.emoji} ${esc(t.name)}</p><h1>Was ist dein Geheimtier?</h1></div>${tierRaster()}<div id="m"></div>`;
+  $("#zur").onclick=()=>seiteTier(klasse);
+  document.querySelectorAll("[data-w]").forEach(b=>b.onclick=async()=>{
+    document.querySelectorAll("[data-w]").forEach(x=>x.disabled=true);
+    let r;try{r=await db.anmelden(klasse,tier,b.dataset.w)}catch(e){r={fehler:"netz"}}
+    anmeldeErgebnis(klasse,tier,r,()=>document.querySelectorAll("[data-w]").forEach(x=>x.disabled=false));
+  });
+}
+
+function anmeldeErgebnis(klasse,tier,r,nochmal){
+  const t=tierInfo(tier);
+  if(r.token){sitzung={klasse,tier,token:r.token};lsSet("if5-sitzung",sitzung);staende=r.staende||{};staendeLokal();toast(`Hallo ${t.name}!`);location.hash="";render();return}
+  const T={falsch:"Das ist nicht dein Geheimtier. Du hast noch einen Versuch.",gesperrt:"Dein Tier ist jetzt gesperrt 🔒. Geh zu deiner Lehrkraft.",
+    besetzt:"Dieses Tier ist schon an einem anderen Platz angemeldet. Sag deiner Lehrkraft Bescheid.",zu:"Die Klasse ist gerade nicht freigeschaltet.",
+    unbekannt:"Dieses Tier gibt es nicht mehr.",vergeben:"Dieses Tier hat sich gerade jemand anderes genommen. Such dir ein anderes aus.",voll:"Die Klasse ist voll. Sag deiner Lehrkraft Bescheid.",netz:"Keine Verbindung. Versuch es noch mal."};
+  const m=$("#m");m.className="msg no";m.textContent=T[r.fehler]||"Das hat nicht geklappt.";m.scrollIntoView({block:"center",behavior:"smooth"});
+  if(r.fehler==="falsch"||r.fehler==="netz")nochmal();
 }
 
 function seiteStart(){
-  const karten=STATIONEN.map(s=>{const p=lsGet("if5-st-"+s.id);
-    const st=p?.fertig?`<span class="chip good">fertig</span>`:p?`<span class="chip">angefangen</span>`:"";
+  const karten=STATIONEN.map(s=>{const p=staende[s.id];
+    const st=p?.fertig?`<span class="chip good">fertig · ${summe(p)} Punkte</span>`:p?`<span class="chip">angefangen</span>`:"";
     return`<button class="st" data-id="${s.id}"><span class="ico">${s.ico}</span><h3>${esc(s.titel)}</h3><span class="muted small">${esc(s.kurz)}</span><span class="meta"><span class="chip">${s.schritte.length} Teile</span>${st}</span></button>`}).join("");
   const bald=BALD.filter(b=>!STATIONEN.some(s=>s.titel===b.titel)).map(b=>`<div class="st soon"><span class="ico">${b.ico}</span><h3>${esc(b.titel)}</h3><span class="muted small">${esc(b.kurz)}</span><span class="meta"><span class="chip">kommt bald</span></span></div>`).join("");
   $("#app").innerHTML=kopf()+`
-  <div class="plate"><p class="eyebrow">Hallo ${esc(profil.name)}</p><h1>Welche Station heute?</h1><p>Deine Lehrkraft sagt dir, welche Station dran ist. Löse alle Teile und zeig am Ende deine Ergebniskarte.</p></div>
+  <div class="plate"><p class="eyebrow">Hallo ${ich()}</p><h1>Welche Station heute?</h1><p>Deine Lehrkraft sagt dir, welche Station dran ist. Löse alle Teile und zeig am Ende deine Ergebniskarte.</p></div>
   <div class="grid-st">${karten}${bald}</div>
   <p class="muted small" style="margin-top:22px">Version ${VERSION}</p>`;
   kopfAktiv();
@@ -91,17 +179,16 @@ function seiteStart(){
 
 function seiteStation(st){
   if(!laufend||laufend.st!==st){
-    const prog=lsGet("if5-st-"+st.id)||{schritt:0,punkte:{},daten:{},start:Date.now(),aktiv:0};
-    laufend={st,prog};speichern();
+    const prog=staende[st.id]||{schritt:0,punkte:{},daten:{},start:Date.now(),aktiv:0};
+    laufend={st,prog};
   }
   const {prog}=laufend;
   if(prog.fertig)return seiteErgebnis(st,prog);
   const i=Math.min(prog.schritt,st.schritte.length-1),sch=st.schritte[i];
-  const summe=Object.values(prog.punkte).reduce((a,b)=>a+b,0);
   const geloest=i in prog.punkte;
   $("#app").innerHTML=kopf()+`
   <div class="steps noprint">${st.schritte.map((_,k)=>`<i class="${k in prog.punkte?"ok":k===i?"now":""}"></i>`).join("")}</div>
-  <div class="stephead"><p class="eyebrow">${st.ico} ${esc(st.titel)} · Teil ${i+1} von ${st.schritte.length}</p><span class="pts">⭐ ${summe} Punkte</span></div>
+  <div class="stephead"><p class="eyebrow">${st.ico} ${esc(st.titel)} · Teil ${i+1} von ${st.schritte.length}</p><span class="pts">⭐ ${summe(prog)} Punkte</span></div>
   <h2>${esc(sch.titel)}</h2>
   <div id="body"></div>
   <div class="nav noprint">
@@ -113,43 +200,139 @@ function seiteStation(st){
   const ctx={
     daten:prog.daten[i],
     geloest,
-    speichern,
-    geschafft(p){if(!(i in prog.punkte)){prog.punkte[i]=p;speichern();
+    speichern:()=>speichern(),
+    geschafft(p){if(!(i in prog.punkte)){prog.punkte[i]=p;speichern(true);
         if(p>0)toast(`Geschafft! +${p} Punkte`);
-        $(".pts").textContent=`⭐ ${Object.values(prog.punkte).reduce((a,b)=>a+b,0)} Punkte`;
+        $(".pts").textContent=`⭐ ${summe(prog)} Punkte`;
         $(".steps").children[i].className="ok"}
       ctx.geloest=true;$("#weiter").disabled=false},
   };
   sch.zeige($("#body"),ctx);
   $("#zur").onclick=()=>{if(i===0){location.hash=""}else{prog.schritt=i-1;speichern();seiteStation(st);scrollTo(0,0)}};
   $("#weiter").onclick=()=>{if(!(i in prog.punkte))return;
-    if(i===st.schritte.length-1){prog.fertig=Date.now();speichern();seiteErgebnis(st,prog)}
+    if(i===st.schritte.length-1){prog.fertig=Date.now();speichern(true);seiteErgebnis(st,prog)}
     else{prog.schritt=i+1;speichern();seiteStation(st)}
     scrollTo(0,0)};
 }
 
 function seiteErgebnis(st,prog){
-  const max=st.schritte.reduce((a,s)=>a+(s.punkte||0),0);
-  const pkt=Object.values(prog.punkte).reduce((a,b)=>a+b,0);
-  const pz=max?Math.round(pkt/max*100):100;
+  const pz=prozent(st,prog);
   $("#app").innerHTML=kopf()+`
   <div class="plate result">
     <p class="eyebrow">Ergebniskarte · ${st.ico} ${esc(st.titel)}</p>
     <div class="row" style="justify-content:space-between;align-items:flex-start">
-      <div><h1 style="margin:0">${esc(profil.name)}</h1><p style="margin:2px 0 0">Klasse ${esc(profil.klasse)}</p></div>
+      <div><h1 style="margin:0">${ich()}</h1><p style="margin:2px 0 0">Klasse ${esc(sitzung.klasse)}</p></div>
       <div style="text-align:right"><div class="note">${noteAus(pz)}</div><span class="small">Vorschlag</span></div>
     </div>
-    <dl><dt>Punkte</dt><dd>${pkt} von ${max} (${pz} %)</dd>
-    <dt>Gearbeitet</dt><dd>${zeit(prog.aktiv||0)}</dd>
+    <dl><dt>Punkte</dt><dd>${summe(prog)} von ${maxPunkte(st)} (${pz} %)</dd>
+    <dt>Gearbeitet</dt><dd>${zeit(prog.aktiv)}</dd>
     <dt>Fertig am</dt><dd>${new Date(prog.fertig).toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</dd></dl>
   </div>
   ${st.ergebnis?`<div class="block">${st.ergebnis(prog.daten)}</div>`:""}
   <div class="block"><p style="margin:0"><b>Zeig diese Karte deiner Lehrkraft.</b> ${st.kreativ?"Die Note für Kreativität gibt die Lehrkraft.":""}</p></div>
-  <div class="nav noprint"><button class="btn ghost" id="zur">Übersicht</button><button class="btn ghost" id="nochmal">Noch mal machen</button></div>`;
+  <div class="nav noprint"><button class="btn ghost" id="zur">Übersicht</button></div>`;
   kopfAktiv();
   if(st.nachErgebnis)st.nachErgebnis(prog.daten);
   $("#zur").onclick=()=>location.hash="";
-  $("#nochmal").onclick=()=>{if(confirm("Wirklich von vorne? Deine Punkte werden gelöscht.")){try{localStorage.removeItem("if5-st-"+st.id)}catch(e){}laufend=null;seiteStation(st)}};
+}
+
+/* =====================================================================
+   Lehrer-Ansicht (#lehrer). Vornamen bleiben NUR in diesem Browser.
+   ===================================================================== */
+let namen=lsGet("if5-namen")||{};      // {kindId: "Vorname"}
+let lKlasse=lsGet("if5-lklasse")||KLASSEN[0];
+let lDaten=null,lTimer=null;
+
+async function seiteLehrer(){
+  laufend=null;clearInterval(lTimer);
+  if(!(await db.lSitzung()))return lehrerLogin();
+  $("#app").innerHTML=`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5 · Lehrkraft</span></div><div class="row">${db.online?`<button class="link" id="lraus">Abmelden</button>`:""}<a class="link" href="#">Zur Kinder-Seite</a></div></div><div id="lb"><p class="muted">Lade …</p></div>`;
+  if($("#lraus"))$("#lraus").onclick=async()=>{await db.lAbmelden();seiteLehrer()};
+  await lehrerLaden();
+  lTimer=setInterval(()=>{if(location.hash==="#lehrer"&&!document.hidden&&!document.activeElement?.matches("input"))lehrerLaden()},20000);
+}
+
+function lehrerLogin(){
+  $("#app").innerHTML=`<div class="top"><div class="brand">${LOGO}<span>Informatik 5 · Lehrkraft</span></div></div>
+  <form class="block" id="f" style="max-width:26rem"><h2>Anmelden</h2>
+  <label class="f" for="e">E-Mail</label><input type="text" id="e" autocomplete="username" inputmode="email">
+  <div style="height:12px"></div><label class="f" for="p">Passwort</label><input type="password" id="p" autocomplete="current-password" class="pw">
+  <div style="height:16px"></div><button class="btn wide">Anmelden</button><div id="m"></div></form>`;
+  $("#f").onsubmit=async e=>{e.preventDefault();try{await db.lAnmelden($("#e").value.trim(),$("#p").value);seiteLehrer()}catch(err){const m=$("#m");m.className="msg no";m.textContent="Anmeldung fehlgeschlagen."}};
+}
+
+async function lehrerLaden(){
+  try{lDaten=await db.lAlles()}catch(e){$("#lb").innerHTML=`<div class="msg no">Laden fehlgeschlagen: ${esc(e.message||e)}</div>`;return}
+  lehrerZeigen();
+}
+
+function lehrerZeigen(){
+  const d=lDaten,kl=lKlasse;
+  const kinder=d.kinder.filter(k=>k.klasse===kl);
+  const bis=d.freigaben[kl]||0,offen=bis>Date.now();
+  const restMin=Math.max(0,Math.round((bis-Date.now())/60000));
+  const zeile=k=>{const t=tierInfo(k.tier),s=d.staende[k.id]||{};
+    const g=k.geheim?tierInfo(k.geheim):null;
+    const status=k.gesperrt?`<span class="chip bad">🔒 gesperrt</span> <button class="link" data-a="entsperren" data-id="${k.id}">entsperren</button>`
+      :k.besetzt?`<span class="chip good">angemeldet</span> <button class="link" data-a="freigeben" data-id="${k.id}">abmelden</button>`:`<span class="muted small">–</span>`;
+    const zellen=STATIONEN.map(st=>{const p=s[st.id];if(!p)return`<td class="muted">–</td>`;const pz=prozent(st,p);
+      return`<td><b>${p.fertig?noteAus(pz):"…"}</b> <span class="muted small">${pz} %${p.fertig?"":" · Teil "+((p.schritt||0)+1)}</span></td>`}).join("");
+    return`<tr><td class="t"><span class="e">${t.emoji}</span>${esc(t.name)}</td><td class="muted small">${g?`${g.emoji} ${esc(g.name)}`:"wählt neu"}</td>
+      <td><input type="text" class="vn" data-id="${k.id}" value="${esc(namen[k.id]||"")}" placeholder="Vorname"></td><td>${status}</td>${zellen}
+      <td><button class="link" data-a="mehr" data-id="${k.id}" aria-label="Mehr">⋯</button></td></tr>`};
+  $("#lb").innerHTML=`
+  <div class="tabs noprint">${KLASSEN.map(k=>`<button class="${k===kl?"an":""}" data-kl="${k}">${k} <span class="muted small">${d.kinder.filter(x=>x.klasse===k).length}</span></button>`).join("")}</div>
+  <div class="block frei-box ${offen?"offen":""}">
+    <div><h2 style="margin:0">${offen?`${kl} ist offen`:`${kl} ist zu`}</h2><p class="muted small" style="margin:2px 0 0">${offen?`Kinder können sich noch ${restMin} Min. anmelden.`:"Kinder können sich gerade nicht anmelden."}</p></div>
+    <button class="btn" id="frei">${offen?"Schließen":`Freischalten (${FREIGABE_MIN} Min.)`}</button>
+  </div>
+  <div class="block" style="overflow-x:auto">
+    ${kinder.length?`<table class="liste"><thead><tr><th>Tier</th><th>Geheimtier</th><th>Vorname <span class="muted small">(nur hier)</span></th><th>Status</th>${STATIONEN.map(st=>`<th>${st.ico} ${esc(st.titel)}</th>`).join("")}<th></th></tr></thead><tbody>${kinder.map(zeile).join("")}</tbody></table>`
+      :`<p style="margin:0">Noch keine Kinder in ${kl}. Schalte die Klasse frei: Die Kinder suchen sich beim ersten Mal selbst ein Tier und ein Geheimtier aus.</p>`}
+  </div>
+  <div class="row noprint">
+    <button class="btn ghost" id="druck" ${kinder.length?"":"disabled"}>Notfall-Kärtchen drucken</button>
+    <button class="btn ghost" id="sichern">Namensliste sichern</button><label class="btn ghost">Namensliste laden<input type="file" id="laden" accept=".json" hidden></label>
+  </div>
+  <p class="muted small" style="margin-top:14px">Die Vornamen werden nur in diesem Browser gespeichert, nie auf dem Server. Sichere die Namensliste ab und zu (z. B. auf IServ), damit sie bei einem neuen Gerät nicht fehlt.${db.online?"":" <b>Vorschau-Modus:</b> Alles liegt nur in diesem Browser."}</p>`;
+
+  document.querySelectorAll("[data-kl]").forEach(b=>b.onclick=()=>{lKlasse=b.dataset.kl;lsSet("if5-lklasse",lKlasse);lehrerZeigen()});
+  $("#frei").onclick=async()=>{await lAktion(()=>db.lFreigabe(kl,offen?null:Date.now()+FREIGABE_MIN*60000))};
+  document.querySelectorAll(".vn").forEach(i=>i.oninput=()=>{const v=i.value.trim();if(v)namen[i.dataset.id]=v;else delete namen[i.dataset.id];lsSet("if5-namen",namen)});
+  document.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{const id=b.dataset.id,a=b.dataset.a;
+    if(a==="entsperren")return lAktion(()=>db.lKindAendern(id,{entsperren:true}));
+    if(a==="freigeben")return lAktion(()=>db.lKindAendern(id,{freigeben:true}));
+    if(a==="mehr")return lMehr(d.kinder.find(k=>k.id===id))});
+  $("#druck").onclick=()=>lDruck(kinder);
+  $("#sichern").onclick=()=>{const b=new Blob([JSON.stringify({art:"if5-namen",gesichert:new Date().toISOString(),namen},null,1)],{type:"application/json"});
+    const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`Informatik5-Namensliste-${new Date().toLocaleDateString("sv")}.json`;a.click();URL.revokeObjectURL(a.href)};
+  $("#laden").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const j=JSON.parse(await f.text());if(j.art!=="if5-namen")throw 0;
+    namen={...namen,...j.namen};lsSet("if5-namen",namen);toast("Namensliste geladen");lehrerZeigen()}catch(err){toast("Das ist keine Namensliste")}};
+}
+
+async function lAktion(f){try{await f();await lehrerLaden()}catch(e){toast("Hat nicht geklappt: "+(e.message||e))}}
+
+function lMehr(k){
+  const t=tierInfo(k.tier);
+  const wahl=prompt(`${t.emoji} ${t.name}${namen[k.id]?" ("+namen[k.id]+")":""}\n\n1 = Geheimtier vergessen? Kind darf ein neues wählen\n2 = Stand einer Station löschen\n3 = Tier ganz löschen`);
+  if(wahl==="1"){lAktion(()=>db.lKindAendern(k.id,{geheimNeu:true})).then(()=>toast(`${t.name} wählt beim nächsten Anmelden ein neues Geheimtier`))}
+  else if(wahl==="2"){const st=STATIONEN.length===1?STATIONEN[0]:STATIONEN[parseInt(prompt(STATIONEN.map((s,i)=>`${i+1} = ${s.titel}`).join("\n")),10)-1];
+    if(st&&confirm(`Stand „${st.titel}“ von ${t.name} löschen?`))lAktion(()=>db.lStandLoeschen(k.id,st.id))}
+  else if(wahl==="3"){if(confirm(`${t.name} mit allen Punkten löschen?`)){delete namen[k.id];lsSet("if5-namen",namen);lAktion(()=>db.lKindLoeschen(k.id))}}
+}
+
+function lDruck(kinder){
+  const w=window.open("","_blank");if(!w)return toast("Bitte Pop-ups erlauben");
+  w.document.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Kärtchen ${esc(lKlasse)}</title><style>
+    body{font:16px system-ui,sans-serif;margin:10mm}.g{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+    .k{border:1px dashed #999;padding:10px 12px;height:42mm;display:flex;flex-direction:column;justify-content:space-between;break-inside:avoid}
+    .e{font-size:40px;line-height:1}.n{font-size:20px;font-weight:700}.f{display:flex;align-items:center;gap:8px;font-weight:700}
+    .f i{width:22px;height:22px;border-radius:50%;display:inline-block;-webkit-print-color-adjust:exact;print-color-adjust:exact}.s{color:#666;font-size:12px}
+    </style></head><body><div class="g">${kinder.map(k=>{const t=tierInfo(k.tier),g=k.geheim?tierInfo(k.geheim):{emoji:"",name:"wählt neu"};
+    return`<div class="k"><div style="display:flex;justify-content:space-between"><span class="e">${t.emoji}</span><span class="s">Informatik 5 · ${esc(k.klasse)}<br>${esc(namen[k.id]||"")}</span></div>
+    <div class="n">${esc(t.name)}</div><div class="f">Geheimtier: ${g.emoji} ${esc(g.name)}</div></div>`}).join("")}</div>
+    <script>onload=()=>print()<\/script></body></html>`);
+  w.document.close();
 }
 
 /* ---------- Bausteine für Stationen ---------- */
@@ -172,10 +355,10 @@ function pixelRaster({w,h,werte,palette,malbar=false,farbe=()=>1,klein=false,onA
 }
 
 /* Farbauswahl für Pixel-Raster */
-function farbLeiste(palette,namen,start=1,ohneWeiss=false){
+function farbLeiste(palette,nm,start=1,ohneWeiss=false){
   const el=document.createElement("div");el.className="pal";let wahl=start;
   palette.forEach((f,k)=>{if(ohneWeiss&&k===0)return;const b=document.createElement("button");b.type="button";b.style.setProperty("--c",f);
-    b.setAttribute("aria-label",namen[k]);b.title=namen[k];b.innerHTML=`<span>${k}</span>`;b.className=k===wahl?"an":"";
+    b.setAttribute("aria-label",nm[k]);b.title=nm[k];b.innerHTML=`<span>${k}</span>`;b.className=k===wahl?"an":"";
     b.onclick=()=>{wahl=k;el.querySelectorAll("button").forEach(x=>x.classList.remove("an"));b.classList.add("an")};el.append(b)});
   return{el,farbe:()=>wahl};
 }
@@ -186,7 +369,7 @@ render();
 
 /* Neue Version holen (wie KT Schule): beim Start und beim Zurückkehren */
 async function versionPruefen(){if(!/github\.io$/.test(location.hostname))return;
-  try{const r=await fetch("version.txt?"+Date.now(),{cache:"no-store"});const v=(await r.text()).trim();if(v&&v!==VERSION)location.reload()}catch(e){}}
-document.addEventListener("visibilitychange",()=>{if(!document.hidden)versionPruefen()});
+  try{const r=await fetch("version.txt?"+Date.now(),{cache:"no-store"});const v=(await r.text()).trim();if(v&&v!==VERSION){await hochladen();location.reload()}}catch(e){}}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)versionPruefen();else if(sitzung){clearTimeout(pushTimer);hochladen()}});
 versionPruefen();
 if("serviceWorker"in navigator&&/github\.io$/.test(location.hostname))navigator.serviceWorker.register("sw.js").catch(()=>{});

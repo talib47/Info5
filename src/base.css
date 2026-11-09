@@ -88,3 +88,32 @@ label.f{display:block;font-weight:650;margin:0 0 6px}
 .result dt{color:rgba(255,255,255,.75)} .result dd{margin:0;font-weight:700}
 .note{font-family:var(--serif);font-size:3.5rem;font-weight:700;line-height:1}
 @media print{.noprint{display:none!important}body{background:#fff}}
+
+/* Anmeldung */
+.wahl{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.gross{min-height:110px;border:0;border-radius:var(--r-m);background:var(--surface);box-shadow:var(--lift);font:600 2.5rem/1 var(--serif);color:var(--accent)}
+.gross:active{transform:scale(.97)}
+.tiere{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.tiere.klein{grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px}
+.tier{display:flex;flex-direction:column;align-items:center;gap:4px;border:0;border-radius:var(--r-m);background:var(--surface);box-shadow:var(--lift);padding:14px 6px 12px;font-weight:650;font-size:.9375rem;min-height:110px}
+.tier .e{font-size:2.75rem;line-height:1.1}
+.tiere.klein .tier{min-height:92px;padding:10px 4px;font-size:.8125rem}
+.tiere.klein .tier .e{font-size:2.25rem}
+.tier:active:not(:disabled){transform:scale(.96)}
+.tier.zu{opacity:.38;box-shadow:none;cursor:default}
+input[type=password]{width:100%;min-height:52px;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);padding:10px 14px;font-size:1.125rem}
+
+/* Lehrer-Ansicht */
+.tabs{display:flex;gap:8px;margin:0 0 14px;flex-wrap:wrap}
+.tabs button{border:0;border-radius:12px;background:var(--surface);padding:10px 18px;font-weight:650;min-height:46px}
+.tabs button.an{background:var(--accent);color:var(--accent-ink)}
+.tabs button.an .muted{color:inherit;opacity:.75}
+.frei-box{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;border-left:6px solid var(--bad)}
+.frei-box.offen{border-left-color:var(--good)}
+table.liste{border-collapse:collapse;width:100%;font-size:.9375rem}
+.liste th{text-align:left;font-size:.78rem;color:var(--muted);font-weight:650;padding:6px 10px 8px;white-space:nowrap}
+.liste td{border-top:1px solid var(--line);padding:8px 10px;vertical-align:middle;white-space:nowrap}
+.liste td.t{font-weight:650}.liste td.t .e{font-size:1.5rem;margin-right:6px;vertical-align:middle}
+.liste input.vn{min-height:40px;padding:6px 10px;font-size:1rem;min-width:9rem;border-radius:10px}
+.chip.bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+label.btn{cursor:pointer}

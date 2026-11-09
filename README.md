@@ -2,7 +2,19 @@
 
 Stunden-Seite für Informatik in Jahrgang 5 (Erich-Kästner-Gesamtschule Homberg, T. Gündoğdu).
 
-**Kein Login, keine Datenbank.** Die Kinder tippen ihren Vornamen und ihre Klasse ein, wählen die Station, lösen die Teile und zeigen am Ende die **Ergebniskarte** (Punkte, Notenvorschlag, gearbeitete Zeit, bei kreativen Stationen das eigene Werk). Alles bleibt nur im Browser des Geräts. „Nicht du?“ oben rechts löscht alles für das nächste Kind.
+## Anmeldung der Kinder (ohne Tippen, ohne Namen)
+
+1. Lehrkraft öffnet `#lehrer` und tippt bei der Klasse auf **Freischalten** (90 Min.). Nur dann können sich Kinder anmelden.
+2. Kind tippt **Klasse** → **sein Tier** → **sein Geheimtier**. Beim ersten Mal: „Ich bin neu hier“ → Tier (in der Klasse einmalig) und Geheimtier selbst aussuchen.
+3. Ist ein Tier an einem anderen PC angemeldet, ist es grau („besetzt“). Nach 2 falschen Geheimtieren ist es gesperrt, die Lehrkraft entsperrt es.
+4. Am Ende der Station zeigt das Kind die **Ergebniskarte**.
+
+Vornamen gibt es nur in der Lehrer-Ansicht und nur im Browser der Lehrkraft („Namensliste sichern“). In der Datenbank stehen nur Klasse, Tier, Geheimtier und Punkte.
+
+## Speicher
+
+- **Vorschau** (Standard): alles nur im Browser dieses Geräts.
+- **Online**: nach dem Okay der Schule `supabase/schema.sql` in einem Supabase-Projekt (Region Frankfurt) ausführen, Anleitung steht oben in der Datei. Dann in `src/daten.js` bei `ONLINE` URL und anon-Schlüssel eintragen, `python3 build.py`, committen. Den service_role-Schlüssel nie eintragen.
 
 Link für die Kinder: `talib47.github.io/Info5/` – eine bestimmte Station direkt: `talib47.github.io/Info5/#s/pixel`
 
