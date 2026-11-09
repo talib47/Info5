@@ -414,7 +414,8 @@ function lDruck(kinder){
 /* Pixel-Raster: w×h Kästchen, Werte = Index in palette. Malen mit Maus, Finger oder Stift (auch Ziehen). */
 function pixelRaster({w,h,werte,palette,malbar=false,farbe=()=>1,klein=false,onAenderung}){
   const el=document.createElement("div");el.className="px"+(malbar?" malbar":"")+(klein?" klein":"");
-  el.style.gridTemplateColumns=`repeat(${w},1fr)`;
+  el.style.gridTemplateColumns=`repeat(${w},1fr)`;el.style.aspectRatio=`${w}/${h}`;
+  if(h<w)el.style.maxWidth=`${Math.round(340*Math.max(h/w,.5))*w/h}px`;
   const v=werte?werte.slice():Array(w*h).fill(0);
   const zellen=v.map((x,k)=>{const c=document.createElement("i");c.style.background=palette[x];c.dataset.k=k;el.append(c);return c});
   const setze=(k,x)=>{if(v[k]===x)return;v[k]=x;zellen[k].style.background=palette[x];zellen[k].classList.remove("falsch");onAenderung&&onAenderung(v)};
