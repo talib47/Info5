@@ -62,11 +62,16 @@ const prozent=(st,prog)=>{const m=maxPunkte(st);return m?Math.round(summe(prog)/
 let sitzung=lsGet("if5-sitzung");      // {klasse, tier, token}
 let staende=lsGet("if5-staende")||{};  // {stationId: prog}
 let laufend=null;                      // {st, prog}
+/* Lehrer-Vorschau (#v): alle Stationen und Teile frei durchklicken, nichts wird gespeichert */
+let VS=false,vStaende={};
+const basis=()=>VS?"v/":"",home=()=>VS?"v":"";
+const meineStaende=()=>VS?vStaende:staende;
 
 function staendeLokal(){lsSet("if5-staende",staende)}
 let pushTimer=null,pushWarte=new Set();
 function speichern(sofort){
   if(!laufend)return;
+  if(VS){vStaende[laufend.st.id]=laufend.prog;return}
   staende[laufend.st.id]=laufend.prog;staendeLokal();
   pushWarte.add(laufend.st.id);
   clearTimeout(pushTimer);pushTimer=setTimeout(hochladen,sofort?0:1500);
@@ -86,7 +91,7 @@ function rauswurf(t){sitzung=null;staende={};laufend=null;lsDel("if5-sitzung");l
    damit die nächste Gruppe am selben PC nicht im fremden Tier landet. */
 const NACHLAUF=10;
 async function stundeVorbeiPruefen(){
-  if(!sitzung||location.hash.startsWith("#lehrer"))return;
+  if(!sitzung||VS||location.hash.startsWith("#lehrer"))return;
   const k=sitzung.klasse;
   if(planOffen(k)||planOffen(k,Date.now()-NACHLAUF*60000))return;
   let offen=[];try{offen=await db.offeneKlassen()}catch(e){return}
@@ -103,17 +108,19 @@ setInterval(()=>{const n=Date.now(),d=Math.min(n-tick,15000);tick=n;
 
 /* ---------- Seiten ---------- */
 function render(){
-  const h=location.hash.slice(1);
+  let h=location.hash.slice(1);
   if(h==="lehrer"||h.startsWith("lehrer/"))return seiteLehrer();
-  if(!sitzung)return seiteKlasse();
+  const vs=h==="v"||h.startsWith("v/");if(vs!==VS){VS=vs;laufend=null}
+  if(VS)h=h.slice(2);
+  else if(!sitzung)return seiteKlasse();
   if(h.startsWith("s/")){const st=STATIONEN.find(s=>s.id===h.slice(2));if(st)return seiteStation(st)}
   laufend=null;seiteStart();
 }
 window.addEventListener("hashchange",render);
 
 const LOGO=`<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="var(--accent)"/><g fill="var(--accent-ink)"><rect x="9" y="9" width="6" height="6" rx="1"/><rect x="17" y="9" width="6" height="6" rx="1" opacity=".45"/><rect x="25" y="9" width="6" height="6" rx="1"/><rect x="9" y="17" width="6" height="6" rx="1" opacity=".45"/><rect x="17" y="17" width="6" height="6" rx="1"/><rect x="25" y="17" width="6" height="6" rx="1" opacity=".45"/><rect x="9" y="25" width="6" height="6" rx="1"/><rect x="17" y="25" width="6" height="6" rx="1" opacity=".45"/><rect x="25" y="25" width="6" height="6" rx="1"/></g></svg>`;
-const ich=()=>{const t=tierInfo(sitzung.tier);return`${t.emoji} ${esc(t.name)}`};
-const kopf=()=>`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5</span></div>${sitzung?`<div class="row"><span class="who">${ich()} · ${esc(sitzung.klasse)}</span><button class="link" id="raus">Abmelden</button></div>`:""}</div>`;
+const ich=()=>{if(VS)return"👀 Lehrkraft";const t=tierInfo(sitzung.tier);return`${t.emoji} ${esc(t.name)}`};
+const kopf=()=>`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5</span></div>${VS?`<div class="row"><span class="who">👀 Lehrer-Vorschau</span><a class="link" href="#lehrer">Zur Lehrer-Ansicht</a></div>`:sitzung?`<div class="row"><span class="who">${ich()} · ${esc(sitzung.klasse)}</span><button class="link" id="raus">Abmelden</button></div>`:""}</div>`;
 function kopfAktiv(){const b=$("#raus");if(b)b.onclick=async()=>{
   if(!confirm("Abmelden? Dein Stand ist gespeichert."))return;
   clearTimeout(pushTimer);await hochladen();try{await db.abmelden(sitzung.token)}catch(e){}
@@ -175,21 +182,23 @@ function anmeldeErgebnis(klasse,tier,r,nochmal){
 }
 
 function seiteStart(){
-  const karten=STATIONEN.map(s=>{const p=staende[s.id];
+  const karten=STATIONEN.map(s=>{const p=meineStaende()[s.id];
     const st=p?.fertig?`<span class="chip good">fertig · ${summe(p)} Punkte</span>`:p?`<span class="chip">angefangen</span>`:"";
     return`<button class="st" data-id="${s.id}"><span class="ico">${s.ico}</span><h3>${esc(s.titel)}</h3><span class="muted small">${esc(s.kurz)}</span><span class="meta"><span class="chip">${s.schritte.length} Teile</span>${st}</span></button>`}).join("");
   const bald=BALD.filter(b=>!STATIONEN.some(s=>s.titel===b.titel)).map(b=>`<div class="st soon"><span class="ico">${b.ico}</span><h3>${esc(b.titel)}</h3><span class="muted small">${esc(b.kurz)}</span><span class="meta"><span class="chip">kommt bald</span></span></div>`).join("");
   $("#app").innerHTML=kopf()+`
-  <div class="plate"><p class="eyebrow">Hallo ${ich()}</p><h1>Welche Station heute?</h1><p>Deine Lehrkraft sagt dir, welche Station dran ist. Löse alle Teile und zeig am Ende deine Ergebniskarte.</p></div>
+  ${VS?`<div class="plate"><p class="eyebrow">👀 Lehrer-Vorschau</p><h1>Alle Stationen ansehen</h1><p>So sehen die Kinder die Stationen. Du kannst jeden Teil frei anklicken, ohne ihn zu lösen. Nichts wird gespeichert.</p><button class="btn" id="vreset">Vorschau zurücksetzen</button></div>`
+    :`<div class="plate"><p class="eyebrow">Hallo ${ich()}</p><h1>Welche Station heute?</h1><p>Deine Lehrkraft sagt dir, welche Station dran ist. Löse alle Teile und zeig am Ende deine Ergebniskarte.</p></div>`}
   <div class="grid-st">${karten}${bald}</div>
   <p class="muted small" style="margin-top:22px">Version ${VERSION}</p>`;
   kopfAktiv();
-  document.querySelectorAll(".st[data-id]").forEach(b=>b.onclick=()=>location.hash="s/"+b.dataset.id);
+  document.querySelectorAll(".st[data-id]").forEach(b=>b.onclick=()=>location.hash=basis()+"s/"+b.dataset.id);
+  if($("#vreset"))$("#vreset").onclick=()=>{vStaende={};laufend=null;seiteStart();toast("Vorschau zurückgesetzt")};
 }
 
 function seiteStation(st){
   if(!laufend||laufend.st!==st){
-    const prog=staende[st.id]||{schritt:0,punkte:{},daten:{},start:Date.now(),aktiv:0};
+    const prog=meineStaende()[st.id]||{schritt:0,punkte:{},daten:{},start:Date.now(),aktiv:0};
     laufend={st,prog};
   }
   const {prog}=laufend;
@@ -197,13 +206,14 @@ function seiteStation(st){
   const i=Math.min(prog.schritt,st.schritte.length-1),sch=st.schritte[i];
   const geloest=i in prog.punkte;
   $("#app").innerHTML=kopf()+`
-  <div class="steps noprint">${st.schritte.map((_,k)=>`<i class="${k in prog.punkte?"ok":k===i?"now":""}"></i>`).join("")}</div>
+  ${VS?`<div class="msg ok noprint" style="margin:0 0 12px">👀 Vorschau: Du kannst jeden Teil anklicken und ohne Lösen weitergehen. Nichts wird gespeichert.</div>`:""}
+  <div class="steps noprint${VS?" springen":""}">${st.schritte.map((_,k)=>`<i class="${k in prog.punkte?"ok":k===i?"now":""}"${VS?` data-sp="${k}" title="Teil ${k+1}"`:""}></i>`).join("")}</div>
   <div class="stephead"><p class="eyebrow">${st.ico} ${esc(st.titel)} · Teil ${i+1} von ${st.schritte.length}</p><span class="pts">⭐ ${summe(prog)} Punkte</span></div>
   <h2>${esc(sch.titel)}</h2>
   <div id="body"></div>
   <div class="nav noprint">
     <button class="btn ghost" id="zur">${i===0?"Übersicht":"Zurück"}</button>
-    <button class="btn" id="weiter" ${geloest?"":"disabled"}>${i===st.schritte.length-1?"Fertig – Ergebnis zeigen":"Weiter"}</button>
+    <button class="btn" id="weiter" ${geloest||VS?"":"disabled"}>${i===st.schritte.length-1?"Fertig – Ergebnis zeigen":"Weiter"}</button>
   </div>`;
   kopfAktiv();
   prog.daten[i]=prog.daten[i]||{};
@@ -218,8 +228,9 @@ function seiteStation(st){
       ctx.geloest=true;$("#weiter").disabled=false},
   };
   sch.zeige($("#body"),ctx);
-  $("#zur").onclick=()=>{if(i===0){location.hash=""}else{prog.schritt=i-1;speichern();seiteStation(st);scrollTo(0,0)}};
-  $("#weiter").onclick=()=>{if(!(i in prog.punkte))return;
+  document.querySelectorAll("[data-sp]").forEach(x=>x.onclick=()=>{prog.schritt=+x.dataset.sp;speichern();seiteStation(st);scrollTo(0,0)});
+  $("#zur").onclick=()=>{if(i===0){location.hash=home()}else{prog.schritt=i-1;speichern();seiteStation(st);scrollTo(0,0)}};
+  $("#weiter").onclick=()=>{if(!(i in prog.punkte)&&!VS)return;
     if(i===st.schritte.length-1){prog.fertig=Date.now();speichern(true);seiteErgebnis(st,prog)}
     else{prog.schritt=i+1;speichern();seiteStation(st)}
     scrollTo(0,0)};
@@ -231,7 +242,7 @@ function seiteErgebnis(st,prog){
   <div class="plate result">
     <p class="eyebrow">Ergebniskarte · ${st.ico} ${esc(st.titel)}</p>
     <div class="row" style="justify-content:space-between;align-items:flex-start">
-      <div><h1 style="margin:0">${ich()}</h1><p style="margin:2px 0 0">Klasse ${esc(sitzung.klasse)}</p></div>
+      <div><h1 style="margin:0">${ich()}</h1><p style="margin:2px 0 0">${VS?"Vorschau":"Klasse "+esc(sitzung.klasse)}</p></div>
       <div style="text-align:right"><div class="note">${noteAus(pz)}</div><span class="small">Vorschlag</span></div>
     </div>
     <dl><dt>Punkte</dt><dd>${summe(prog)} von ${maxPunkte(st)} (${pz} %)</dd>
@@ -243,7 +254,8 @@ function seiteErgebnis(st,prog){
   <div class="nav noprint"><button class="btn ghost" id="zur">Übersicht</button></div>`;
   kopfAktiv();
   if(st.nachErgebnis)st.nachErgebnis(prog.daten);
-  $("#zur").onclick=()=>location.hash="";
+  $("#zur").onclick=()=>location.hash=home();
+  if(VS)$(".nav").insertAdjacentHTML("beforeend",`<button class="btn ghost" id="vnochmal">Station noch mal</button>`),$("#vnochmal").onclick=()=>{delete vStaende[st.id];laufend=null;seiteStation(st)};
 }
 
 /* =====================================================================
@@ -257,7 +269,7 @@ let lDaten=null,lTimer=null,lPlanGesendet=false;
 async function seiteLehrer(){
   laufend=null;clearInterval(lTimer);
   if(!(await db.lSitzung()))return lehrerLogin();
-  $("#app").innerHTML=`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5 · Lehrkraft</span></div><div class="row">${db.online?`<button class="link" id="lraus">Abmelden</button>`:""}<a class="link" href="#">Zur Kinder-Seite</a></div></div><div id="lb"><p class="muted">Lade …</p></div>`;
+  $("#app").innerHTML=`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5 · Lehrkraft</span></div><div class="row">${db.online?`<button class="link" id="lraus">Abmelden</button>`:""}<a class="link" href="#v">👀 Stationen ansehen</a></div></div><div id="lb"><p class="muted">Lade …</p></div>`;
   if($("#lraus"))$("#lraus").onclick=async()=>{await db.lAbmelden();seiteLehrer()};
   if(db.online&&!lPlanGesendet){try{await db.lPlanUebertragen();lPlanGesendet=true}catch(e){toast("Stundenplan konnte nicht übertragen werden")}}
   await lehrerLaden();

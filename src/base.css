@@ -117,3 +117,5 @@ table.liste{border-collapse:collapse;width:100%;font-size:.9375rem}
 .liste input.vn{min-height:40px;padding:6px 10px;font-size:1rem;min-width:9rem;border-radius:10px}
 .chip.bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
 label.btn{cursor:pointer}
+.steps.springen i{cursor:pointer;height:14px}
+.steps.springen i:hover{filter:brightness(.85)}

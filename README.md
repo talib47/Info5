@@ -14,6 +14,7 @@ Vornamen gibt es nur in der Lehrer-Ansicht und nur im Browser der Lehrkraft („
 ## Speicher
 
 - **Vorschau** (Standard): alles nur im Browser dieses Geräts.
+- **Lehrer-Vorschau** (`#v`, Knopf „Stationen ansehen“ in der Lehrer-Ansicht): alle Stationen und Teile frei durchklicken, ohne zu lösen, nichts wird gespeichert.
 - **Online**: nach dem Okay der Schule `supabase/schema.sql` in einem Supabase-Projekt (Region Frankfurt) ausführen, Anleitung steht oben in der Datei. Dann in `src/daten.js` bei `ONLINE` URL und anon-Schlüssel eintragen, `python3 build.py`, committen. Den service_role-Schlüssel nie eintragen.
 
 Link für die Kinder: `talib47.github.io/Info5/` – eine bestimmte Station direkt: `talib47.github.io/Info5/#s/pixel`
