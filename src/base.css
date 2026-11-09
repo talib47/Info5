@@ -222,3 +222,12 @@ label.btn{cursor:pointer}
 .regler .r0 input{accent-color:#E5383B}.regler .r1 input{accent-color:#2DA44E}.regler .r2 input{accent-color:#2F6FDE}
 .regler b{font-family:ui-monospace,Menlo,Consolas,monospace;text-align:right}
 .nono{width:fit-content;grid-template-columns:auto min(calc(var(--w)*48px),calc(100vw - 110px))}
+.lampen{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.lampe{display:flex;flex-direction:column;align-items:center;gap:6px;border:2px solid var(--line);border-radius:18px;background:var(--surface);padding:14px 6px;font-size:1rem}
+.lampe .birne{width:56px;height:56px;border-radius:50%;background:#2a2a30;border:3px solid #55555f;transition:all .15s}
+.lampe .stufe{font-size:.875rem;color:var(--muted);font-weight:600}
+.lampe.l0[data-st="1"] .birne{background:#801c1e;box-shadow:0 0 14px #e5383b80}.lampe.l0[data-st="2"] .birne{background:#ff2b2b;box-shadow:0 0 26px #ff2b2b}
+.lampe.l1[data-st="1"] .birne{background:#167030;box-shadow:0 0 14px #2da44e80}.lampe.l1[data-st="2"] .birne{background:#2bff5a;box-shadow:0 0 26px #2bff5a}
+.lampe.l2[data-st="1"] .birne{background:#1c3f8a;box-shadow:0 0 14px #2f6fde80}.lampe.l2[data-st="2"] .birne{background:#3b7bff;box-shadow:0 0 26px #3b7bff}
+.lampe:active{transform:scale(.97)}
+.tipp{font-size:1.0625rem;margin:0 0 10px}

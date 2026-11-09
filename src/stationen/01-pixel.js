@@ -207,31 +207,41 @@ function nonogramm(name,titel,punkte,merke){return{titel,punkte,merke,zeige(el,c
   if(ctx.geloest){const m=el.querySelector("#m");m.className="msg ok";m.textContent="Schon gelöst. Weiter geht's!"}
 }}}
 
-/* ---------- Farbmischer: Jede Farbe auf dem Bildschirm ist aus Rot, Grün und Blau gemischt – also aus 3 Zahlen ---------- */
-const ZIELE=[{n:"Gelb",f:[255,255,0]},{n:"Lila",f:[150,0,255]},{n:"Türkis",f:[0,210,210]}];
+/* ---------- Farbmischer: Bildschirm-Farben entstehen aus 3 Lampen (Rot, Grün, Blau). Jede Lampe: aus / halb / an.
+   Für den Computer ist jede Farbe 3 Zahlen (0, 128 oder 255). ---------- */
+const STUFEN=[0,128,255],STUFE_TEXT=["aus","halb","an"];
+const ZIELE=[
+  {n:"Rot",s:[2,0,0],tipp:"Mach nur die rote Lampe an."},
+  {n:"Gelb",s:[2,2,0],tipp:"Komisch, aber wahr: <b>Rot + Grün</b> ergibt bei Licht <b>Gelb</b>!"},
+  {n:"Weiß",s:[2,2,2],tipp:"Was passiert, wenn <b>alle drei</b> Lampen an sind?"},
+  {n:"Lila",s:[1,0,2],tipp:"<b>Halb Rot</b> und <b>ganz Blau</b>."},
+];
+const rgb=st=>st.map(x=>STUFEN[x]).join(",");
 function farbmischer(titel,punkte,merke){return{titel,punkte,merke,zeige(el,ctx){
-  const d=ctx.daten;d.runde=d.runde||0;d.f=d.f||[0,0,0];
+  const d=ctx.daten;d.runde=d.runde||0;d.s=d.s||[0,0,0];
   const zeichne=()=>{
     if(d.runde>=ZIELE.length){el.innerHTML=`<div class="msg ok">🎨 Alle Farben gemischt! Tippe auf „Weiter“.</div>`;return}
     const ziel=ZIELE[d.runde];
-    el.innerHTML=`<div class="regel">🎨 <b>Farbmischer:</b> Jede Farbe auf dem Bildschirm wird aus <b>Rot, Grün und Blau</b> gemischt. Schieb die Regler, bis deine Farbe aussieht wie das Ziel!</div>
-      <p class="eyebrow" style="margin-top:12px">Farbe ${d.runde+1} von ${ZIELE.length}</p>
-      <div class="mischer"><div class="felder"><div><div class="feld" style="background:rgb(${ziel.f})"></div><b>Ziel: ${ziel.n}</b></div>
+    el.innerHTML=`<div class="regel">🔦 Jeder Bildschirm hat winzige <b>Lampen</b> in Rot, Grün und Blau. Tippe auf die Lampen, bis deine Farbe aussieht wie das Ziel. Jede Lampe: <b>aus → halb → an</b>.</div>
+      <p class="eyebrow" style="margin-top:12px">Farbe ${d.runde+1} von ${ZIELE.length}</p><p class="tipp">💡 Tipp: ${ziel.tipp}</p>
+      <div class="mischer"><div class="felder"><div><div class="feld" style="background:rgb(${rgb(ziel.s)})"></div><b>Ziel: ${ziel.n}</b></div>
         <div><div class="feld" id="du"></div><b>Deine Farbe</b></div></div>
-        <div class="regler">${["Rot","Grün","Blau"].map((n,k)=>`<label class="r${k}"><span>${n}</span><input type="range" min="0" max="255" step="5" value="${d.f[k]}" data-k="${k}"><b id="z${k}">${d.f[k]}</b></label>`).join("")}
-        <p class="muted">Für den Computer ist deine Farbe: <b id="code"></b></p></div></div><div id="m"></div>`;
-    const male=()=>{el.querySelector("#du").style.background=`rgb(${d.f})`;d.f.forEach((x,k)=>el.querySelector(`#z${k}`).textContent=x);el.querySelector("#code").textContent=d.f.join(", ")};male();
-    el.querySelectorAll(".regler input").forEach(i=>i.oninput=()=>{d.f[+i.dataset.k]=+i.value;male();ctx.speichern()});
+        <div><div class="lampen">${["Rot","Grün","Blau"].map((n,k)=>`<button class="lampe l${k}" data-k="${k}"><span class="birne"></span><b>${n}</b><span class="stufe"></span></button>`).join("")}</div>
+        <p class="muted" style="margin-top:10px">Für den Computer ist deine Farbe: <b id="code"></b></p></div></div><div id="m"></div>`;
+    const male=()=>{el.querySelector("#du").style.background=`rgb(${rgb(d.s)})`;
+      el.querySelectorAll(".lampe").forEach(b=>{const k=+b.dataset.k;b.dataset.st=d.s[k];b.querySelector(".stufe").textContent=`${STUFE_TEXT[d.s[k]]} (${STUFEN[d.s[k]]})`});
+      el.querySelector("#code").textContent=d.s.map(x=>STUFEN[x]).join(", ")};male();
+    el.querySelectorAll(".lampe").forEach(b=>b.onclick=()=>{const k=+b.dataset.k;d.s[k]=(d.s[k]+1)%3;male();ctx.speichern();
+      if(d.s.join()===ZIELE[d.runde].s.join()){const m=el.querySelector("#m");m.className="msg ok";m.textContent="✔️ Genau richtig! Tippe auf „Weiter“."}});
   };
   zeichne();
-  const nah=()=>{const z=ZIELE[d.runde].f;return Math.max(...z.map((x,k)=>Math.abs(x-d.f[k])))<=45};
   ctx.pruefer=()=>{const m=el.querySelector("#m");
     if(d.runde>=ZIELE.length){ctx.geschafft(punkte);return true}
-    if(nah()){d.runde++;d.f=[0,0,0];ctx.speichern();
+    if(d.s.join()===ZIELE[d.runde].s.join()){d.runde++;d.s=[0,0,0];ctx.speichern();
       if(d.runde>=ZIELE.length){ctx.geschafft(punkte);return true}
       toast("Perfekt gemischt! 🎨 Nächste Farbe");zeichne();return false}
-    m.className="msg no";m.textContent="Noch nicht ganz – vergleich die beiden Farben und schieb weiter.";return false};
-  ctx.loesung=()=>{if(d.runde<ZIELE.length){d.f=ZIELE[d.runde].f.slice();zeichne()}};
+    m.className="msg no";m.textContent="Noch nicht gleich – schau dir den Tipp oben an.";return false};
+  ctx.loesung=()=>{if(d.runde<ZIELE.length){d.s=ZIELE[d.runde].s.slice();zeichne()}};
 }}}
 
 const MIN_PIXEL=40;
@@ -254,14 +264,14 @@ station({
     codieren("boot","Du bist der Computer",15,"<b>Decodieren</b> heißt: Code → Bild. <b>Codieren</b> heißt: Bild → Code. Jetzt codierst du!"),
     codeBild("apfel","Farbcode 1",15,true,"Im Computer gibt es nur Strom <b>aus = 0</b> oder Strom <b>an = 1</b>. Darum speichert er alles mit Zahlen."),
     codeBild("sonne","Farbcode 2",15,true),
-    farbmischer("Farbmischer 🎨",15,"Jede Farbe auf dem Bildschirm sind <b>3 Zahlen</b>: wie viel Rot, wie viel Grün, wie viel Blau."),
+    farbmischer("Farbmischer 🎨",15),
     kurzLesen("tanne","Kurzschrift lesen",15,"Daten brauchen Platz. Mit einem Trick kann man sie <b>kleiner</b> machen – so passen mehr Fotos aufs Handy."),
     kurzSchreiben("pilz","Kurzschrift schreiben",15),
     nonogramm("herz5","Pixel-Rätsel 🧩",15,"Mit der Kurzschrift kann man sogar Rätsel bauen!"),
     nonogramm("pfeil","Pixel-Rätsel für Profis 🧩",20),
     zauber("Zaubertrick 🎩",20,3,true,"Beim Senden kann ein Kästchen kaputtgehen. Der Computer hat einen Trick, um den Fehler zu finden. Probier ihn aus!"),
     zauber("Zaubertrick für Profis 🎩",20,3,false,"Jetzt ohne Zählhilfe – zähl selbst!"),
-    {titel:"Dein eigenes Bild",punkte:20,merke:"Für den Computer ist <b>jede Farbe eine Zahl</b>. Ein Handyfoto hat Millionen Farben – und Millionen Zahlen.",zeige(el,ctx){
+    {titel:"Dein eigenes Bild",punkte:20,merke:"Für den Computer ist <b>jede Farbe Zahlen</b> – beim Bildschirm 3 Stück: Rot, Grün, Blau. Ein Handyfoto hat Millionen Pixel – und Millionen Zahlen.",zeige(el,ctx){
       el.innerHTML=`<p>Jetzt bist du dran! Mal ein eigenes Bild auf 16 mal 16 Kästchen. Gib ihm einen Namen. Die schönsten und kreativsten Bilder bekommen die beste Note.</p>
         <label class="f" for="t">Name deines Bildes</label><input type="text" id="t" maxlength="40" placeholder="z. B. Mein Haustier">
         <div id="pal" style="margin-top:14px"></div><div class="frei" id="b"></div>
