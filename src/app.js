@@ -226,6 +226,7 @@ function seiteStation(st){
     return`<i class="${k in prog.punkte?"ok":k===i?"now":""}${darf?"":" zu"}"${darf?` data-sp="${k}" title="Zu Teil ${k+1}"`:""}></i>`}).join("")}</div>
   <div class="stephead"><p class="eyebrow">${st.ico} ${esc(st.titel)} · Teil ${i+1} von ${st.schritte.length}</p><span class="pts">⭐ ${summe(prog)} Punkte</span></div>
   <h2>${esc(sch.titel)}</h2>
+  ${sch.merke?`<div class="aha merke"><b>💡 Merke:</b> ${sch.merke}</div>`:""}
   <div id="body"></div>
   <div class="nav noprint">
     <button class="btn ghost pfeil" id="zur">${i===0?"🏠 Übersicht":"◀ Zurück"}</button>

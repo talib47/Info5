@@ -38,7 +38,7 @@ function pruefen(ctx,raster,soll,punkte,box){
   return false;
 }
 
-function abmalen(name,titel,punkte){return{titel,punkte,zeige(el,ctx){
+function abmalen(name,titel,punkte,merke){return{titel,punkte,merke,zeige(el,ctx){
   const soll=zahlen(BILDER[name]);
   el.innerHTML=`<p>Mal das Bild links genau ab. Tippe auf ein Kästchen, dann wird es schwarz. Nochmal tippen macht es wieder weiß. Du kannst auch ziehen.</p>
     <div class="paar"><div><p class="eyebrow">Vorlage</p><div id="a"></div></div><div><p class="eyebrow">Dein Bild</p><div id="b"></div></div></div>
@@ -52,7 +52,7 @@ function abmalen(name,titel,punkte){return{titel,punkte,zeige(el,ctx){
   if(ctx.geloest){const m=el.querySelector("#m");m.className="msg ok";m.textContent="Schon gelöst. Weiter geht's!"}
 }}}
 
-function codeBild(name,titel,punkte,farbig){return{titel,punkte,zeige(el,ctx){
+function codeBild(name,titel,punkte,farbig,merke){return{titel,punkte,merke,zeige(el,ctx){
   const roh=BILDER[name],soll=zahlen(roh);
   const key=farbig?SCHLUESSEL[name]:null;
   const pal=farbig?["#FFFFFF",...key.map(x=>x[1])]:SW;
@@ -90,7 +90,7 @@ station({
     {titel:"Worum geht's?",punkte:0,zeige(el,ctx){
       el.innerHTML=`<div class="block"><p>Schau ganz nah auf einen Bildschirm: Jedes Bild besteht aus winzigen <b>Kästchen</b>. Ein Kästchen heißt <b>Pixel</b>.</p>
       <p>Der Computer kann keine Bilder sehen. Er merkt sich für jedes Pixel nur eine <b>Zahl</b>, zum Beispiel 1 für schwarz und 0 für weiß.</p>
-      <p style="margin:0">Heute bist du der Computer: Du malst ab, knackst Geheimcodes und beantwortest kurze Fragen. Am Ende malst du dein eigenes Bild.</p></div>
+      <p style="margin:0">Heute bist du der Computer: Du malst ab und knackst Geheimcodes. Am Ende malst du dein eigenes Bild.</p></div>
       <div class="paar"><div id="a"></div><ol class="code klein">${BILDER.herz.map(z=>`<li>${z.split("").map(c=>`<span>${c}</span>`).join("")}</li>`).join("")}</ol></div>`;
       el.querySelector("#a").append(pixelRaster({w:8,h:8,werte:zahlen(BILDER.herz),palette:SW,klein:true}).el);
       ctx.geschafft(0);
@@ -98,22 +98,12 @@ station({
     abmalen("pfeil","Abmalen 1: Der Pfeil",10),
     abmalen("boot","Abmalen 2: Das Boot",10),
     abmalen("alien","Abmalen 3: Das Alien",10),
-    frage("Frage","Ein Bild am Computer besteht aus kleinen …",["🟦 Kästchen","🍕 Pizzastücken"],
-      "Die kleinen Kästchen heißen <b>Pixel</b>. Jedes Bild auf dem Handy oder Computer besteht aus Pixeln.",5,
-      `<div class="bildchen">⬜⬛⬛⬜<br>⬛⬛⬛⬛<br>⬜⬛⬛⬜</div>`),
-    codeBild("herz","Geheimcode 1",10),
+    codeBild("herz","Geheimcode 1",10,false,"Die Kästchen heißen <b>Pixel</b>. Jedes Bild auf dem Handy und am Computer besteht aus Pixeln."),
     codeBild("smiley","Geheimcode 2",10),
     codeBild("haus","Geheimcode 3",10),
-    frage("Frage","Im Computer gibt es nur Strom aus 💡❌ oder Strom an 💡✅. Welche Zahlen passen dazu?",["0 und 1","5 und 9"],
-      "Strom aus ist <b>0</b>, Strom an ist <b>1</b>. Darum spricht der Computer nur mit 0 und 1 – auch bei Bildern, Musik und Spielen.",5),
-    frage("Frage","Welcher Code passt zu dieser Reihe?",["11111111","00000000"],
-      "Jede <b>1</b> ist ein schwarzes Kästchen. Du kannst jetzt lesen wie ein Computer! 🤖",5,
-      `<div class="bildchen">⬛⬛⬛⬛⬛⬛⬛⬛</div>`),
-    codeBild("apfel","Farbcode 1",15,true),
+    codeBild("apfel","Farbcode 1",15,true,"Im Computer gibt es nur Strom <b>aus = 0</b> oder Strom <b>an = 1</b>. Darum speichert er alles mit 0 und 1 – auch Bilder."),
     codeBild("sonne","Farbcode 2",15,true),
-    frage("Frage","Für den Computer ist jede Farbe eine …",["🔢 Zahl","🖍️ Wachsmalstift"],
-      "Richtig! Beim Apfel war Rot die Zahl 1. <b>Jede Farbe ist für den Computer eine Zahl.</b>",5),
-    {titel:"Dein eigenes Bild",punkte:20,zeige(el,ctx){
+    {titel:"Dein eigenes Bild",punkte:20,merke:"Für den Computer ist <b>jede Farbe eine Zahl</b>. Ein Handyfoto hat Millionen Farben – und Millionen Zahlen.",zeige(el,ctx){
       el.innerHTML=`<p>Jetzt bist du dran! Mal ein eigenes Bild auf 16 mal 16 Kästchen. Gib ihm einen Namen. Die schönsten und kreativsten Bilder bekommen die beste Note.</p>
         <label class="f" for="t">Name deines Bildes</label><input type="text" id="t" maxlength="40" placeholder="z. B. Mein Haustier">
         <div id="pal" style="margin-top:14px"></div><div class="frei" id="b"></div>
