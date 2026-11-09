@@ -219,7 +219,7 @@ function seiteStation(st){
     <button class="btn ghost pfeil" id="zur">${i===0?"🏠 Übersicht":"◀ Zurück"}</button>
     <button class="btn pfeil" id="weiter" ${geloest||VS?"":"disabled"}>${i===st.schritte.length-1?"Fertig 🏁":"Weiter ▶"}</button>
   </div>
-  ${!geloest&&!VS&&i<st.schritte.length?`<p class="muted small noprint" style="text-align:right;margin-top:6px">„Weiter“ geht, sobald du diesen Teil gelöst hast.</p>`:""}`;
+  ${!geloest&&!VS&&i<st.schritte.length?`<p class="muted small noprint" id="weiterhinweis" style="text-align:right;margin-top:6px">„Weiter“ geht, sobald du diesen Teil gelöst hast.</p>`:""}`;
   prog.weitester=Math.max(prog.weitester||0,i);
   kopfAktiv();
   prog.daten[i]=prog.daten[i]||{};
@@ -233,7 +233,7 @@ function seiteStation(st){
         if(p>0)toast(`Geschafft! +${p} Punkte`);
         $(".pts").textContent=`⭐ ${summe(prog)} Punkte`;
         $(".steps").children[i].className="ok"}
-      ctx.geloest=true;$("#weiter").disabled=false},
+      ctx.geloest=true;$("#weiter").disabled=false;$("#weiterhinweis")?.remove()},
   };
   sch.zeige($("#body"),ctx);
   document.querySelectorAll("[data-sp]").forEach(x=>x.onclick=()=>{prog.schritt=+x.dataset.sp;speichern();seiteStation(st);scrollTo(0,0)});
@@ -398,6 +398,19 @@ function pixelRaster({w,h,werte,palette,malbar=false,farbe=()=>1,klein=false,onA
   }
   return{el,werte:v,setzeAlle(a){a.forEach((x,k)=>setze(k,x))},markiere(falsch){zellen.forEach((c,k)=>c.classList.toggle("falsch",falsch.includes(k)))}};
 }
+
+/* Aha-Frage: kurze Frage mit 3 leichten Antworten. Nach der richtigen Antwort erklärt ein „Aha!“-Kasten den Sinn.
+   frage("Titel","Frage?",["richtig","falsch","falsch"],"Erklärung",punkte)  – die erste Antwort ist die richtige, angezeigt wird gemischt. */
+function frage(titel,text,antworten,aha,punkte=5){return{titel,punkte,zeige(el,ctx){
+  const reihe=ctx.daten.reihe||(ctx.daten.reihe=antworten.map((_,k)=>k).sort(()=>Math.random()-.5));ctx.speichern();
+  el.innerHTML=`<p class="frage">${text}</p><div class="antworten">${reihe.map(k=>`<button class="antwort" data-k="${k}">${esc(antworten[k])}</button>`).join("")}</div><div id="aha"></div>`;
+  const zeigeAha=()=>{el.querySelector("#aha").innerHTML=`<div class="aha"><b>💡 Aha!</b> ${aha}</div>`;
+    el.querySelectorAll(".antwort").forEach(b=>{b.disabled=true;if(b.dataset.k==="0")b.classList.add("richtig")})};
+  if(ctx.geloest)return zeigeAha();
+  el.querySelectorAll(".antwort").forEach(b=>b.onclick=()=>{
+    if(b.dataset.k==="0"){zeigeAha();ctx.geschafft(punkte)}
+    else{ctx.fehler();b.classList.add("falsch");b.disabled=true;toast("Nicht ganz – versuch es noch mal!")}});
+}}}
 
 /* Farbauswahl für Pixel-Raster */
 function farbLeiste(palette,nm,start=1,ohneWeiss=false){

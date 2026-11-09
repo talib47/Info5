@@ -125,3 +125,11 @@ label.btn{cursor:pointer}
 .heute div{display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid var(--line);padding:6px 0}
 .steps.springen i.zu{cursor:default;opacity:.6}
 .btn.pfeil{min-width:9rem;font-size:1.0625rem}
+.frage{font-size:1.25rem;font-weight:600;margin:4px 0 14px}
+.antworten{display:grid;gap:10px}
+.antwort{text-align:left;border:2px solid var(--line);border-radius:16px;background:var(--surface);padding:16px 18px;font-size:1.0625rem;font-weight:600;min-height:58px}
+.antwort:hover:not(:disabled){border-color:var(--accent)}
+.antwort.falsch{border-color:var(--bad);background:var(--bad-soft);color:var(--bad);text-decoration:line-through}
+.antwort.richtig{border-color:var(--good);background:var(--good-soft);color:var(--good)}
+.antwort:disabled{cursor:default}
+.aha{margin-top:16px;border-radius:16px;padding:16px 18px;background:color-mix(in srgb,var(--gold) 12%,var(--surface));border:2px solid color-mix(in srgb,var(--gold) 35%,transparent);font-size:1.0625rem}

@@ -61,6 +61,7 @@ function codeBild(name,titel,punkte,farbig){return{titel,punkte,zeige(el,ctx){
 }}}
 
 const MIN_PIXEL=40;
+let FREI=0; // Index des Teils „Dein eigenes Bild“ (wird unten gesetzt)
 station({
   id:"pixel",nr:1,ico:"🎨",titel:"Pixel-Werkstatt",kreativ:true,
   kurz:"Bilder aus Kästchen – und wie der Computer sie als Zahlen speichert",
@@ -68,7 +69,7 @@ station({
     {titel:"Worum geht's?",punkte:0,zeige(el,ctx){
       el.innerHTML=`<div class="block"><p>Schau ganz nah auf einen Bildschirm: Jedes Bild besteht aus winzigen <b>Kästchen</b>. Ein Kästchen heißt <b>Pixel</b>.</p>
       <p>Der Computer kann keine Bilder sehen. Er merkt sich für jedes Pixel nur eine <b>Zahl</b>, zum Beispiel 1 für schwarz und 0 für weiß.</p>
-      <p style="margin:0">Heute bist du der Computer. Du hast 4 Teile vor dir. Am Ende malst du dein eigenes Bild.</p></div>
+      <p style="margin:0">Heute bist du der Computer: Du malst ab, knackst Geheimcodes und beantwortest kurze Fragen. Am Ende malst du dein eigenes Bild.</p></div>
       <div class="paar"><div id="a"></div><ol class="code klein">${BILDER.herz.map(z=>`<li>${z.split("").map(c=>`<span>${c}</span>`).join("")}</li>`).join("")}</ol></div>`;
       el.querySelector("#a").append(pixelRaster({w:8,h:8,werte:zahlen(BILDER.herz),palette:SW,klein:true}).el);
       ctx.geschafft(0);
@@ -76,11 +77,21 @@ station({
     abmalen("pfeil","Abmalen 1: Der Pfeil",10),
     abmalen("boot","Abmalen 2: Das Boot",10),
     abmalen("alien","Abmalen 3: Das Alien",10),
+    frage("Kurze Frage","Ein Bild hat 8 Reihen und in jeder Reihe 8 Kästchen. Wie viele Pixel sind das?",["64","16","88"],
+      "8 mal 8 ist 64. Dein Bild hatte also 64 Pixel. Ein Handy-Bildschirm hat über <b>2 Millionen</b> Pixel – darum sieht man sie nicht."),
     codeBild("herz","Geheimcode 1",10),
     codeBild("smiley","Geheimcode 2",10),
     codeBild("haus","Geheimcode 3",10),
+    frage("Kurze Frage","Warum benutzt der Computer nur 0 und 1?",["Weil im Computer Strom an oder aus ist","Weil er nur bis 1 zählen kann","Weil 0 und 1 am schönsten aussehen"],
+      "Im Computer gibt es nur zwei Zustände: Strom <b>an (1)</b> oder <b>aus (0)</b>. Aus ganz vielen 0 und 1 baut er alles – Bilder, Musik, Videos und Spiele. Das nennt man <b>Binärcode</b>."),
+    frage("Kurze Frage","In einer Reihe steht der Code 11111111. Wie sieht die Reihe aus?",["Alles schwarz","Alles weiß","Halb schwarz, halb weiß"],
+      "Jede 1 ist ein schwarzes Kästchen. Acht Einsen sind eine ganze schwarze Reihe. Du kannst jetzt Bilder lesen wie ein Computer!"),
     codeBild("apfel","Farbcode 1",15,true),
     codeBild("sonne","Farbcode 2",15,true),
+    frage("Kurze Frage","Ein Foto soll ganz viele Farben haben. Was braucht der Computer dafür?",["Mehr Zahlen für mehr Farben","Größere Kästchen","Einen neuen Bildschirm"],
+      "Jede Farbe ist für den Computer nur eine Zahl. Du hattest 10 Farben. Ein echtes Handyfoto hat über <b>16 Millionen</b> Farben – jede hat ihre eigene Zahl."),
+    frage("Letzte Frage","Du ziehst ein kleines Pixelbild auf dem Bildschirm ganz groß. Was passiert?",["Man sieht die einzelnen Kästchen","Es wird schärfer","Es wird bunter"],
+      "Das Bild hat nicht mehr Pixel bekommen, die Kästchen werden nur größer. Darum sehen vergrößerte Bilder <b>„pixelig“</b> aus."),
     {titel:"Dein eigenes Bild",punkte:20,zeige(el,ctx){
       el.innerHTML=`<p>Jetzt bist du dran! Mal ein eigenes Bild auf 16 mal 16 Kästchen. Gib ihm einen Namen. Die schönsten und kreativsten Bilder bekommen die beste Note.</p>
         <label class="f" for="t">Name deines Bildes</label><input type="text" id="t" maxlength="40" placeholder="z. B. Mein Haustier">
@@ -99,9 +110,10 @@ station({
     }},
   ],
   ergebnis(d){
-    const f=d[9]||{};
+    const f=d[FREI]||{};
     return`<p class="eyebrow">Eigenes Bild</p><h2>${esc(f.titel||"ohne Namen")}</h2><div id="erg-bild" style="max-width:340px"></div>`;
   },
-  nachErgebnis(d){const f=d[9]||{};const box=document.getElementById("erg-bild");if(box)box.append(pixelRaster({w:16,h:16,werte:f.bild,palette:PAL}).el)}
+  nachErgebnis(d){const f=d[FREI]||{};const box=document.getElementById("erg-bild");if(box)box.append(pixelRaster({w:16,h:16,werte:f.bild,palette:PAL}).el)}
 });
+FREI=STATIONEN.find(x=>x.id==="pixel").schritte.findIndex(x=>x.titel==="Dein eigenes Bild");
 })();
