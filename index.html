@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Informatik 5</title>
+<meta name="theme-color" content="#4338CA">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Informatik 5">
+<style>@font-face{font-family:"Newsreader";font-style:normal;font-weight:200 800;font-display:swap;src:url("fonts/newsreader-latin.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Newsreader";font-style:normal;font-weight:200 800;font-display:swap;src:url("fonts/newsreader-latin-ext.woff2") format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+/* Informatik 5 — ruhige Spalte wie KT Schule, aber kindgerecht: große Flächen, große Knöpfe. Bandfarbe Indigo. */
+:root{color-scheme:light;
+  --bg:#F2F2F6; --surface:#FFFFFF; --ink:#1B1B1F; --muted:#5F5F69; --line:#E3E3EA;
+  --fill:rgba(118,118,140,.10); --fill2:rgba(118,118,140,.18);
+  --accent:#4338CA; --accent-ink:#FFFFFF; --plate-top:#5B50E6; --plate-bot:#2E2690;
+  --good:#2D7A4E; --bad:#B43A2E; --gold:#8A6400;
+  --good-soft:color-mix(in srgb,var(--good) 11%,var(--surface)); --bad-soft:color-mix(in srgb,var(--bad) 9%,var(--surface));
+  --tint:color-mix(in srgb,var(--accent) 11%,transparent);
+  --serif:"Newsreader","Iowan Old Style",Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,system-ui,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  --r-l:24px; --r-m:18px;
+  --lift:0 1px 2px rgba(0,0,0,.04),0 16px 36px -18px rgba(0,0,0,.22);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --bg:#000; --surface:#1C1C1E; --ink:#F3F3F5; --muted:#A0A0AA; --line:#2F2F34;
+  --fill:rgba(118,118,140,.22); --fill2:rgba(118,118,140,.32);
+  --accent:#A5A0FF; --accent-ink:#14123A; --plate-top:#4A41C9; --plate-bot:#211B66;
+  --good:#62C48C; --bad:#F2897E; --gold:#DDB35A;
+  --tint:color-mix(in srgb,var(--accent) 17%,transparent)}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --bg:#000; --surface:#1C1C1E; --ink:#F3F3F5; --muted:#A0A0AA; --line:#2F2F34;
+  --fill:rgba(118,118,140,.22); --fill2:rgba(118,118,140,.32);
+  --accent:#A5A0FF; --accent-ink:#14123A; --plate-top:#4A41C9; --plate-bot:#211B66;
+  --good:#62C48C; --bad:#F2897E; --gold:#DDB35A;
+  --tint:color-mix(in srgb,var(--accent) 17%,transparent)}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 var(--sans);-webkit-tap-highlight-color:transparent}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 75%,transparent);outline-offset:2px}
+#app{max-width:58rem;margin:0 auto;padding:18px max(16px,env(safe-area-inset-left,0px)) 60px max(16px,env(safe-area-inset-right,0px));overflow-wrap:break-word}
+h1,h2,h3{font-family:var(--serif);font-optical-sizing:auto;text-wrap:balance;margin:0}
+h1{font-size:2.25rem;font-weight:600;line-height:1.1;letter-spacing:-.02em;margin-bottom:12px}
+h2{font-size:1.5rem;font-weight:600;line-height:1.2;letter-spacing:-.012em;margin-bottom:10px}
+p{margin:0 0 10px;text-wrap:pretty}
+.eyebrow{font-size:.8125rem;font-weight:650;color:var(--muted);margin:0 0 6px;letter-spacing:.02em;text-transform:uppercase}
+.muted{color:var(--muted)} .small{font-size:.875rem}
+.block{background:var(--surface);border-radius:var(--r-m);padding:20px;margin:0 0 14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:12px 22px;border:0;border-radius:14px;font-weight:650;background:var(--accent);color:var(--accent-ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 1px 2px rgba(0,0,0,.1);transition:transform .15s,filter .15s}
+.btn:active:not(:disabled){transform:scale(.97);filter:brightness(.93)}
+.btn.ghost{background:var(--tint);color:var(--accent);box-shadow:none}
+.btn.wide{width:100%}
+.btn:disabled{opacity:.38;cursor:default}
+.link{border:0;background:none;padding:6px 0;color:var(--accent);font-weight:600;min-height:44px}
+.chip{display:inline-block;border-radius:999px;background:var(--fill);color:var(--muted);padding:3px 10px;font-weight:650;font-size:.78rem;white-space:nowrap}
+.chip.good{background:color-mix(in srgb,var(--good) 15%,transparent);color:var(--good)}
+input[type=text],select{width:100%;min-height:52px;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);padding:10px 14px;font-size:1.125rem}
+input[type=text]:focus,select:focus{border-color:var(--accent);outline:none}
+label.f{display:block;font-weight:650;margin:0 0 6px}
+
+/* Kopf mit Name */
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 14px}
+.top .who{font-weight:650}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--serif);font-weight:600;font-size:1.25rem}
+.brand svg{width:34px;height:34px}
+
+/* Platte (Startseite / Ergebnis) */
+.plate{position:relative;overflow:hidden;border-radius:var(--r-l);padding:24px 22px;margin:0 0 16px;color:#fff;
+  background:radial-gradient(120% 90% at 100% 0%,rgba(255,255,255,.16),transparent 55%),linear-gradient(165deg,var(--plate-top),var(--plate-bot));box-shadow:0 18px 36px -26px var(--plate-bot)}
+.plate .eyebrow{color:rgba(255,255,255,.8)}
+.plate h1,.plate h2{color:#fff}
+.plate .btn{background:#fff;color:var(--plate-bot)}
+
+/* Stationen-Kacheln */
+.grid-st{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.st{display:flex;flex-direction:column;gap:6px;text-align:left;border:0;border-radius:var(--r-m);background:var(--surface);padding:18px;min-height:150px;box-shadow:var(--lift)}
+.st .ico{font-size:2rem;line-height:1}
+.st h3{font-size:1.25rem}
+.st.soon{opacity:.55;box-shadow:none;cursor:default}
+.st .meta{margin-top:auto;display:flex;gap:6px;flex-wrap:wrap}
+
+/* Schritt-Leiste */
+.steps{display:flex;gap:6px;margin:0 0 16px}
+.steps i{flex:1;height:8px;border-radius:999px;background:var(--fill2)}
+.steps i.ok{background:var(--good)} .steps i.now{background:var(--accent)}
+.stephead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 8px}
+.pts{font-weight:700;color:var(--gold);white-space:nowrap}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
+.msg{border-radius:14px;padding:12px 16px;margin:12px 0 0;font-weight:600}
+.msg.ok{background:var(--good-soft);color:var(--good)}
+.msg.no{background:var(--bad-soft);color:var(--bad)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:14px;font-weight:600;z-index:9;box-shadow:var(--lift)}
+
+/* Ergebnis */
+.result dl{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;margin:12px 0 0}
+.result dt{color:rgba(255,255,255,.75)} .result dd{margin:0;font-weight:700}
+.note{font-family:var(--serif);font-size:3.5rem;font-weight:700;line-height:1}
+@media print{.noprint{display:none!important}body{background:#fff}}
+/* Bausteine der Stationen */
+.paar{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;align-items:start;margin-top:8px}
+.px{display:grid;gap:2px;background:var(--line);border:2px solid var(--line);border-radius:10px;overflow:hidden;width:100%;max-width:340px;aspect-ratio:1;touch-action:none;user-select:none;-webkit-user-select:none}
+.px.klein{max-width:200px}
+.px i{display:block;width:100%;height:100%}
+.px.malbar{cursor:crosshair}
+.px.malbar i:hover{filter:brightness(.92)}
+.px i.falsch{outline:3px solid var(--bad);outline-offset:-3px}
+.frei .px{max-width:520px;margin-top:12px;gap:1px}
+.code{list-style:none;counter-reset:z;margin:0;padding:0;font:600 1.375rem/1.3 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.code li{counter-increment:z;display:flex;align-items:center;gap:2px}
+.code li::before{content:counter(z);width:1.6em;font-size:.75rem;color:var(--muted);font-family:var(--sans)}
+.code span{display:inline-block;width:1.05em;text-align:center}
+.code.klein{font-size:1rem}
+.legende{display:flex;flex-wrap:wrap;gap:8px 16px;margin:14px 0 4px;font-weight:600}
+.legende span{display:inline-flex;align-items:center;gap:6px}
+.legende i{width:20px;height:20px;border-radius:5px;border:1px solid var(--line)}
+.pal{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.pal button{width:52px;height:52px;border-radius:14px;border:3px solid var(--surface);background:var(--c);box-shadow:0 0 0 1.5px var(--line);display:flex;align-items:flex-end;justify-content:flex-end;padding:3px 6px}
+.pal button span{font-size:.75rem;font-weight:700;color:#000;background:rgba(255,255,255,.8);border-radius:5px;padding:0 4px}
+.pal button.an{box-shadow:0 0 0 3px var(--accent);transform:scale(1.06)}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+/* =====================================================================
+   Informatik 5 — eigene Stunden-Seite für Jahrgang 5 (EKG Homberg, GNDO)
+   Ohne Login, ohne Datenbank: Vorname eintippen, Station wählen, Schritte
+   lösen, am Ende Ergebniskarte der Lehrkraft zeigen.
+   Alles bleibt nur auf diesem Gerät (localStorage, Präfix „if5-“).
+   Neue Stunde = neue Datei in src/stationen/ (siehe README).
+   ===================================================================== */
+const VERSION="d8a45cece3";
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $=q=>document.querySelector(q);
+const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const lsClear=()=>{try{Object.keys(localStorage).filter(k=>k.startsWith("if5-")).forEach(k=>localStorage.removeItem(k))}catch(e){}};
+function toast(t){document.querySelectorAll(".toast").forEach(x=>x.remove());const el=document.createElement("div");el.className="toast";el.setAttribute("role","status");el.textContent=t;document.body.append(el);setTimeout(()=>el.remove(),2200)}
+
+/* Klassen: hier jedes Schuljahr anpassen */
+const KLASSEN=["5A","5B","5C","5D","5E"];
+
+/* Alle Stationen tragen sich selbst hier ein (Dateien in src/stationen/) */
+const STATIONEN=[];
+function station(s){STATIONEN.push(s)}
+
+/* Geplante Stunden, die noch nicht gebaut sind (erscheinen grau) */
+const BALD=[
+  {ico:"🔐",titel:"Passwort-Werkstatt",kurz:"Starke Passwörter bauen und knacken lassen"},
+  {ico:"⌨️",titel:"Tasten-Tricks",kurz:"Kopieren, Einfügen, Rückgängig – wie die Profis"},
+  {ico:"🗂️",titel:"Ordnung im Computer",kurz:"Dateien in die richtigen Ordner sortieren"},
+  {ico:"💬",titel:"Nett im Netz",kurz:"Welche Nachricht ist okay, welche nicht?"},
+  {ico:"⚡",titel:"Tipp-Training",kurz:"Schneller tippen mit allen Fingern"},
+  {ico:"🕵️",titel:"Echt oder Betrug?",kurz:"Gefälschte Nachrichten erkennen"},
+  {ico:"🤖",titel:"Robo-Labyrinth",kurz:"Einen Roboter mit Befehlen steuern"},
+  {ico:"0️⃣",titel:"Geheimsprache 0 und 1",kurz:"Zahlen und Wörter in Binär"}
+];
+
+/* Notenvorschlag aus Prozent (nur Vorschlag, Lehrkraft entscheidet) */
+const noteAus=p=>p>=90?"1":p>=75?"2":p>=60?"3":p>=45?"4":p>=20?"5":"6";
+const zeit=ms=>{const m=Math.round(ms/60000);return m<1?"unter 1 Min.":m+" Min."};
+const jetzt=()=>new Date().toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+
+let profil=lsGet("if5-profil");
+let laufend=null; // {st, prog} der gerade offenen Station
+
+/* ---------- Aktive Zeit messen (nur wenn die Seite sichtbar ist) ---------- */
+let tick=Date.now();
+setInterval(()=>{const n=Date.now(),d=Math.min(n-tick,15000);tick=n;
+  if(laufend&&!document.hidden&&!laufend.prog.fertig){laufend.prog.aktiv=(laufend.prog.aktiv||0)+d;speichern()}},5000);
+
+function speichern(){if(laufend)lsSet("if5-st-"+laufend.st.id,laufend.prog)}
+
+/* ---------- Seiten ---------- */
+function render(){
+  const h=location.hash.slice(1);
+  if(!profil)return seiteName();
+  if(h.startsWith("s/")){const st=STATIONEN.find(s=>s.id===h.slice(2));if(st)return seiteStation(st)}
+  laufend=null;seiteStart();
+}
+window.addEventListener("hashchange",render);
+
+const LOGO=`<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="var(--accent)"/><g fill="var(--accent-ink)"><rect x="9" y="9" width="6" height="6" rx="1"/><rect x="17" y="9" width="6" height="6" rx="1" opacity=".45"/><rect x="25" y="9" width="6" height="6" rx="1"/><rect x="9" y="17" width="6" height="6" rx="1" opacity=".45"/><rect x="17" y="17" width="6" height="6" rx="1"/><rect x="25" y="17" width="6" height="6" rx="1" opacity=".45"/><rect x="9" y="25" width="6" height="6" rx="1"/><rect x="17" y="25" width="6" height="6" rx="1" opacity=".45"/><rect x="25" y="25" width="6" height="6" rx="1"/></g></svg>`;
+const kopf=()=>`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5</span></div>${profil?`<div class="row"><span class="who">${esc(profil.name)} · ${esc(profil.klasse)}</span><button class="link" id="wechsel">Nicht du?</button></div>`:""}</div>`;
+function kopfAktiv(){const b=$("#wechsel");if(b)b.onclick=()=>{if(confirm("Alles auf diesem Gerät löschen und neuen Namen eingeben?")){lsClear();profil=null;location.hash="";render()}}}
+
+function seiteName(){
+  $("#app").innerHTML=kopf()+`
+  <div class="plate"><p class="eyebrow">Willkommen</p><h1>Wie heißt du?</h1><p>Schreib deinen Vornamen und wähle deine Klasse. Dann geht es los.</p></div>
+  <form class="block" id="f" autocomplete="off">
+    <label class="f" for="n">Vorname</label><input type="text" id="n" maxlength="30" required>
+    <div style="height:14px"></div>
+    <label class="f" for="k">Klasse</label><select id="k" required><option value="">Bitte wählen</option>${KLASSEN.map(k=>`<option>${k}</option>`).join("")}</select>
+    <div style="height:18px"></div>
+    <button class="btn wide" type="submit">Los geht's</button>
+  </form>`;
+  $("#n").focus();
+  $("#f").onsubmit=e=>{e.preventDefault();const name=$("#n").value.trim().replace(/\s+/g," ");const klasse=$("#k").value;
+    if(!name||!klasse)return toast("Bitte Name und Klasse angeben");
+    lsClear();profil={name,klasse};lsSet("if5-profil",profil);render()};
+}
+
+function seiteStart(){
+  const karten=STATIONEN.map(s=>{const p=lsGet("if5-st-"+s.id);
+    const st=p?.fertig?`<span class="chip good">fertig</span>`:p?`<span class="chip">angefangen</span>`:"";
+    return`<button class="st" data-id="${s.id}"><span class="ico">${s.ico}</span><h3>${esc(s.titel)}</h3><span class="muted small">${esc(s.kurz)}</span><span class="meta"><span class="chip">${s.schritte.length} Teile</span>${st}</span></button>`}).join("");
+  const bald=BALD.filter(b=>!STATIONEN.some(s=>s.titel===b.titel)).map(b=>`<div class="st soon"><span class="ico">${b.ico}</span><h3>${esc(b.titel)}</h3><span class="muted small">${esc(b.kurz)}</span><span class="meta"><span class="chip">kommt bald</span></span></div>`).join("");
+  $("#app").innerHTML=kopf()+`
+  <div class="plate"><p class="eyebrow">Hallo ${esc(profil.name)}</p><h1>Welche Station heute?</h1><p>Deine Lehrkraft sagt dir, welche Station dran ist. Löse alle Teile und zeig am Ende deine Ergebniskarte.</p></div>
+  <div class="grid-st">${karten}${bald}</div>
+  <p class="muted small" style="margin-top:22px">Version ${VERSION}</p>`;
+  kopfAktiv();
+  document.querySelectorAll(".st[data-id]").forEach(b=>b.onclick=()=>location.hash="s/"+b.dataset.id);
+}
+
+function seiteStation(st){
+  if(!laufend||laufend.st!==st){
+    const prog=lsGet("if5-st-"+st.id)||{schritt:0,punkte:{},daten:{},start:Date.now(),aktiv:0};
+    laufend={st,prog};speichern();
+  }
+  const {prog}=laufend;
+  if(prog.fertig)return seiteErgebnis(st,prog);
+  const i=Math.min(prog.schritt,st.schritte.length-1),sch=st.schritte[i];
+  const summe=Object.values(prog.punkte).reduce((a,b)=>a+b,0);
+  const geloest=i in prog.punkte;
+  $("#app").innerHTML=kopf()+`
+  <div class="steps noprint">${st.schritte.map((_,k)=>`<i class="${k in prog.punkte?"ok":k===i?"now":""}"></i>`).join("")}</div>
+  <div class="stephead"><p class="eyebrow">${st.ico} ${esc(st.titel)} · Teil ${i+1} von ${st.schritte.length}</p><span class="pts">⭐ ${summe} Punkte</span></div>
+  <h2>${esc(sch.titel)}</h2>
+  <div id="body"></div>
+  <div class="nav noprint">
+    <button class="btn ghost" id="zur">${i===0?"Übersicht":"Zurück"}</button>
+    <button class="btn" id="weiter" ${geloest?"":"disabled"}>${i===st.schritte.length-1?"Fertig – Ergebnis zeigen":"Weiter"}</button>
+  </div>`;
+  kopfAktiv();
+  prog.daten[i]=prog.daten[i]||{};
+  const ctx={
+    daten:prog.daten[i],
+    geloest,
+    speichern,
+    geschafft(p){if(!(i in prog.punkte)){prog.punkte[i]=p;speichern();
+        if(p>0)toast(`Geschafft! +${p} Punkte`);
+        $(".pts").textContent=`⭐ ${Object.values(prog.punkte).reduce((a,b)=>a+b,0)} Punkte`;
+        $(".steps").children[i].className="ok"}
+      ctx.geloest=true;$("#weiter").disabled=false},
+  };
+  sch.zeige($("#body"),ctx);
+  $("#zur").onclick=()=>{if(i===0){location.hash=""}else{prog.schritt=i-1;speichern();seiteStation(st);scrollTo(0,0)}};
+  $("#weiter").onclick=()=>{if(!(i in prog.punkte))return;
+    if(i===st.schritte.length-1){prog.fertig=Date.now();speichern();seiteErgebnis(st,prog)}
+    else{prog.schritt=i+1;speichern();seiteStation(st)}
+    scrollTo(0,0)};
+}
+
+function seiteErgebnis(st,prog){
+  const max=st.schritte.reduce((a,s)=>a+(s.punkte||0),0);
+  const pkt=Object.values(prog.punkte).reduce((a,b)=>a+b,0);
+  const pz=max?Math.round(pkt/max*100):100;
+  $("#app").innerHTML=kopf()+`
+  <div class="plate result">
+    <p class="eyebrow">Ergebniskarte · ${st.ico} ${esc(st.titel)}</p>
+    <div class="row" style="justify-content:space-between;align-items:flex-start">
+      <div><h1 style="margin:0">${esc(profil.name)}</h1><p style="margin:2px 0 0">Klasse ${esc(profil.klasse)}</p></div>
+      <div style="text-align:right"><div class="note">${noteAus(pz)}</div><span class="small">Vorschlag</span></div>
+    </div>
+    <dl><dt>Punkte</dt><dd>${pkt} von ${max} (${pz} %)</dd>
+    <dt>Gearbeitet</dt><dd>${zeit(prog.aktiv||0)}</dd>
+    <dt>Fertig am</dt><dd>${new Date(prog.fertig).toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</dd></dl>
+  </div>
+  ${st.ergebnis?`<div class="block">${st.ergebnis(prog.daten)}</div>`:""}
+  <div class="block"><p style="margin:0"><b>Zeig diese Karte deiner Lehrkraft.</b> ${st.kreativ?"Die Note für Kreativität gibt die Lehrkraft.":""}</p></div>
+  <div class="nav noprint"><button class="btn ghost" id="zur">Übersicht</button><button class="btn ghost" id="nochmal">Noch mal machen</button></div>`;
+  kopfAktiv();
+  if(st.nachErgebnis)st.nachErgebnis(prog.daten);
+  $("#zur").onclick=()=>location.hash="";
+  $("#nochmal").onclick=()=>{if(confirm("Wirklich von vorne? Deine Punkte werden gelöscht.")){try{localStorage.removeItem("if5-st-"+st.id)}catch(e){}laufend=null;seiteStation(st)}};
+}
+
+/* ---------- Bausteine für Stationen ---------- */
+
+/* Pixel-Raster: w×h Kästchen, Werte = Index in palette. Malen mit Maus, Finger oder Stift (auch Ziehen). */
+function pixelRaster({w,h,werte,palette,malbar=false,farbe=()=>1,klein=false,onAenderung}){
+  const el=document.createElement("div");el.className="px"+(malbar?" malbar":"")+(klein?" klein":"");
+  el.style.gridTemplateColumns=`repeat(${w},1fr)`;
+  const v=werte?werte.slice():Array(w*h).fill(0);
+  const zellen=v.map((x,k)=>{const c=document.createElement("i");c.style.background=palette[x];c.dataset.k=k;el.append(c);return c});
+  const setze=(k,x)=>{if(v[k]===x)return;v[k]=x;zellen[k].style.background=palette[x];zellen[k].classList.remove("falsch");onAenderung&&onAenderung(v)};
+  if(malbar){let mal=null;
+    const ziel=e=>{const t=document.elementFromPoint(e.clientX,e.clientY);return t&&t.parentNode===el?+t.dataset.k:null};
+    el.addEventListener("pointerdown",e=>{const k=ziel(e);if(k==null)return;e.preventDefault();el.setPointerCapture(e.pointerId);
+      const f=farbe();mal=v[k]===f?0:f;setze(k,mal)});
+    el.addEventListener("pointermove",e=>{if(mal==null)return;const k=ziel(e);if(k!=null)setze(k,mal)});
+    const ende=()=>{mal=null};el.addEventListener("pointerup",ende);el.addEventListener("pointercancel",ende);
+  }
+  return{el,werte:v,setzeAlle(a){a.forEach((x,k)=>setze(k,x))},markiere(falsch){zellen.forEach((c,k)=>c.classList.toggle("falsch",falsch.includes(k)))}};
+}
+
+/* Farbauswahl für Pixel-Raster */
+function farbLeiste(palette,namen,start=1,ohneWeiss=false){
+  const el=document.createElement("div");el.className="pal";let wahl=start;
+  palette.forEach((f,k)=>{if(ohneWeiss&&k===0)return;const b=document.createElement("button");b.type="button";b.style.setProperty("--c",f);
+    b.setAttribute("aria-label",namen[k]);b.title=namen[k];b.innerHTML=`<span>${k}</span>`;b.className=k===wahl?"an":"";
+    b.onclick=()=>{wahl=k;el.querySelectorAll("button").forEach(x=>x.classList.remove("an"));b.classList.add("an")};el.append(b)});
+  return{el,farbe:()=>wahl};
+}
+
+/* Station: Pixel-Werkstatt — Bilder bestehen aus Kästchen, und Kästchen kann man als Zahlen aufschreiben.
+   Teil 1 abmalen (Auge), Teil 2 Geheimcode 0/1 (Binär), Teil 3 Farbcode (Zahlen = Farben), Teil 4 freies Bild (kreativ). */
+(()=>{
+const SW=["#FFFFFF","#1B1B1F"];
+const PAL=["#FFFFFF","#1B1B1F","#E5383B","#2DA44E","#F5C518","#2F6FDE","#8B5A2B","#F28CB8","#F08A24","#8E5BD6"];
+const NAMEN=["Weiß","Schwarz","Rot","Grün","Gelb","Blau","Braun","Rosa","Orange","Lila"];
+const zahlen=z=>z.join("").split("").map(Number);
+
+const BILDER={
+  pfeil:["00011000","00111100","01111110","11111111","00011000","00011000","00011000","00011000"],
+  boot:["00010000","00011000","00011100","00011110","00010000","11111111","01111110","00111100"],
+  alien:["00100100","00011000","00111100","01011010","11111111","10111101","10100101","00100100"],
+  herz:["00000000","01100110","11111111","11111111","01111110","00111100","00011000","00000000"],
+  smiley:["00111100","01000010","10100101","10000001","10100101","10011001","01000010","00111100"],
+  haus:["00011000","00111100","01111110","11111111","01000010","01011010","01011010","01111110"],
+  apfel:["00006300","00006000","02222220","22222222","22222222","22222222","02222220","00222200"],
+  sonne:["00444400","04444440","04444440","00444400","00000000","55555555","55555555","55555555"],
+};
+
+/* Vergleich + Rückmeldung; ab dem 3. Fehlversuch werden falsche Kästchen rot umrandet */
+function pruefen(ctx,raster,soll,punkte,box){
+  const falsch=[];soll.forEach((x,k)=>{if(raster.werte[k]!==x)falsch.push(k)});
+  ctx.daten.versuche=(ctx.daten.versuche||0)+1;ctx.speichern();
+  if(!falsch.length){raster.markiere([]);box.className="msg ok";box.textContent="Richtig! Alle Kästchen stimmen.";ctx.geschafft(punkte);return}
+  box.className="msg no";
+  box.textContent=falsch.length===1?"Fast! Noch 1 Kästchen ist falsch.":`Noch ${falsch.length} Kästchen sind falsch.`;
+  if(ctx.daten.versuche>=3){raster.markiere(falsch);box.textContent+=" Sie sind jetzt rot umrandet."}
+}
+
+function abmalen(name,titel,punkte){return{titel,punkte,zeige(el,ctx){
+  const soll=zahlen(BILDER[name]);
+  el.innerHTML=`<p>Mal das Bild links genau ab. Tippe auf ein Kästchen, dann wird es schwarz. Nochmal tippen macht es wieder weiß. Du kannst auch ziehen.</p>
+    <div class="paar"><div><p class="eyebrow">Vorlage</p><div id="a"></div></div><div><p class="eyebrow">Dein Bild</p><div id="b"></div></div></div>
+    <div class="row noprint" style="margin-top:14px"><button class="btn" id="p">Prüfen</button><button class="btn ghost" id="l">Alles löschen</button></div><div id="m"></div>`;
+  el.querySelector("#a").append(pixelRaster({w:8,h:8,werte:soll,palette:SW}).el);
+  const r=pixelRaster({w:8,h:8,werte:ctx.daten.bild,palette:SW,malbar:true,onAenderung:v=>{ctx.daten.bild=v.slice();ctx.speichern()}});
+  el.querySelector("#b").append(r.el);
+  el.querySelector("#p").onclick=()=>pruefen(ctx,r,soll,punkte,el.querySelector("#m"));
+  el.querySelector("#l").onclick=()=>r.setzeAlle(Array(64).fill(0));
+  if(ctx.geloest){const m=el.querySelector("#m");m.className="msg ok";m.textContent="Schon gelöst. Weiter geht's!"}
+}}}
+
+function codeBild(name,titel,punkte,farbig){return{titel,punkte,zeige(el,ctx){
+  const roh=BILDER[name],soll=zahlen(roh),pal=farbig?PAL:SW;
+  const genutzt=[...new Set(soll)].sort((a,b)=>a-b);
+  el.innerHTML=(farbig
+    ?`<p>Jede Zahl ist eine Farbe. Wähl unten eine Farbe aus und mal Zeile für Zeile. Die <b>0</b> bleibt weiß.</p>`
+    :`<p>Das ist ein Geheimcode. <b>1</b> heißt schwarz, <b>0</b> heißt weiß. Mal jede Zeile so, wie der Code es sagt. Was kommt heraus?</p>`)+
+    `<div class="paar"><div><p class="eyebrow">Code</p><ol class="code">${roh.map(z=>`<li>${z.split("").map(c=>`<span>${c}</span>`).join("")}</li>`).join("")}</ol></div>
+    <div><p class="eyebrow">Dein Bild</p><div id="b"></div></div></div>
+    ${farbig?`<div class="legende">${genutzt.map(k=>`<span><i style="background:${PAL[k]}"></i>${k} = ${NAMEN[k]}</span>`).join("")}</div><div id="pal"></div>`:""}
+    <div class="row noprint" style="margin-top:14px"><button class="btn" id="p">Prüfen</button><button class="btn ghost" id="l">Alles löschen</button></div><div id="m"></div>`;
+  let leiste=null;
+  if(farbig){leiste=farbLeiste(PAL.slice(0,Math.max(...genutzt)+1),NAMEN,genutzt.find(k=>k>0),true);el.querySelector("#pal").append(leiste.el)}
+  const r=pixelRaster({w:8,h:8,werte:ctx.daten.bild,palette:pal,malbar:true,farbe:leiste?leiste.farbe:()=>1,onAenderung:v=>{ctx.daten.bild=v.slice();ctx.speichern()}});
+  el.querySelector("#b").append(r.el);
+  el.querySelector("#p").onclick=()=>pruefen(ctx,r,soll,punkte,el.querySelector("#m"));
+  el.querySelector("#l").onclick=()=>r.setzeAlle(Array(64).fill(0));
+  if(ctx.geloest){const m=el.querySelector("#m");m.className="msg ok";m.textContent="Schon gelöst. Weiter geht's!"}
+}}}
+
+const MIN_PIXEL=40;
+station({
+  id:"pixel",nr:1,ico:"🎨",titel:"Pixel-Werkstatt",kreativ:true,
+  kurz:"Bilder aus Kästchen – und wie der Computer sie als Zahlen speichert",
+  schritte:[
+    {titel:"Worum geht's?",punkte:0,zeige(el,ctx){
+      el.innerHTML=`<div class="block"><p>Schau ganz nah auf einen Bildschirm: Jedes Bild besteht aus winzigen <b>Kästchen</b>. Ein Kästchen heißt <b>Pixel</b>.</p>
+      <p>Der Computer kann keine Bilder sehen. Er merkt sich für jedes Pixel nur eine <b>Zahl</b>, zum Beispiel 1 für schwarz und 0 für weiß.</p>
+      <p style="margin:0">Heute bist du der Computer. Du hast 4 Teile vor dir. Am Ende malst du dein eigenes Bild.</p></div>
+      <div class="paar"><div id="a"></div><ol class="code klein">${BILDER.herz.map(z=>`<li>${z.split("").map(c=>`<span>${c}</span>`).join("")}</li>`).join("")}</ol></div>`;
+      el.querySelector("#a").append(pixelRaster({w:8,h:8,werte:zahlen(BILDER.herz),palette:SW,klein:true}).el);
+      ctx.geschafft(0);
+    }},
+    abmalen("pfeil","Abmalen 1: Der Pfeil",10),
+    abmalen("boot","Abmalen 2: Das Boot",10),
+    abmalen("alien","Abmalen 3: Das Alien",10),
+    codeBild("herz","Geheimcode 1",10),
+    codeBild("smiley","Geheimcode 2",10),
+    codeBild("haus","Geheimcode 3",10),
+    codeBild("apfel","Farbcode 1",15,true),
+    codeBild("sonne","Farbcode 2",15,true),
+    {titel:"Dein eigenes Bild",punkte:20,zeige(el,ctx){
+      el.innerHTML=`<p>Jetzt bist du dran! Mal ein eigenes Bild auf 16 mal 16 Kästchen. Gib ihm einen Namen. Die schönsten und kreativsten Bilder bekommen die beste Note.</p>
+        <label class="f" for="t">Name deines Bildes</label><input type="text" id="t" maxlength="40" placeholder="z. B. Mein Haustier">
+        <div id="pal" style="margin-top:14px"></div><div class="frei" id="b"></div>
+        <div class="row noprint" style="margin-top:14px"><button class="btn" id="p">Bild ist fertig</button><button class="btn ghost" id="l">Alles löschen</button><span class="muted small" id="z"></span></div><div id="m"></div>`;
+      const t=el.querySelector("#t");t.value=ctx.daten.titel||"";t.oninput=()=>{ctx.daten.titel=t.value;ctx.speichern()};
+      const leiste=farbLeiste(PAL,NAMEN,1);el.querySelector("#pal").append(leiste.el);
+      const zaehle=v=>{const n=v.filter(x=>x>0).length;el.querySelector("#z").textContent=n<MIN_PIXEL?`${n} von mindestens ${MIN_PIXEL} Kästchen bemalt`:`${n} Kästchen bemalt`};
+      const r=pixelRaster({w:16,h:16,werte:ctx.daten.bild,palette:PAL,malbar:true,farbe:leiste.farbe,onAenderung:v=>{ctx.daten.bild=v.slice();ctx.speichern();zaehle(v)}});
+      el.querySelector("#b").append(r.el);zaehle(r.werte);
+      el.querySelector("#l").onclick=()=>{if(confirm("Ganzes Bild löschen?"))r.setzeAlle(Array(256).fill(0))};
+      el.querySelector("#p").onclick=()=>{const m=el.querySelector("#m"),n=r.werte.filter(x=>x>0).length;
+        if(n<MIN_PIXEL){m.className="msg no";m.textContent=`Mal noch etwas mehr: mindestens ${MIN_PIXEL} Kästchen.`;return}
+        if(!t.value.trim()){m.className="msg no";m.textContent="Gib deinem Bild noch einen Namen.";t.focus();return}
+        m.className="msg ok";m.textContent="Super! Du kannst noch weiter malen oder auf „Fertig“ tippen.";ctx.geschafft(20)};
+    }},
+  ],
+  ergebnis(d){
+    const f=d[9]||{};
+    return`<p class="eyebrow">Eigenes Bild</p><h2>${esc(f.titel||"ohne Namen")}</h2><div id="erg-bild" style="max-width:340px"></div>`;
+  },
+  nachErgebnis(d){const f=d[9]||{};const box=document.getElementById("erg-bild");if(box)box.append(pixelRaster({w:16,h:16,werte:f.bild,palette:PAL}).el)}
+});
+})();
+
+/* ---------- Start ---------- */
+STATIONEN.sort((a,b)=>(a.nr||99)-(b.nr||99));
+render();
+
+/* Neue Version holen (wie KT Schule): beim Start und beim Zurückkehren */
+async function versionPruefen(){if(!/github\.io$/.test(location.hostname))return;
+  try{const r=await fetch("version.txt?"+Date.now(),{cache:"no-store"});const v=(await r.text()).trim();if(v&&v!==VERSION)location.reload()}catch(e){}}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)versionPruefen()});
+versionPruefen();
+if("serviceWorker"in navigator&&/github\.io$/.test(location.hostname))navigator.serviceWorker.register("sw.js").catch(()=>{});
+
+</script>
+</body>
+</html>

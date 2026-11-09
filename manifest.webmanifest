@@ -1,0 +1,12 @@
+{
+  "name": "Informatik 5",
+  "short_name": "Informatik 5",
+  "description": "Stationen für Informatik in Klasse 5 – ohne Anmeldung",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#4338CA",
+  "theme_color": "#4338CA",
+  "icons": [{"src": "icon.svg", "sizes": "any", "type": "image/svg+xml"}]
+}

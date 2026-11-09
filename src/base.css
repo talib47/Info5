@@ -1,0 +1,90 @@
+/* Informatik 5 — ruhige Spalte wie KT Schule, aber kindgerecht: große Flächen, große Knöpfe. Bandfarbe Indigo. */
+:root{color-scheme:light;
+  --bg:#F2F2F6; --surface:#FFFFFF; --ink:#1B1B1F; --muted:#5F5F69; --line:#E3E3EA;
+  --fill:rgba(118,118,140,.10); --fill2:rgba(118,118,140,.18);
+  --accent:#4338CA; --accent-ink:#FFFFFF; --plate-top:#5B50E6; --plate-bot:#2E2690;
+  --good:#2D7A4E; --bad:#B43A2E; --gold:#8A6400;
+  --good-soft:color-mix(in srgb,var(--good) 11%,var(--surface)); --bad-soft:color-mix(in srgb,var(--bad) 9%,var(--surface));
+  --tint:color-mix(in srgb,var(--accent) 11%,transparent);
+  --serif:"Newsreader","Iowan Old Style",Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,system-ui,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  --r-l:24px; --r-m:18px;
+  --lift:0 1px 2px rgba(0,0,0,.04),0 16px 36px -18px rgba(0,0,0,.22);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --bg:#000; --surface:#1C1C1E; --ink:#F3F3F5; --muted:#A0A0AA; --line:#2F2F34;
+  --fill:rgba(118,118,140,.22); --fill2:rgba(118,118,140,.32);
+  --accent:#A5A0FF; --accent-ink:#14123A; --plate-top:#4A41C9; --plate-bot:#211B66;
+  --good:#62C48C; --bad:#F2897E; --gold:#DDB35A;
+  --tint:color-mix(in srgb,var(--accent) 17%,transparent)}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --bg:#000; --surface:#1C1C1E; --ink:#F3F3F5; --muted:#A0A0AA; --line:#2F2F34;
+  --fill:rgba(118,118,140,.22); --fill2:rgba(118,118,140,.32);
+  --accent:#A5A0FF; --accent-ink:#14123A; --plate-top:#4A41C9; --plate-bot:#211B66;
+  --good:#62C48C; --bad:#F2897E; --gold:#DDB35A;
+  --tint:color-mix(in srgb,var(--accent) 17%,transparent)}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 var(--sans);-webkit-tap-highlight-color:transparent}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 75%,transparent);outline-offset:2px}
+#app{max-width:58rem;margin:0 auto;padding:18px max(16px,env(safe-area-inset-left,0px)) 60px max(16px,env(safe-area-inset-right,0px));overflow-wrap:break-word}
+h1,h2,h3{font-family:var(--serif);font-optical-sizing:auto;text-wrap:balance;margin:0}
+h1{font-size:2.25rem;font-weight:600;line-height:1.1;letter-spacing:-.02em;margin-bottom:12px}
+h2{font-size:1.5rem;font-weight:600;line-height:1.2;letter-spacing:-.012em;margin-bottom:10px}
+p{margin:0 0 10px;text-wrap:pretty}
+.eyebrow{font-size:.8125rem;font-weight:650;color:var(--muted);margin:0 0 6px;letter-spacing:.02em;text-transform:uppercase}
+.muted{color:var(--muted)} .small{font-size:.875rem}
+.block{background:var(--surface);border-radius:var(--r-m);padding:20px;margin:0 0 14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:12px 22px;border:0;border-radius:14px;font-weight:650;background:var(--accent);color:var(--accent-ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 1px 2px rgba(0,0,0,.1);transition:transform .15s,filter .15s}
+.btn:active:not(:disabled){transform:scale(.97);filter:brightness(.93)}
+.btn.ghost{background:var(--tint);color:var(--accent);box-shadow:none}
+.btn.wide{width:100%}
+.btn:disabled{opacity:.38;cursor:default}
+.link{border:0;background:none;padding:6px 0;color:var(--accent);font-weight:600;min-height:44px}
+.chip{display:inline-block;border-radius:999px;background:var(--fill);color:var(--muted);padding:3px 10px;font-weight:650;font-size:.78rem;white-space:nowrap}
+.chip.good{background:color-mix(in srgb,var(--good) 15%,transparent);color:var(--good)}
+input[type=text],select{width:100%;min-height:52px;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);padding:10px 14px;font-size:1.125rem}
+input[type=text]:focus,select:focus{border-color:var(--accent);outline:none}
+label.f{display:block;font-weight:650;margin:0 0 6px}
+
+/* Kopf mit Name */
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 14px}
+.top .who{font-weight:650}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--serif);font-weight:600;font-size:1.25rem}
+.brand svg{width:34px;height:34px}
+
+/* Platte (Startseite / Ergebnis) */
+.plate{position:relative;overflow:hidden;border-radius:var(--r-l);padding:24px 22px;margin:0 0 16px;color:#fff;
+  background:radial-gradient(120% 90% at 100% 0%,rgba(255,255,255,.16),transparent 55%),linear-gradient(165deg,var(--plate-top),var(--plate-bot));box-shadow:0 18px 36px -26px var(--plate-bot)}
+.plate .eyebrow{color:rgba(255,255,255,.8)}
+.plate h1,.plate h2{color:#fff}
+.plate .btn{background:#fff;color:var(--plate-bot)}
+
+/* Stationen-Kacheln */
+.grid-st{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.st{display:flex;flex-direction:column;gap:6px;text-align:left;border:0;border-radius:var(--r-m);background:var(--surface);padding:18px;min-height:150px;box-shadow:var(--lift)}
+.st .ico{font-size:2rem;line-height:1}
+.st h3{font-size:1.25rem}
+.st.soon{opacity:.55;box-shadow:none;cursor:default}
+.st .meta{margin-top:auto;display:flex;gap:6px;flex-wrap:wrap}
+
+/* Schritt-Leiste */
+.steps{display:flex;gap:6px;margin:0 0 16px}
+.steps i{flex:1;height:8px;border-radius:999px;background:var(--fill2)}
+.steps i.ok{background:var(--good)} .steps i.now{background:var(--accent)}
+.stephead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 8px}
+.pts{font-weight:700;color:var(--gold);white-space:nowrap}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
+.msg{border-radius:14px;padding:12px 16px;margin:12px 0 0;font-weight:600}
+.msg.ok{background:var(--good-soft);color:var(--good)}
+.msg.no{background:var(--bad-soft);color:var(--bad)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:14px;font-weight:600;z-index:9;box-shadow:var(--lift)}
+
+/* Ergebnis */
+.result dl{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;margin:12px 0 0}
+.result dt{color:rgba(255,255,255,.75)} .result dd{margin:0;font-weight:700}
+.note{font-family:var(--serif);font-size:3.5rem;font-weight:700;line-height:1}
+@media print{.noprint{display:none!important}body{background:#fff}}
