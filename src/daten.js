@@ -6,7 +6,7 @@
    ===================================================================== */
 
 /* Nach dem Okay der Schule hier eintragen (Supabase → Project Settings → API). Nur der anon-Schlüssel! */
-const ONLINE={url:"",key:""};
+const ONLINE={url:"https://dqopymysowroicfdwwhv.supabase.co",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxb3B5bXlzb3dyb2ljZmR3d2h2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQyNTk5NzMsImV4cCI6MjEwOTgzNTk3M30.-0X9oc6t_ezyPQLW-t6u6EWM02ETB8crrlHkb1RpJqs"};
 
 const CLOUD=!!(ONLINE.url&&ONLINE.key&&/github\.io$/.test(location.hostname)&&window.supabase);
 const sb=CLOUD?window.supabase.createClient(ONLINE.url,ONLINE.key):null;
