@@ -220,20 +220,22 @@ function tastenMissionen({titel,punkte=15,merke,text,start="",missionen}){return
   const d=ctx.daten;d.m=d.m||0;
   const zeichne=()=>{
     const fertig=d.m>=missionen.length,ms=missionen[d.m];
-    el.innerHTML=kopfText(text)+`<div class="missionen">${missionen.map((x,i)=>`<div class="mission${i<d.m?" ok":i===d.m?" jetzt":""}"><span class="mnr">${i<d.m?"✔️":i+1}</span><span>${x.text}</span><span class="kappen">${x.tasten.map(t=>`<kbd>${t}</kbd>`).join("<i>+</i>")}</span></div>`).join("")}</div>
-      ${fertig?`<div class="msg ok">Alle Missionen geschafft! Tippe auf „Weiter“.</div>`:`<p class="eyebrow" style="margin-top:12px">Mission ${d.m+1}: ${ms.text}</p>`}
-      <textarea class="uebfeld" spellcheck="false" placeholder="Hier ist dein Übungsfeld">${esc(d.feld??start)}</textarea>${MLD}`;
+    el.innerHTML=kopfText(text)+(fertig?`<div class="msg ok">Alle ${missionen.length} Aufgaben geschafft. Tippe auf „Weiter“.</div>`
+      :`<div class="tastaufgabe"><p class="eyebrow">Aufgabe ${d.m+1} von ${missionen.length}</p><p class="was">${ms.text}</p>
+        <p class="wie"><b>So geht es:</b> ${ms.wie||""}</p><p class="kappen">${ms.tasten.map(t=>`<kbd>${t}</kbd>`).join("<i>+</i>")}</p></div>`)+`
+      <p class="eyebrow" style="margin-top:14px">Dein Übungsfeld – klick hinein und probier es aus</p>
+      <textarea class="uebfeld" spellcheck="false">${esc(d.feld??start)}</textarea>${MLD}`;
     const f=el.querySelector(".uebfeld");
     f.oninput=()=>{d.feld=f.value;ctx.speichern()};
     f.onkeydown=e=>{
       if((e.ctrlKey||e.metaKey)&&["s","p","f","d","h","w","n","t"].includes(e.key.toLowerCase()))e.preventDefault();
       const ms=missionen[d.m];if(!ms)return;
       if(ms.test(e,f)){setTimeout(()=>{d.feld=f.value;d.m++;ctx.speichern();zeichne();const g=el.querySelector(".uebfeld");g.focus();
-        if(d.m>=missionen.length)ctx.geschafft(punkte);else toast("Mission geschafft!")},ms.verzoegert?150:30)}};
+        if(d.m>=missionen.length)ctx.geschafft(punkte);else toast("Richtig. Nächste Aufgabe.")},ms.verzoegert?150:30)}};
     if(!fertig)setTimeout(()=>f.focus(),50);
   };
   zeichne();
-  ctx.pruefer=()=>{if(d.m>=missionen.length){ctx.geschafft(punkte);return true}meldung(el,false,`Mach zuerst alle Missionen. Du bist bei Mission ${d.m+1}.`);return false};
+  ctx.pruefer=()=>{if(d.m>=missionen.length){ctx.geschafft(punkte);return true}meldung(el,false,`Mach zuerst alle Aufgaben. Du bist bei Aufgabe ${d.m+1} von ${missionen.length}.`);return false};
   ctx.loesung=()=>{d.m=missionen.length;zeichne()};
 }}}
 const strg=b=>e=>(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()===b;

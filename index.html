@@ -735,6 +735,11 @@ kbd{border-radius:5px;font-family:var(--mono)}
 .bef,.rk{font:800 1.5rem/1 var(--sans);color:var(--ink)}
 .rk{font-size:1.75rem}
 .sk{color:#C2570C}
+.tastaufgabe{border:2px solid var(--ink);border-radius:var(--r-l);padding:16px 18px;margin-top:12px}
+.tastaufgabe .was{font-size:1.5rem;font-weight:750;margin:0 0 8px}
+.tastaufgabe .wie{font-size:1.0625rem;margin:0 0 12px;max-width:36rem}
+.tastaufgabe .kappen{margin:0;justify-content:flex-start;display:flex}
+.tastaufgabe kbd{font-size:1.0625rem;padding:6px 12px}
 /* Bausteine der Stationen */
 .paar{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;align-items:start;margin-top:8px}
 .px{display:grid;gap:2px;background:var(--line);border:2px solid var(--line);border-radius:10px;overflow:hidden;width:100%;max-width:340px;aspect-ratio:1;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -770,7 +775,7 @@ kbd{border-radius:5px;font-family:var(--mono)}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="bd85071edf";
+const VERSION="f14fb6cb40";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -982,7 +987,9 @@ function status(st){
   if(EINE_PRO_TAG&&tagVon(vor.fertig)===heuteTag())return"morgen";
   return"offen";
 }
-const spielplatzOffen=()=>VS||PFAD().some(s=>{const p=meineStaende()[s.id];return p?.fertig&&tagVon(p.fertig)===heuteTag()});
+/* Der Spielplatz ist die Belohnung für gute Arbeit: Er öffnet nur, wenn die Station von heute ein + hat (Schnell-Durchklicken lohnt sich nicht). */
+const heuteFertig=()=>PFAD().filter(s=>{const p=meineStaende()[s.id];return p?.fertig&&tagVon(p.fertig)===heuteTag()});
+const spielplatzOffen=()=>VS||heuteFertig().some(s=>zeichenAus(prozent(s,meineStaende()[s.id]))==="+");
 /* Aufräumen beim Verlassen eines Teils (z. B. Tastatur-Abhörer, Zeitgeber) */
 let aufraeumListe=[];
 function aufraeumen(){aufraeumListe.forEach(f=>{try{f()}catch(e){}});aufraeumListe=[]}
@@ -1159,7 +1166,7 @@ function seiteStart(){
   const spielListe=`<div class="spiele">${SPIELE().map(x=>`<button class="spiel" data-sp="${x.id}">${pix(x.id,24)}<b>${esc(x.titel)}</b></button>`).join("")}</div>`;
   /* Oben steht genau eine Sache: die Station von heute – oder, wenn sie geschafft ist, der Spielplatz als Belohnung */
   const heute=VS?"":!akt?`<div class="heute-karte">${pix("pixel",56,"blau")}<div><p class="eyebrow">Alles geschafft</p><h2>Du hast alle ${pfad.length} Stationen geschafft.</h2><p class="muted">Starke Leistung. Der Spielplatz gehört dir.</p></div></div>`
-    :stAkt==="morgen"?`<div class="heute-karte">${pix(akt.id,56)}<div><p class="eyebrow">Für heute fertig</p><h2>Deine Station ist geschafft.</h2><p class="muted">Bis zur nächsten Stunde darfst du spielen. Dann geht es weiter mit „${esc(akt.titel)}“</p></div></div>`
+    :stAkt==="morgen"?`<div class="heute-karte">${pix(akt.id,56)}<div><p class="eyebrow">Für heute fertig</p><h2>Deine Station ist geschafft.</h2><p class="muted">${spOffen?"Du hast ein + geschafft und darfst spielen.":"Für den Spielplatz brauchst du ein +. Du kannst deine Station verbessern: Tippe sie unten im Lernpfad an."} Nächste Stunde geht es weiter mit „${esc(akt.titel)}“</p></div></div>`
     :`<button class="heute-karte" data-id="${akt.id}">${pix(akt.id,56,"blau")}<div><p class="eyebrow">${s[akt.id]?"Hier machst du weiter":"Deine Station heute"}</p><h2>${esc(akt.titel)}</h2><p class="muted">${esc(akt.kurz)}</p></div><span class="btn">${s[akt.id]?"Weitermachen":"Anfangen"}</span></button>`;
   const spielplatz=VS?`<h2 style="margin:28px 0 6px">Spielplatz</h2><p class="muted">Bonus-Spiele ohne Note. Kinder sehen sie erst, wenn die Station von heute geschafft ist.</p><div class="spielplatz">${spielListe}</div>`
     :spOffen?`<div class="spielplatz"><h2>Spielplatz</h2><p class="muted">Deine Belohnung für heute. Hier gibt es keine Note.</p>${spielListe}</div>`:"";
@@ -1177,7 +1184,7 @@ function seiteStart(){
   ${VS?"":spielplatz}
   <h2 style="margin:8px 0 0">${VS?"Lernpfad":"Dein Lernpfad"}</h2>
   <ol class="lernpfad">${liste}</ol>
-  ${VS?spielplatz:spOffen||!akt?"":`<p class="spielplatz zu-hinweis">Wenn du deine Station von heute geschafft hast, öffnet sich hier der Spielplatz.</p>`}
+  ${VS?spielplatz:spOffen||!akt?"":`<p class="spielplatz zu-hinweis">Der Spielplatz öffnet sich, wenn du deine Station von heute mit einem + schaffst.</p>`}
   <p class="muted small" style="margin-top:22px">Version ${VERSION}</p>`;
   kopfAktiv();
   document.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{const x=STATIONEN.find(y=>y.id===b.dataset.id),stt=status(x);
@@ -1221,7 +1228,10 @@ function seiteStation(st){
     geloest,
     speichern:()=>speichern(),
     /* Ein falscher Versuch kostet 2 Punkte, aber höchstens die Hälfte der Punkte dieses Teils */
-    fehler(){prog.fehler=prog.fehler||{};prog.fehler[i]=(prog.fehler[i]||0)+1;speichern()},
+    fehler(){prog.fehler=prog.fehler||{};prog.fehler[i]=(prog.fehler[i]||0)+1;speichern();
+      /* Raten erkennen: zwei falsche Versuche innerhalb weniger Sekunden → kurze Lese-Pause statt weiterem Raten */
+      const jetzt=Date.now();serie=jetzt-letzterFehler<7000?serie+1:1;letzterFehler=jetzt;
+      if(serie>=2&&!frei){serie=0;lesePause(15)}},
     geschafft(p){if(!(i in prog.punkte)){const f=(prog.fehler||{})[i]||0;p=Math.max(Math.ceil(p/2),p-2*f);prog.punkte[i]=p;speichern(true);
         if(p>0)toast(`Geschafft, +${p} Punkte`);
         $(".pts").textContent=`${summe(prog)} Punkte`;
@@ -1243,7 +1253,12 @@ function seiteStation(st){
     else{prog.schritt=i+1;speichern();seiteStation(st)}
     scrollTo(0,0)};
   /* „Weiter“ prüft automatisch: richtig → kurz Erfolg zeigen, dann weiter; falsch → bleiben, Rückmeldung steht da */
-  let sperre=false;
+  let sperre=false,pause=0,letzterFehler=0,serie=0,pauseTimer=null;
+  function lesePause(sek){const w=$("#weiter");if(!w)return;pause=Date.now()+sek*1000;const text=w.textContent;w.disabled=true;
+    const tick=()=>{const r=Math.ceil((pause-Date.now())/1000);if(r<=0||!w.isConnected){clearInterval(pauseTimer);if(w.isConnected){w.disabled=false;w.textContent=text}return}
+      w.textContent=`Erst lesen (${r})`};
+    tick();pauseTimer=setInterval(tick,500);aufraeumListe.push(()=>clearInterval(pauseTimer));
+    toast("Nicht raten. Lies die Aufgabe noch einmal in Ruhe.")}
   $("#weiter").onclick=()=>{if(sperre)return;
     if(frei||i in prog.punkte)return vor();
     if(ctx.pruefer){if(ctx.pruefer()){sperre=true;setTimeout(vor,900)}return}
@@ -1266,16 +1281,20 @@ function seiteErgebnis(st,prog){
   <div class="ergebnis result">
     <div><h1 style="margin:0 0 4px">${ich()}</h1><p class="muted" style="margin:0">${VS?"Vorschau":"Klasse "+esc(sitzung.klasse)}</p>
       <dl><dt>Punkte</dt><dd>${summe(prog)} von ${maxPunkte(st)} (${pz} %)</dd>
+      <dt>Fehlversuche</dt><dd>${Object.values(prog.fehler||{}).reduce((a,b)=>a+b,0)}</dd>
       <dt>Gearbeitet</dt><dd>${zeit(prog.aktiv)}</dd>
       <dt>Fertig am</dt><dd>${new Date(prog.fertig).toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</dd></dl></div>
     <div class="stempel"><span>Note für heute</span><span class="z note zeichen">${z}</span><span>${ZEICHEN_TEXT[z]}</span></div>
   </div>
   <p style="font-weight:700">Zeig dieses Ergebnis deiner Lehrkraft.${st.kreativ?" Die Note für Kreativität gibt die Lehrkraft.":""}</p>
   ${st.ergebnis?`<div class="block">${st.ergebnis(prog.daten)}</div>`:""}
-  <div class="nav noprint"><button class="btn ghost" id="zur">Zum Lernpfad</button>${spielplatzOffen()?`<button class="btn" id="spielen">Zum Spielplatz</button>`:""}</div>`;
+  <div class="nav noprint"><button class="btn ghost" id="zur">Zum Lernpfad</button>${VS?"":z==="+"?`<button class="btn" id="spielen">Zum Spielplatz</button>`:`<button class="btn" id="besser">Station verbessern</button>`}</div>
+  ${VS||z==="+"?"":`<p class="muted" style="margin-top:14px">Der Spielplatz öffnet nur mit einem +. Du kannst die Station noch einmal machen. Dann zählt dein neues Ergebnis.</p>`}`;
   kopfAktiv();
   if(st.nachErgebnis)st.nachErgebnis(prog.daten);
   $("#zur").onclick=()=>location.hash=home();
+  if($("#besser"))$("#besser").onclick=()=>{if(!confirm("Station noch einmal von vorn machen? Dein neues Ergebnis zählt dann."))return;
+    staende[st.id]={schritt:0,punkte:{},daten:{},start:Date.now(),aktiv:0,versuch:(prog.versuch||1)+1};laufend=null;staendeLokal();seiteStation(st)};
   if($("#spielen"))$("#spielen").onclick=()=>{location.hash=home();setTimeout(()=>document.querySelector(".spielplatz")?.scrollIntoView({behavior:"smooth"}),100)};
   if(VS)$(".nav").insertAdjacentHTML("beforeend",`<button class="btn ghost" id="vnochmal">Station noch mal</button>`),$("#vnochmal").onclick=()=>{delete vStaende[st.id];laufend=null;seiteStation(st)};
 }
@@ -1665,20 +1684,22 @@ function tastenMissionen({titel,punkte=15,merke,text,start="",missionen}){return
   const d=ctx.daten;d.m=d.m||0;
   const zeichne=()=>{
     const fertig=d.m>=missionen.length,ms=missionen[d.m];
-    el.innerHTML=kopfText(text)+`<div class="missionen">${missionen.map((x,i)=>`<div class="mission${i<d.m?" ok":i===d.m?" jetzt":""}"><span class="mnr">${i<d.m?"✔️":i+1}</span><span>${x.text}</span><span class="kappen">${x.tasten.map(t=>`<kbd>${t}</kbd>`).join("<i>+</i>")}</span></div>`).join("")}</div>
-      ${fertig?`<div class="msg ok">Alle Missionen geschafft! Tippe auf „Weiter“.</div>`:`<p class="eyebrow" style="margin-top:12px">Mission ${d.m+1}: ${ms.text}</p>`}
-      <textarea class="uebfeld" spellcheck="false" placeholder="Hier ist dein Übungsfeld">${esc(d.feld??start)}</textarea>${MLD}`;
+    el.innerHTML=kopfText(text)+(fertig?`<div class="msg ok">Alle ${missionen.length} Aufgaben geschafft. Tippe auf „Weiter“.</div>`
+      :`<div class="tastaufgabe"><p class="eyebrow">Aufgabe ${d.m+1} von ${missionen.length}</p><p class="was">${ms.text}</p>
+        <p class="wie"><b>So geht es:</b> ${ms.wie||""}</p><p class="kappen">${ms.tasten.map(t=>`<kbd>${t}</kbd>`).join("<i>+</i>")}</p></div>`)+`
+      <p class="eyebrow" style="margin-top:14px">Dein Übungsfeld – klick hinein und probier es aus</p>
+      <textarea class="uebfeld" spellcheck="false">${esc(d.feld??start)}</textarea>${MLD}`;
     const f=el.querySelector(".uebfeld");
     f.oninput=()=>{d.feld=f.value;ctx.speichern()};
     f.onkeydown=e=>{
       if((e.ctrlKey||e.metaKey)&&["s","p","f","d","h","w","n","t"].includes(e.key.toLowerCase()))e.preventDefault();
       const ms=missionen[d.m];if(!ms)return;
       if(ms.test(e,f)){setTimeout(()=>{d.feld=f.value;d.m++;ctx.speichern();zeichne();const g=el.querySelector(".uebfeld");g.focus();
-        if(d.m>=missionen.length)ctx.geschafft(punkte);else toast("Mission geschafft!")},ms.verzoegert?150:30)}};
+        if(d.m>=missionen.length)ctx.geschafft(punkte);else toast("Richtig. Nächste Aufgabe.")},ms.verzoegert?150:30)}};
     if(!fertig)setTimeout(()=>f.focus(),50);
   };
   zeichne();
-  ctx.pruefer=()=>{if(d.m>=missionen.length){ctx.geschafft(punkte);return true}meldung(el,false,`Mach zuerst alle Missionen. Du bist bei Mission ${d.m+1}.`);return false};
+  ctx.pruefer=()=>{if(d.m>=missionen.length){ctx.geschafft(punkte);return true}meldung(el,false,`Mach zuerst alle Aufgaben. Du bist bei Aufgabe ${d.m+1} von ${missionen.length}.`);return false};
   ctx.loesung=()=>{d.m=missionen.length;zeichne()};
 }}}
 const strg=b=>e=>(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()===b;
@@ -2288,30 +2309,30 @@ station({
     paare({titel:"Wichtige Tasten",punkte:10,text:"Diese Tasten brauchst du ständig. Was machen sie?",
       merke:"Suche die Tasten jetzt auf deiner echten Tastatur!",
       paare:[["⇧ Umschalt (Shift)","Großbuchstaben"],["⌫ Rücktaste","löscht das Zeichen links"],["↵ Enter","neue Zeile oder bestätigen"],["␣ Leertaste","Abstand zwischen Wörtern"],["⇥ Tab","springt ins nächste Feld"],["⇪ Feststelltaste","ALLES GROSS (aus Versehen an? Noch mal drücken!)"]]}),
-    tastenMissionen({titel:"Tasten-Missionen",punkte:15,text:"Klick ins Übungsfeld und mach die Missionen der Reihe nach. Die Seite merkt, wenn du es richtig machst.",
+    tastenMissionen({titel:"Wichtige Tasten ausprobieren",punkte:15,text:"Jetzt probierst du die Tasten selbst aus. Du bekommst immer <b>eine</b> Aufgabe. Wenn du die richtige Taste drückst, kommt die nächste.",
       start:"",missionen:[
-        {text:"Schreib ein großes <b>H</b>",tasten:["⇧","H"],test:e=>e.key==="H"},
-        {text:"Lösche es wieder",tasten:["⌫"],test:e=>e.key==="Backspace"},
-        {text:"Mach einen Abstand",tasten:["Leertaste"],test:e=>e.key===" "},
-        {text:"Mach eine neue Zeile",tasten:["↵ Enter"],test:e=>e.key==="Enter"},
-        {text:"Schreib ein Fragezeichen",tasten:["⇧","ß"],test:e=>e.key==="?"},
-        {text:"Schreib ein Ausrufezeichen",tasten:["⇧","1"],test:e=>e.key==="!"},
-        {text:"Schreib das @ (für E-Mails)",tasten:["AltGr","Q"],test:e=>e.key==="@"},
+        {text:"Schreib ein großes H.",wie:"Halte die Umschalt-Taste gedrückt (links unten, mit dem Pfeil nach oben). Drück dann zusätzlich H.",tasten:["Umschalt ⇧","H"],test:e=>e.key==="H"},
+        {text:"Lösche das H wieder.",wie:"Drück die Rücktaste. Sie ist oben rechts und hat einen Pfeil nach links.",tasten:["Rücktaste ⌫"],test:e=>e.key==="Backspace"},
+        {text:"Mach ein Leerzeichen.",wie:"Drück die lange Taste ganz unten. Das ist die Leertaste.",tasten:["Leertaste"],test:e=>e.key===" "},
+        {text:"Geh in eine neue Zeile.",wie:"Drück die Enter-Taste. Das ist die große Taste rechts.",tasten:["Enter ↵"],test:e=>e.key==="Enter"},
+        {text:"Schreib ein Fragezeichen.",wie:"Halte Umschalt gedrückt und drück die Taste ß (oben, rechts neben der 0).",tasten:["Umschalt ⇧","ß"],test:e=>e.key==="?"},
+        {text:"Schreib ein Ausrufezeichen.",wie:"Halte Umschalt gedrückt und drück die 1.",tasten:["Umschalt ⇧","1"],test:e=>e.key==="!"},
+        {text:"Schreib das Zeichen @. Man braucht es für E-Mail-Adressen.",wie:"Halte die Taste AltGr gedrückt (rechts neben der Leertaste) und drück Q.",tasten:["AltGr","Q"],test:e=>e.key==="@"},
       ]}),
     tippen({titel:"Die Grundstellung",punkte:15,zeilen:["fff jjj","fj fj fj","ddd kkk","dk dk dk"],
       text:"Leg die Zeigefinger auf <b>F</b> und <b>J</b> – dort sind kleine Hügel zum Fühlen. Dann tippe die Zeilen ab. Die bunte Taste zeigt dir, was als Nächstes kommt.",
       merke:"Jeder Finger hat seine eigenen Tasten (die Farben). Nach jedem Tippen kehren die Finger zurück zu <b>asdf</b> und <b>jklö</b>."}),
     tippen({titel:"Erste Wörter",punkte:15,zeilen:["sss lll","aaa ööö","das","da lag ja das","lass das"],
       text:"Bleib mit den Fingern auf der Grundreihe. Nicht auf die Tastatur schauen – schau auf die bunte Taste hier auf dem Bildschirm!"}),
-    tastenMissionen({titel:"Kopieren wie ein Profi",punkte:15,text:"Im Feld steht schon ein Satz. Klick hinein und mach die Missionen.",
+    tastenMissionen({titel:"Kopieren und einfügen",punkte:15,text:"Im Übungsfeld steht schon ein Satz. Klick einmal hinein. Dann kopierst du den Satz mit der Tastatur.",
       start:"Informatik macht Spaß!",missionen:[
-        {text:"Markiere <b>alles</b>",tasten:["Strg","A"],test:strg("a")},
-        {text:"<b>Kopiere</b> es",tasten:["Strg","C"],test:strg("c")},
-        {text:"Geh ans Ende (Pfeiltaste ↓ oder Ende-Taste)",tasten:["Ende"],test:e=>["End","ArrowDown","ArrowRight"].includes(e.key)},
-        {text:"<b>Füge</b> es ein",tasten:["Strg","V"],test:strg("v"),verzoegert:true},
-        {text:"Füge es noch einmal ein",tasten:["Strg","V"],test:strg("v"),verzoegert:true},
-        {text:"Oh nein! Mach es <b>rückgängig</b>",tasten:["Strg","Z"],test:strg("z"),verzoegert:true},
-      ],merke:"<b>Strg + C</b> = kopieren · <b>Strg + V</b> = einfügen · <b>Strg + Z</b> = rückgängig. Das klappt in fast jedem Programm!"}),
+        {text:"Markiere den ganzen Satz.",wie:"Halte die Taste Strg gedrückt (ganz unten links) und drück A. Der Satz wird farbig.",tasten:["Strg","A"],test:strg("a")},
+        {text:"Kopiere den Satz.",wie:"Halte Strg gedrückt und drück C. Du siehst nichts, aber der Computer merkt sich den Satz.",tasten:["Strg","C"],test:strg("c")},
+        {text:"Geh ans Ende vom Satz.",wie:"Drück einmal die Pfeiltaste nach rechts.",tasten:["→"],test:e=>["End","ArrowDown","ArrowRight"].includes(e.key)},
+        {text:"Füge den Satz ein.",wie:"Halte Strg gedrückt und drück V. Jetzt steht der Satz zweimal da.",tasten:["Strg","V"],test:strg("v"),verzoegert:true},
+        {text:"Füge den Satz noch einmal ein.",wie:"Wieder Strg und V.",tasten:["Strg","V"],test:strg("v"),verzoegert:true},
+        {text:"Das war einmal zu viel. Mach es rückgängig.",wie:"Halte Strg gedrückt und drück Z. Der letzte Satz verschwindet wieder.",tasten:["Strg","Z"],test:strg("z"),verzoegert:true},
+      ],merke:"<b>Strg + C</b> kopiert. <b>Strg + V</b> fügt ein. <b>Strg + Z</b> macht rückgängig. Das klappt in fast jedem Programm."}),
     paare({titel:"Tastenkürzel",punkte:10,text:"Profis sparen Zeit mit Tastenkürzeln. Was machen sie?",
       paare:[["Strg + C","kopieren"],["Strg + V","einfügen"],["Strg + Z","rückgängig machen"],["Strg + A","alles markieren"],["Strg + S","speichern"],["Strg + P","drucken"]]}),
     reihenfolge({titel:"Text kopieren – Schritt für Schritt",punkte:10,text:"Du willst einen Satz aus einer Webseite in dein Dokument kopieren. In welcher Reihenfolge?",

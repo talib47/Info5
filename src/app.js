@@ -75,7 +75,9 @@ function status(st){
   if(EINE_PRO_TAG&&tagVon(vor.fertig)===heuteTag())return"morgen";
   return"offen";
 }
-const spielplatzOffen=()=>VS||PFAD().some(s=>{const p=meineStaende()[s.id];return p?.fertig&&tagVon(p.fertig)===heuteTag()});
+/* Der Spielplatz ist die Belohnung für gute Arbeit: Er öffnet nur, wenn die Station von heute ein + hat (Schnell-Durchklicken lohnt sich nicht). */
+const heuteFertig=()=>PFAD().filter(s=>{const p=meineStaende()[s.id];return p?.fertig&&tagVon(p.fertig)===heuteTag()});
+const spielplatzOffen=()=>VS||heuteFertig().some(s=>zeichenAus(prozent(s,meineStaende()[s.id]))==="+");
 /* Aufräumen beim Verlassen eines Teils (z. B. Tastatur-Abhörer, Zeitgeber) */
 let aufraeumListe=[];
 function aufraeumen(){aufraeumListe.forEach(f=>{try{f()}catch(e){}});aufraeumListe=[]}
@@ -252,7 +254,7 @@ function seiteStart(){
   const spielListe=`<div class="spiele">${SPIELE().map(x=>`<button class="spiel" data-sp="${x.id}">${pix(x.id,24)}<b>${esc(x.titel)}</b></button>`).join("")}</div>`;
   /* Oben steht genau eine Sache: die Station von heute – oder, wenn sie geschafft ist, der Spielplatz als Belohnung */
   const heute=VS?"":!akt?`<div class="heute-karte">${pix("pixel",56,"blau")}<div><p class="eyebrow">Alles geschafft</p><h2>Du hast alle ${pfad.length} Stationen geschafft.</h2><p class="muted">Starke Leistung. Der Spielplatz gehört dir.</p></div></div>`
-    :stAkt==="morgen"?`<div class="heute-karte">${pix(akt.id,56)}<div><p class="eyebrow">Für heute fertig</p><h2>Deine Station ist geschafft.</h2><p class="muted">Bis zur nächsten Stunde darfst du spielen. Dann geht es weiter mit „${esc(akt.titel)}“</p></div></div>`
+    :stAkt==="morgen"?`<div class="heute-karte">${pix(akt.id,56)}<div><p class="eyebrow">Für heute fertig</p><h2>Deine Station ist geschafft.</h2><p class="muted">${spOffen?"Du hast ein + geschafft und darfst spielen.":"Für den Spielplatz brauchst du ein +. Du kannst deine Station verbessern: Tippe sie unten im Lernpfad an."} Nächste Stunde geht es weiter mit „${esc(akt.titel)}“</p></div></div>`
     :`<button class="heute-karte" data-id="${akt.id}">${pix(akt.id,56,"blau")}<div><p class="eyebrow">${s[akt.id]?"Hier machst du weiter":"Deine Station heute"}</p><h2>${esc(akt.titel)}</h2><p class="muted">${esc(akt.kurz)}</p></div><span class="btn">${s[akt.id]?"Weitermachen":"Anfangen"}</span></button>`;
   const spielplatz=VS?`<h2 style="margin:28px 0 6px">Spielplatz</h2><p class="muted">Bonus-Spiele ohne Note. Kinder sehen sie erst, wenn die Station von heute geschafft ist.</p><div class="spielplatz">${spielListe}</div>`
     :spOffen?`<div class="spielplatz"><h2>Spielplatz</h2><p class="muted">Deine Belohnung für heute. Hier gibt es keine Note.</p>${spielListe}</div>`:"";
@@ -270,7 +272,7 @@ function seiteStart(){
   ${VS?"":spielplatz}
   <h2 style="margin:8px 0 0">${VS?"Lernpfad":"Dein Lernpfad"}</h2>
   <ol class="lernpfad">${liste}</ol>
-  ${VS?spielplatz:spOffen||!akt?"":`<p class="spielplatz zu-hinweis">Wenn du deine Station von heute geschafft hast, öffnet sich hier der Spielplatz.</p>`}
+  ${VS?spielplatz:spOffen||!akt?"":`<p class="spielplatz zu-hinweis">Der Spielplatz öffnet sich, wenn du deine Station von heute mit einem + schaffst.</p>`}
   <p class="muted small" style="margin-top:22px">Version ${VERSION}</p>`;
   kopfAktiv();
   document.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{const x=STATIONEN.find(y=>y.id===b.dataset.id),stt=status(x);
@@ -314,7 +316,10 @@ function seiteStation(st){
     geloest,
     speichern:()=>speichern(),
     /* Ein falscher Versuch kostet 2 Punkte, aber höchstens die Hälfte der Punkte dieses Teils */
-    fehler(){prog.fehler=prog.fehler||{};prog.fehler[i]=(prog.fehler[i]||0)+1;speichern()},
+    fehler(){prog.fehler=prog.fehler||{};prog.fehler[i]=(prog.fehler[i]||0)+1;speichern();
+      /* Raten erkennen: zwei falsche Versuche innerhalb weniger Sekunden → kurze Lese-Pause statt weiterem Raten */
+      const jetzt=Date.now();serie=jetzt-letzterFehler<7000?serie+1:1;letzterFehler=jetzt;
+      if(serie>=2&&!frei){serie=0;lesePause(15)}},
     geschafft(p){if(!(i in prog.punkte)){const f=(prog.fehler||{})[i]||0;p=Math.max(Math.ceil(p/2),p-2*f);prog.punkte[i]=p;speichern(true);
         if(p>0)toast(`Geschafft, +${p} Punkte`);
         $(".pts").textContent=`${summe(prog)} Punkte`;
@@ -336,7 +341,12 @@ function seiteStation(st){
     else{prog.schritt=i+1;speichern();seiteStation(st)}
     scrollTo(0,0)};
   /* „Weiter“ prüft automatisch: richtig → kurz Erfolg zeigen, dann weiter; falsch → bleiben, Rückmeldung steht da */
-  let sperre=false;
+  let sperre=false,pause=0,letzterFehler=0,serie=0,pauseTimer=null;
+  function lesePause(sek){const w=$("#weiter");if(!w)return;pause=Date.now()+sek*1000;const text=w.textContent;w.disabled=true;
+    const tick=()=>{const r=Math.ceil((pause-Date.now())/1000);if(r<=0||!w.isConnected){clearInterval(pauseTimer);if(w.isConnected){w.disabled=false;w.textContent=text}return}
+      w.textContent=`Erst lesen (${r})`};
+    tick();pauseTimer=setInterval(tick,500);aufraeumListe.push(()=>clearInterval(pauseTimer));
+    toast("Nicht raten. Lies die Aufgabe noch einmal in Ruhe.")}
   $("#weiter").onclick=()=>{if(sperre)return;
     if(frei||i in prog.punkte)return vor();
     if(ctx.pruefer){if(ctx.pruefer()){sperre=true;setTimeout(vor,900)}return}
@@ -359,16 +369,20 @@ function seiteErgebnis(st,prog){
   <div class="ergebnis result">
     <div><h1 style="margin:0 0 4px">${ich()}</h1><p class="muted" style="margin:0">${VS?"Vorschau":"Klasse "+esc(sitzung.klasse)}</p>
       <dl><dt>Punkte</dt><dd>${summe(prog)} von ${maxPunkte(st)} (${pz} %)</dd>
+      <dt>Fehlversuche</dt><dd>${Object.values(prog.fehler||{}).reduce((a,b)=>a+b,0)}</dd>
       <dt>Gearbeitet</dt><dd>${zeit(prog.aktiv)}</dd>
       <dt>Fertig am</dt><dd>${new Date(prog.fertig).toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</dd></dl></div>
     <div class="stempel"><span>Note für heute</span><span class="z note zeichen">${z}</span><span>${ZEICHEN_TEXT[z]}</span></div>
   </div>
   <p style="font-weight:700">Zeig dieses Ergebnis deiner Lehrkraft.${st.kreativ?" Die Note für Kreativität gibt die Lehrkraft.":""}</p>
   ${st.ergebnis?`<div class="block">${st.ergebnis(prog.daten)}</div>`:""}
-  <div class="nav noprint"><button class="btn ghost" id="zur">Zum Lernpfad</button>${spielplatzOffen()?`<button class="btn" id="spielen">Zum Spielplatz</button>`:""}</div>`;
+  <div class="nav noprint"><button class="btn ghost" id="zur">Zum Lernpfad</button>${VS?"":z==="+"?`<button class="btn" id="spielen">Zum Spielplatz</button>`:`<button class="btn" id="besser">Station verbessern</button>`}</div>
+  ${VS||z==="+"?"":`<p class="muted" style="margin-top:14px">Der Spielplatz öffnet nur mit einem +. Du kannst die Station noch einmal machen. Dann zählt dein neues Ergebnis.</p>`}`;
   kopfAktiv();
   if(st.nachErgebnis)st.nachErgebnis(prog.daten);
   $("#zur").onclick=()=>location.hash=home();
+  if($("#besser"))$("#besser").onclick=()=>{if(!confirm("Station noch einmal von vorn machen? Dein neues Ergebnis zählt dann."))return;
+    staende[st.id]={schritt:0,punkte:{},daten:{},start:Date.now(),aktiv:0,versuch:(prog.versuch||1)+1};laufend=null;staendeLokal();seiteStation(st)};
   if($("#spielen"))$("#spielen").onclick=()=>{location.hash=home();setTimeout(()=>document.querySelector(".spielplatz")?.scrollIntoView({behavior:"smooth"}),100)};
   if(VS)$(".nav").insertAdjacentHTML("beforeend",`<button class="btn ghost" id="vnochmal">Station noch mal</button>`),$("#vnochmal").onclick=()=>{delete vStaende[st.id];laufend=null;seiteStation(st)};
 }
