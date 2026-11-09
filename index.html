@@ -160,6 +160,9 @@ label.btn{cursor:pointer}
 .konfetti{position:fixed;inset:0;pointer-events:none;z-index:20;overflow:hidden}
 .konfetti i{position:absolute;top:-40px;font-style:normal;animation:fall 2.6s ease-in forwards}
 @keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+.bildchen{font-size:2rem;line-height:1.05;letter-spacing:2px;margin:0 0 14px}
+.antworten{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.antwort{font-size:1.25rem;text-align:center;min-height:72px}
 /* Bausteine der Stationen */
 .paar{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;align-items:start;margin-top:8px}
 .px{display:grid;gap:2px;background:var(--line);border:2px solid var(--line);border-radius:10px;overflow:hidden;width:100%;max-width:340px;aspect-ratio:1;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -194,7 +197,7 @@ label.btn{cursor:pointer}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="e68a195012";
+const VERSION="418f06dff3";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -771,10 +774,11 @@ function pixelRaster({w,h,werte,palette,malbar=false,farbe=()=>1,klein=false,onA
 }
 
 /* Aha-Frage: kurze Frage mit 3 leichten Antworten. Nach der richtigen Antwort erklärt ein „Aha!“-Kasten den Sinn.
-   frage("Titel","Frage?",["richtig","falsch","falsch"],"Erklärung",punkte)  – die erste Antwort ist die richtige, angezeigt wird gemischt. */
-function frage(titel,text,antworten,aha,punkte=5){return{titel,punkte,zeige(el,ctx){
+   frage("Titel","Frage?",["richtig","falsch"],"Erklärung",punkte,bildHTML)  – die erste Antwort ist die richtige, angezeigt wird gemischt.
+   Für Klasse 5: kurze Frage, 2 Antworten mit Emoji, eine davon offensichtlich falsch. */
+function frage(titel,text,antworten,aha,punkte=5,bild=""){return{titel,punkte,zeige(el,ctx){
   const reihe=ctx.daten.reihe||(ctx.daten.reihe=antworten.map((_,k)=>k).sort(()=>Math.random()-.5));ctx.speichern();
-  el.innerHTML=`<p class="frage">${text}</p><div class="antworten">${reihe.map(k=>`<button class="antwort" data-k="${k}">${esc(antworten[k])}</button>`).join("")}</div><div id="aha"></div>`;
+  el.innerHTML=`<p class="frage">${text}</p>${bild}<div class="antworten">${reihe.map(k=>`<button class="antwort" data-k="${k}">${esc(antworten[k])}</button>`).join("")}</div><div id="aha"></div>`;
   const zeigeAha=()=>{el.querySelector("#aha").innerHTML=`<div class="aha"><b>💡 Aha!</b> ${aha}</div>`;
     el.querySelectorAll(".antwort").forEach(b=>{b.disabled=true;if(b.dataset.k==="0")b.classList.add("richtig")})};
   ctx.pruefer=()=>{toast("Tippe zuerst auf eine Antwort.");return false};
@@ -883,21 +887,21 @@ station({
     abmalen("pfeil","Abmalen 1: Der Pfeil",10),
     abmalen("boot","Abmalen 2: Das Boot",10),
     abmalen("alien","Abmalen 3: Das Alien",10),
-    frage("Kurze Frage","Ein Bild hat 8 Reihen und in jeder Reihe 8 Kästchen. Wie viele Pixel sind das?",["64","16","88"],
-      "8 mal 8 ist 64. Dein Bild hatte also 64 Pixel. Ein Handy-Bildschirm hat über <b>2 Millionen</b> Pixel – darum sieht man sie nicht."),
+    frage("Frage","Ein Bild am Computer besteht aus kleinen …",["🟦 Kästchen","🍕 Pizzastücken"],
+      "Die kleinen Kästchen heißen <b>Pixel</b>. Jedes Bild auf dem Handy oder Computer besteht aus Pixeln.",5,
+      `<div class="bildchen">⬜⬛⬛⬜<br>⬛⬛⬛⬛<br>⬜⬛⬛⬜</div>`),
     codeBild("herz","Geheimcode 1",10),
     codeBild("smiley","Geheimcode 2",10),
     codeBild("haus","Geheimcode 3",10),
-    frage("Kurze Frage","Warum benutzt der Computer nur 0 und 1?",["Weil im Computer Strom an oder aus ist","Weil er nur bis 1 zählen kann","Weil 0 und 1 am schönsten aussehen"],
-      "Im Computer gibt es nur zwei Zustände: Strom <b>an (1)</b> oder <b>aus (0)</b>. Aus ganz vielen 0 und 1 baut er alles – Bilder, Musik, Videos und Spiele. Das nennt man <b>Binärcode</b>."),
-    frage("Kurze Frage","In einer Reihe steht der Code 11111111. Wie sieht die Reihe aus?",["Alles schwarz","Alles weiß","Halb schwarz, halb weiß"],
-      "Jede 1 ist ein schwarzes Kästchen. Acht Einsen sind eine ganze schwarze Reihe. Du kannst jetzt Bilder lesen wie ein Computer!"),
+    frage("Frage","Im Geheimcode heißt die 1 …",["⬛ schwarz","⬜ weiß"],
+      "Der Computer kennt nur <b>0</b> und <b>1</b>. Daraus macht er Bilder, Musik und Spiele.",5),
+    frage("Frage","Welcher Code passt zu dieser Reihe?",["11111111","00000000"],
+      "Jede <b>1</b> ist ein schwarzes Kästchen. Du kannst jetzt lesen wie ein Computer! 🤖",5,
+      `<div class="bildchen">⬛⬛⬛⬛⬛⬛⬛⬛</div>`),
     codeBild("apfel","Farbcode 1",15,true),
     codeBild("sonne","Farbcode 2",15,true),
-    frage("Kurze Frage","Ein Foto soll ganz viele Farben haben. Was braucht der Computer dafür?",["Mehr Zahlen für mehr Farben","Größere Kästchen","Einen neuen Bildschirm"],
-      "Jede Farbe ist für den Computer nur eine Zahl. Du hattest 10 Farben. Ein echtes Handyfoto hat über <b>16 Millionen</b> Farben – jede hat ihre eigene Zahl."),
-    frage("Letzte Frage","Du ziehst ein kleines Pixelbild auf dem Bildschirm ganz groß. Was passiert?",["Man sieht die einzelnen Kästchen","Es wird schärfer","Es wird bunter"],
-      "Das Bild hat nicht mehr Pixel bekommen, die Kästchen werden nur größer. Darum sehen vergrößerte Bilder <b>„pixelig“</b> aus."),
+    frage("Frage","Für den Computer ist jede Farbe eine …",["🔢 Zahl","🖍️ Wachsmalstift"],
+      "Richtig! Rot ist für den Computer zum Beispiel die Zahl 2. <b>Jede Farbe ist eine Zahl.</b>",5),
     {titel:"Dein eigenes Bild",punkte:20,zeige(el,ctx){
       el.innerHTML=`<p>Jetzt bist du dran! Mal ein eigenes Bild auf 16 mal 16 Kästchen. Gib ihm einen Namen. Die schönsten und kreativsten Bilder bekommen die beste Note.</p>
         <label class="f" for="t">Name deines Bildes</label><input type="text" id="t" maxlength="40" placeholder="z. B. Mein Haustier">

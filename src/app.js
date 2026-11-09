@@ -439,10 +439,11 @@ function pixelRaster({w,h,werte,palette,malbar=false,farbe=()=>1,klein=false,onA
 }
 
 /* Aha-Frage: kurze Frage mit 3 leichten Antworten. Nach der richtigen Antwort erklärt ein „Aha!“-Kasten den Sinn.
-   frage("Titel","Frage?",["richtig","falsch","falsch"],"Erklärung",punkte)  – die erste Antwort ist die richtige, angezeigt wird gemischt. */
-function frage(titel,text,antworten,aha,punkte=5){return{titel,punkte,zeige(el,ctx){
+   frage("Titel","Frage?",["richtig","falsch"],"Erklärung",punkte,bildHTML)  – die erste Antwort ist die richtige, angezeigt wird gemischt.
+   Für Klasse 5: kurze Frage, 2 Antworten mit Emoji, eine davon offensichtlich falsch. */
+function frage(titel,text,antworten,aha,punkte=5,bild=""){return{titel,punkte,zeige(el,ctx){
   const reihe=ctx.daten.reihe||(ctx.daten.reihe=antworten.map((_,k)=>k).sort(()=>Math.random()-.5));ctx.speichern();
-  el.innerHTML=`<p class="frage">${text}</p><div class="antworten">${reihe.map(k=>`<button class="antwort" data-k="${k}">${esc(antworten[k])}</button>`).join("")}</div><div id="aha"></div>`;
+  el.innerHTML=`<p class="frage">${text}</p>${bild}<div class="antworten">${reihe.map(k=>`<button class="antwort" data-k="${k}">${esc(antworten[k])}</button>`).join("")}</div><div id="aha"></div>`;
   const zeigeAha=()=>{el.querySelector("#aha").innerHTML=`<div class="aha"><b>💡 Aha!</b> ${aha}</div>`;
     el.querySelectorAll(".antwort").forEach(b=>{b.disabled=true;if(b.dataset.k==="0")b.classList.add("richtig")})};
   ctx.pruefer=()=>{toast("Tippe zuerst auf eine Antwort.");return false};

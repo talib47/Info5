@@ -147,3 +147,6 @@ label.btn{cursor:pointer}
 .konfetti{position:fixed;inset:0;pointer-events:none;z-index:20;overflow:hidden}
 .konfetti i{position:absolute;top:-40px;font-style:normal;animation:fall 2.6s ease-in forwards}
 @keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+.bildchen{font-size:2rem;line-height:1.05;letter-spacing:2px;margin:0 0 14px}
+.antworten{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.antwort{font-size:1.25rem;text-align:center;min-height:72px}
