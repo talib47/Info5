@@ -109,8 +109,15 @@ async function hochladen(){
       if(ok===false){rauswurf("Du wurdest abgemeldet. Bitte melde dich neu an.");return}}
     catch(e){pushWarte.add(id);clearTimeout(pushTimer);pushTimer=setTimeout(hochladen,8000)}
   }
+  /* Solange etwas nicht beim Server angekommen ist: sichtbar machen und eine Notkopie auf diesem PC behalten */
+  document.body.dataset.offline=pushWarte.size?"1":"";
+  if(pushWarte.size)notkopie();else lsDel("if5-ungesendet");
 }
-function rauswurf(t){sitzung=null;staende={};laufend=null;lsDel("if5-sitzung");lsDel("if5-staende");toast(t);location.hash="";render()}
+function notkopie(){if(!sitzung||!pushWarte.size)return;const s={};pushWarte.forEach(id=>{if(staende[id])s[id]=staende[id]});
+  const alt=lsGet("if5-ungesendet")||[];const rest=alt.filter(x=>!(x.klasse===sitzung.klasse&&x.tier===sitzung.tier));
+  rest.push({klasse:sitzung.klasse,tier:sitzung.tier,staende:s,zeit:Date.now()});lsSet("if5-ungesendet",rest.slice(-12))}
+const weiterAls=(a,b)=>!b||(!!a.fertig&&!b.fertig)||Object.keys(a.punkte||{}).length>Object.keys(b.punkte||{}).length;
+function rauswurf(t){notkopie();sitzung=null;staende={};laufend=null;lsDel("if5-sitzung");lsDel("if5-staende");toast(t);location.hash="";render()}
 
 /* Automatisch abmelden, wenn die Stunde vorbei ist (10 Minuten Nachlauf für Ergebniskarte und Speichern),
    damit die nächste Gruppe am selben PC nicht im fremden Tier landet. */
@@ -178,7 +185,7 @@ const ich=()=>{if(VS)return"Lehrkraft";const t=tierInfo(sitzung.tier);return`${t
 const kopf=()=>`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5</span></div>${VS?`<div class="row"><span class="who">Vorschau für Lehrkräfte</span><a class="link" href="#lehrer">Zur Lehrer-Ansicht</a></div>`:sitzung?`<div class="row"><span class="who">${ich()}, ${esc(sitzung.klasse)}</span><button class="link" id="raus">Abmelden</button></div>`:""}</div>`;
 function kopfAktiv(){const b=$("#raus");if(b)b.onclick=async()=>{
   if(!confirm("Abmelden? Dein Stand ist gespeichert."))return;
-  clearTimeout(pushTimer);await hochladen();try{await db.abmelden(sitzung.token)}catch(e){}
+  clearTimeout(pushTimer);await hochladen();notkopie();try{await db.abmelden(sitzung.token)}catch(e){}
   sitzung=null;staende={};laufend=null;lsDel("if5-sitzung");lsDel("if5-staende");location.hash="";render()}}
 const vorschauHinweis=()=>db.online?"":`<p class="muted small" style="margin-top:18px">Vorschau: Alles wird nur in diesem Browser gespeichert.</p>`;
 
@@ -240,7 +247,12 @@ function seiteNeuTier(klasse,vergeben){
 
 function anmeldeErgebnis(klasse,tier,r,nochmal){
   const t=tierInfo(tier);
-  if(r.token){sitzung={klasse,tier,token:r.token};lsSet("if5-sitzung",sitzung);lsSet("if5-zuletzt",{klasse,tier});staende=r.staende||{};staendeLokal();toast(`Hallo ${t.name}!`);location.hash="";render();return}
+  if(r.token){sitzung={klasse,tier,token:r.token};lsSet("if5-sitzung",sitzung);lsSet("if5-zuletzt",{klasse,tier});staende=r.staende||{};
+    /* Liegt auf diesem PC noch ein nicht gesendeter Stand von diesem Tier? Dann jetzt nachreichen. */
+    const un=(lsGet("if5-ungesendet")||[]).find(x=>x.klasse===klasse&&x.tier===tier);
+    if(un){Object.entries(un.staende).forEach(([id,p])=>{if(weiterAls(p,staende[id])){staende[id]=p;pushWarte.add(id)}});
+      lsSet("if5-ungesendet",(lsGet("if5-ungesendet")||[]).filter(x=>x!==un&&!(x.klasse===klasse&&x.tier===tier)));setTimeout(hochladen,500)}
+    staendeLokal();toast(`Hallo ${t.name}!`);location.hash="";render();return}
   const T={besetzt:"Dieses Tier ist schon an einem anderen Platz angemeldet. Sag deiner Lehrkraft Bescheid.",zu:"Die Klasse ist gerade geschlossen.",
     unbekannt:"Dieses Tier gibt es nicht mehr.",vergeben:"Dieses Tier hat sich gerade jemand anderes genommen. Such dir ein anderes aus.",voll:"Die Klasse ist voll. Sag deiner Lehrkraft Bescheid.",netz:"Keine Verbindung. Versuch es noch mal."};
   const m=$("#m");m.className="msg no";m.textContent=T[r.fehler]||"Das hat nicht geklappt.";m.scrollIntoView({block:"center",behavior:"smooth"});
@@ -338,7 +350,7 @@ function seiteStation(st){
   $("#zur").onclick=()=>{if(i===0){location.hash=home()}else{prog.schritt=i-1;speichern();seiteStation(st);scrollTo(0,0)}};
   const vor=()=>{if(i===st.schritte.length-1){
       if(st.spiel){delete staende[st.id];staendeLokal();laufend=null;toast("Gut gespielt.");location.hash=home();return}
-      prog.fertig=Date.now();speichern(true);seiteErgebnis(st,prog)}
+      prog.fertig=Date.now();prog.erg={p:summe(prog),max:maxPunkte(st),z:zeichenAus(prozent(st,prog)),f:Object.values(prog.fehler||{}).reduce((a,b)=>a+b,0)};speichern(true);seiteErgebnis(st,prog)}
     else{prog.schritt=i+1;speichern();seiteStation(st)}
     scrollTo(0,0)};
   /* „Weiter“ prüft automatisch: richtig → kurz Erfolg zeigen, dann weiter; falsch → bleiben, Rückmeldung steht da */
@@ -429,9 +441,33 @@ function lehrerLogin(){
   $("#f").onsubmit=async e=>{e.preventDefault();try{await db.lAnmelden($("#e").value.trim(),$("#p").value);seiteLehrer()}catch(err){const m=$("#m");m.className="msg no";m.textContent="Anmeldung fehlgeschlagen."}};
 }
 
+/* Notfall-Datei: alle Noten als Tabelle (öffnet in Excel) – auf Knopfdruck und einmal täglich automatisch */
+function notfallCsv(){const d=lDaten;if(!d)return"";
+  const tierVon=Object.fromEntries(d.kinder.map(k=>[k.id,k])),titel=Object.fromEntries(STATIONEN.map(s=>[s.id,s.titel]));
+  const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+  const kopf=["Klasse","Name","Tier","Station","Stand","Note","Punkte","von","Fehlversuche","Minuten","Fertig am"];
+  const z=[];const schon=new Set();
+  (d.abschluesse||[]).forEach(a=>{schon.add(a.kind_id+"|"+a.station+"|"+new Date(a.fertig_am).getTime());
+    z.push([a.klasse,namen[a.kind_id]||"",a.tier,titel[a.station]||a.station,tierVon[a.kind_id]?"fertig":"fertig (Kind gelöscht)",a.note,a.punkte,a.max,a.fehlversuche,a.minuten,new Date(a.fertig_am).toLocaleString("de-DE")])});
+  d.kinder.forEach(k=>Object.entries(d.staende[k.id]||{}).forEach(([id,p])=>{const st=STATIONEN.find(s=>s.id===id);if(!st||st.spiel)return;
+    if(p.fertig&&schon.has(k.id+"|"+id+"|"+p.fertig))return;
+    z.push([k.klasse,namen[k.id]||"",k.tier,st.titel,p.fertig?"fertig":`Teil ${(p.schritt||0)+1} von ${st.schritte.length}`,zeichenAus(prozent(st,p)),summe(p),maxPunkte(st),Object.values(p.fehler||{}).reduce((a,b)=>a+b,0),Math.round((p.aktiv||0)/60000),p.fertig?new Date(p.fertig).toLocaleString("de-DE"):""])}));
+  z.sort((a,b)=>String(a[0]+a[1]+a[2]).localeCompare(String(b[0]+b[1]+b[2]),"de"));
+  return"\uFEFF"+[kopf,...z].map(r=>r.map(q).join(";")).join("\r\n")}
+function notfallLaden(auto){const csv=notfallCsv();if(!csv)return;
+  try{localStorage.setItem("if5-notfall",csv);localStorage.setItem("if5-notfall-zeit",new Date().toISOString())}catch(e){}
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download=`Informatik5-Noten-${new Date().toLocaleDateString("sv")}.csv`;a.click();URL.revokeObjectURL(a.href);
+  lsSet("if5-notfall-tag",{tag:new Date().toDateString(),n:(lDaten.abschluesse||[]).length});
+  toast(auto?"Notfall-Datei mit allen Noten wurde automatisch gespeichert.":"Notfall-Datei gespeichert.")}
+
 async function lehrerLaden(){
   try{lDaten=await db.lAlles()}catch(e){$("#lb").innerHTML=`<div class="msg no">Laden fehlgeschlagen: ${esc(e.message||e)}</div>`;return}
   lehrerZeigen();
+  /* Kopie der Notenliste immer auch in diesem Browser; neue Abschlüsse → einmal am Tag automatisch als Datei */
+  try{localStorage.setItem("if5-notfall",notfallCsv());localStorage.setItem("if5-notfall-zeit",new Date().toISOString())}catch(e){}
+  const nt=lsGet("if5-notfall-tag")||{},n=(lDaten.abschluesse||[]).length;
+  if(db.online&&n>0&&n!==nt.n&&nt.tag!==new Date().toDateString())notfallLaden(true);
 }
 
 function lehrerZeigen(){
@@ -482,13 +518,14 @@ function lehrerZeigen(){
     <div class="row" style="margin-top:10px"><button class="btn" id="zuteilen">Speichern und Tiere zuteilen</button><span class="muted small">Danach: Kärtchen drucken und verteilen.</span></div></details>
   <div class="row noprint">
     <button class="btn ghost" id="druck" ${kinder.length?"":"disabled"}>Kärtchen drucken</button>
+    <button class="btn" id="notfall">Notfall-Datei: alle Noten speichern</button>
     <button class="btn ghost" id="sichern">Namensliste sichern</button><label class="btn ghost">Namensliste laden<input type="file" id="laden" accept=".json" hidden></label>
   </div>
   <details class="block plan"><summary><b>Lernpfad & Lehrplan</b> <span class="muted small">– alle ${PFAD().length} Stationen mit Bezug zum Kernlehrplan NRW</span></summary>
     <ol>${PFAD().map(st=>`<li><b>${esc(st.titel)}</b> <span class="chip">${KAPITEL_NAME[st.kapitel]||""}</span><br><span class="small">${esc(st.kurz)}</span>${st.klp?`<br><span class="muted small">KLP: ${esc(st.klp)}</span>`:""}</li>`).join("")}</ol>
     <p class="muted small">Ablauf: Jede Station ist eine Doppelstunde (60 Min.). Die Kinder gehen den Lernpfad der Reihe nach, höchstens eine neue Station pro Tag. Der Spielplatz (Bonus-Spiele, ohne Note) öffnet nur mit einem + in der Station von heute.</p></details>
   <p class="muted small" style="margin-top:14px">${!db.online?"<b>Vorschau-Modus:</b> Alles liegt nur in diesem Browser."
-    :db.hatSchluessel()?"Die Namen sehen nur du und dieses Konto. Sie werden mit deinem Passwort verschlüsselt gesichert und sind nach der Anmeldung auf jedem Gerät da. Kinder sehen nur Tiere."+(namenStand==="fehler"?" <b>Die Sicherung hat gerade nicht geklappt.</b>":"")
+    :db.hatSchluessel()?"<b>Sicherung:</b> Jede fertige Station wird zusätzlich in ein Protokoll geschrieben, das sich nicht löschen lässt. Die Datenbank sichert sich stündlich selbst (60 Tage zurück). Eine Notfall-Datei mit allen Noten wird einmal täglich automatisch heruntergeladen, wenn es neue Noten gibt. Die Namen sehen nur du und dieses Konto. Sie werden mit deinem Passwort verschlüsselt gesichert und sind nach der Anmeldung auf jedem Gerät da. Kinder sehen nur Tiere."+(namenStand==="fehler"?" <b>Die Sicherung hat gerade nicht geklappt.</b>":"")
     :"<b>Melde dich einmal ab und wieder an</b>, dann werden die Namen verschlüsselt bei deinem Konto gesichert. Bis dahin liegen sie nur in diesem Browser."}</p>`;
 
   document.querySelectorAll("[data-kl]").forEach(b=>b.onclick=()=>{lKlasse=b.dataset.kl;lsSet("if5-lklasse",lKlasse);lehrerZeigen()});
@@ -499,6 +536,7 @@ function lehrerZeigen(){
     if(a==="freigeben")return lAktion(()=>db.lAbmeldenKind(id));
     if(a==="mehr")return lMehr(d.kinder.find(k=>k.id===id))});
   $("#druck").onclick=()=>lDruck(kinder);
+  $("#notfall").onclick=()=>notfallLaden(false);
   $("#zuteilen").onclick=async()=>{const liste=[...new Set($("#kliste").value.split("\n").map(x=>x.trim()).filter(Boolean))];
     listen[kl]=liste;namenMerken();
     const neu=liste.filter(n=>!kinder.some(k=>namen[k.id]===n)),frei=TIERE.map(t=>t[1]).filter(t=>!kinder.some(k=>k.tier===t));

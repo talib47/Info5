@@ -728,3 +728,4 @@ body[data-seite="lehrer"] #app{max-width:76rem}
 .liste tr.auff td{background:color-mix(in srgb,var(--marker) 28%,transparent)}
 .heute-t td,.heute-t th{padding:7px 10px}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .kib .chip{color:var(--ink)}}
+body[data-offline="1"][data-seite="kind"]::before{content:"Keine Verbindung. Dein Stand ist auf diesem Computer gesichert und wird gesendet, sobald das Internet wieder da ist. Arbeite einfach weiter.";display:block;background:var(--marker);color:var(--marker-ink);font-weight:700;padding:8px 16px;text-align:center}

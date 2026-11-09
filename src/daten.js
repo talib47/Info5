@@ -138,12 +138,12 @@ const db={
   },
   async lAlles(){
     if(CLOUD){
-      const [k,s,f]=await Promise.all([sb.from("kinder").select("*").order("erstellt"),sb.from("staende").select("kind_id,station,prog"),sb.from("freigaben").select("*")]);
+      const [k,s,f,a]=await Promise.all([sb.from("kinder").select("*").order("erstellt"),sb.from("staende").select("kind_id,station,prog"),sb.from("freigaben").select("*"),sb.from("abschluesse").select("*").order("fertig_am")]);
       for(const r of [k,s,f])if(r.error)throw r.error;
       const staende={};s.data.forEach(r=>{(staende[r.kind_id]=staende[r.kind_id]||{})[r.station]=r.prog});
       const freigaben={};f.data.forEach(r=>freigaben[r.klasse]={offen_bis:r.offen_bis?new Date(r.offen_bis).getTime():0,zu_bis:r.zu_bis?new Date(r.zu_bis).getTime():0});
       return{kinder:k.data.map(r=>({id:r.id,klasse:r.klasse,tier:r.tier,
-        besetzt:!!(r.token&&Date.now()-new Date(r.aktiv_seit).getTime()<MIN75),aktiv:r.aktiv_seit?new Date(r.aktiv_seit).getTime():0})),staende,freigaben};
+        besetzt:!!(r.token&&Date.now()-new Date(r.aktiv_seit).getTime()<MIN75),aktiv:r.aktiv_seit?new Date(r.aktiv_seit).getTime():0})),staende,freigaben,abschluesse:a.error?[]:a.data};
     }
     const d=vdb.lesen();
     return{kinder:d.kinder.map(k=>({...k,besetzt:vBesetzt(k)})),staende:d.staende,freigaben:d.freigaben};
