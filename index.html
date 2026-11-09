@@ -164,7 +164,7 @@ label.btn{cursor:pointer}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="c2b41c7e56";
+const VERSION="34be86e2ae";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -381,6 +381,20 @@ async function hochladen(){
   }
 }
 function rauswurf(t){sitzung=null;staende={};laufend=null;lsDel("if5-sitzung");lsDel("if5-staende");toast(t);location.hash="";render()}
+
+/* Automatisch abmelden, wenn die Stunde vorbei ist (10 Minuten Nachlauf für Ergebniskarte und Speichern),
+   damit die nächste Gruppe am selben PC nicht im fremden Tier landet. */
+const NACHLAUF=10;
+async function stundeVorbeiPruefen(){
+  if(!sitzung||location.hash.startsWith("#lehrer"))return;
+  const k=sitzung.klasse;
+  if(planOffen(k)||planOffen(k,Date.now()-NACHLAUF*60000))return;
+  let offen=[];try{offen=await db.offeneKlassen()}catch(e){return}
+  if(offen.includes(k))return;
+  clearTimeout(pushTimer);await hochladen();try{await db.abmelden(sitzung.token)}catch(e){}
+  rauswurf("Die Stunde ist vorbei. Du wurdest abgemeldet – dein Stand ist gespeichert.");
+}
+setInterval(stundeVorbeiPruefen,60000);
 
 /* Aktive Zeit messen (nur wenn die Seite sichtbar ist) */
 let tick=Date.now();
@@ -773,7 +787,7 @@ station({
 
 /* ---------- Start ---------- */
 STATIONEN.sort((a,b)=>(a.nr||99)-(b.nr||99));
-render();
+stundeVorbeiPruefen().finally(render);
 
 /* Neue Version holen (wie KT Schule): beim Start und beim Zurückkehren */
 async function versionPruefen(){if(!/github\.io$/.test(location.hostname))return;

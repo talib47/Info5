@@ -82,6 +82,20 @@ async function hochladen(){
 }
 function rauswurf(t){sitzung=null;staende={};laufend=null;lsDel("if5-sitzung");lsDel("if5-staende");toast(t);location.hash="";render()}
 
+/* Automatisch abmelden, wenn die Stunde vorbei ist (10 Minuten Nachlauf für Ergebniskarte und Speichern),
+   damit die nächste Gruppe am selben PC nicht im fremden Tier landet. */
+const NACHLAUF=10;
+async function stundeVorbeiPruefen(){
+  if(!sitzung||location.hash.startsWith("#lehrer"))return;
+  const k=sitzung.klasse;
+  if(planOffen(k)||planOffen(k,Date.now()-NACHLAUF*60000))return;
+  let offen=[];try{offen=await db.offeneKlassen()}catch(e){return}
+  if(offen.includes(k))return;
+  clearTimeout(pushTimer);await hochladen();try{await db.abmelden(sitzung.token)}catch(e){}
+  rauswurf("Die Stunde ist vorbei. Du wurdest abgemeldet – dein Stand ist gespeichert.");
+}
+setInterval(stundeVorbeiPruefen,60000);
+
 /* Aktive Zeit messen (nur wenn die Seite sichtbar ist) */
 let tick=Date.now();
 setInterval(()=>{const n=Date.now(),d=Math.min(n-tick,15000);tick=n;
@@ -366,7 +380,7 @@ function farbLeiste(palette,nm,start=1,ohneWeiss=false){
 
 /* ---------- Start ---------- */
 STATIONEN.sort((a,b)=>(a.nr||99)-(b.nr||99));
-render();
+stundeVorbeiPruefen().finally(render);
 
 /* Neue Version holen (wie KT Schule): beim Start und beim Zurückkehren */
 async function versionPruefen(){if(!/github\.io$/.test(location.hostname))return;
