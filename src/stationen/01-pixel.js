@@ -17,26 +17,29 @@ const BILDER={
   sonne:["00444400","04444440","04444440","00444400","00000000","55555555","55555555","55555555"],
 };
 
-/* Vergleich + Rückmeldung; ab dem 3. Fehlversuch werden falsche Kästchen rot umrandet */
+/* Wird beim Tippen auf „Weiter“ aufgerufen. true = richtig. Ab dem 3. Fehlversuch werden falsche Kästchen rot umrandet. */
 function pruefen(ctx,raster,soll,punkte,box){
+  if(raster.werte.every(x=>x===0)){box.className="msg no";box.textContent="Mal zuerst das Bild, dann tippe auf „Weiter“.";return false} // aus Versehen getippt: kein Abzug
   const falsch=[];soll.forEach((x,k)=>{if(raster.werte[k]!==x)falsch.push(k)});
   ctx.daten.versuche=(ctx.daten.versuche||0)+1;ctx.speichern();
-  if(!falsch.length){raster.markiere([]);box.className="msg ok";box.textContent="Richtig! Alle Kästchen stimmen.";ctx.geschafft(punkte);return}
+  if(!falsch.length){raster.markiere([]);box.className="msg ok";box.textContent="Richtig! Alle Kästchen stimmen.";ctx.geschafft(punkte);return true}
   ctx.fehler();
   box.className="msg no";
   box.textContent=falsch.length===1?"Fast! Noch 1 Kästchen ist falsch.":`Noch ${falsch.length} Kästchen sind falsch.`;
   if(ctx.daten.versuche>=3){raster.markiere(falsch);box.textContent+=" Sie sind jetzt rot umrandet."}
+  box.scrollIntoView({block:"nearest",behavior:"smooth"});
+  return false;
 }
 
 function abmalen(name,titel,punkte){return{titel,punkte,zeige(el,ctx){
   const soll=zahlen(BILDER[name]);
   el.innerHTML=`<p>Mal das Bild links genau ab. Tippe auf ein Kästchen, dann wird es schwarz. Nochmal tippen macht es wieder weiß. Du kannst auch ziehen.</p>
     <div class="paar"><div><p class="eyebrow">Vorlage</p><div id="a"></div></div><div><p class="eyebrow">Dein Bild</p><div id="b"></div></div></div>
-    <div class="row noprint" style="margin-top:14px"><button class="btn" id="p">Prüfen</button><button class="btn ghost" id="l">Alles löschen</button></div><div id="m"></div>`;
+    <div class="row noprint" style="margin-top:14px"><button class="btn ghost" id="l">Alles löschen</button><span class="muted small">Fertig? Tippe unten auf „Weiter“ – dann wird geprüft.</span></div><div id="m"></div>`;
   el.querySelector("#a").append(pixelRaster({w:8,h:8,werte:soll,palette:SW}).el);
   const r=pixelRaster({w:8,h:8,werte:ctx.daten.bild,palette:SW,malbar:true,onAenderung:v=>{ctx.daten.bild=v.slice();ctx.speichern()}});
   el.querySelector("#b").append(r.el);
-  el.querySelector("#p").onclick=()=>pruefen(ctx,r,soll,punkte,el.querySelector("#m"));
+  ctx.pruefer=()=>pruefen(ctx,r,soll,punkte,el.querySelector("#m"));
   el.querySelector("#l").onclick=()=>r.setzeAlle(Array(64).fill(0));
   if(ctx.geloest){const m=el.querySelector("#m");m.className="msg ok";m.textContent="Schon gelöst. Weiter geht's!"}
 }}}
@@ -50,12 +53,12 @@ function codeBild(name,titel,punkte,farbig){return{titel,punkte,zeige(el,ctx){
     `<div class="paar"><div><p class="eyebrow">Code</p><ol class="code">${roh.map(z=>`<li>${z.split("").map(c=>`<span>${c}</span>`).join("")}</li>`).join("")}</ol></div>
     <div><p class="eyebrow">Dein Bild</p><div id="b"></div></div></div>
     ${farbig?`<div class="legende">${genutzt.map(k=>`<span><i style="background:${PAL[k]}"></i>${k} = ${NAMEN[k]}</span>`).join("")}</div><div id="pal"></div>`:""}
-    <div class="row noprint" style="margin-top:14px"><button class="btn" id="p">Prüfen</button><button class="btn ghost" id="l">Alles löschen</button></div><div id="m"></div>`;
+    <div class="row noprint" style="margin-top:14px"><button class="btn ghost" id="l">Alles löschen</button><span class="muted small">Fertig? Tippe unten auf „Weiter“ – dann wird geprüft.</span></div><div id="m"></div>`;
   let leiste=null;
   if(farbig){leiste=farbLeiste(PAL.slice(0,Math.max(...genutzt)+1),NAMEN,genutzt.find(k=>k>0),true);el.querySelector("#pal").append(leiste.el)}
   const r=pixelRaster({w:8,h:8,werte:ctx.daten.bild,palette:pal,malbar:true,farbe:leiste?leiste.farbe:()=>1,onAenderung:v=>{ctx.daten.bild=v.slice();ctx.speichern()}});
   el.querySelector("#b").append(r.el);
-  el.querySelector("#p").onclick=()=>pruefen(ctx,r,soll,punkte,el.querySelector("#m"));
+  ctx.pruefer=()=>pruefen(ctx,r,soll,punkte,el.querySelector("#m"));
   el.querySelector("#l").onclick=()=>r.setzeAlle(Array(64).fill(0));
   if(ctx.geloest){const m=el.querySelector("#m");m.className="msg ok";m.textContent="Schon gelöst. Weiter geht's!"}
 }}}
@@ -96,17 +99,18 @@ station({
       el.innerHTML=`<p>Jetzt bist du dran! Mal ein eigenes Bild auf 16 mal 16 Kästchen. Gib ihm einen Namen. Die schönsten und kreativsten Bilder bekommen die beste Note.</p>
         <label class="f" for="t">Name deines Bildes</label><input type="text" id="t" maxlength="40" placeholder="z. B. Mein Haustier">
         <div id="pal" style="margin-top:14px"></div><div class="frei" id="b"></div>
-        <div class="row noprint" style="margin-top:14px"><button class="btn" id="p">Bild ist fertig</button><button class="btn ghost" id="l">Alles löschen</button><span class="muted small" id="z"></span></div><div id="m"></div>`;
+        <div class="row noprint" style="margin-top:14px"><button class="btn ghost" id="l">Alles löschen</button><span class="muted small" id="z"></span></div><div id="m"></div>`;
       const t=el.querySelector("#t");t.value=ctx.daten.titel||"";t.oninput=()=>{ctx.daten.titel=t.value;ctx.speichern()};
       const leiste=farbLeiste(PAL,NAMEN,1);el.querySelector("#pal").append(leiste.el);
       const zaehle=v=>{const n=v.filter(x=>x>0).length;el.querySelector("#z").textContent=n<MIN_PIXEL?`${n} von mindestens ${MIN_PIXEL} Kästchen bemalt`:`${n} Kästchen bemalt`};
       const r=pixelRaster({w:16,h:16,werte:ctx.daten.bild,palette:PAL,malbar:true,farbe:leiste.farbe,onAenderung:v=>{ctx.daten.bild=v.slice();ctx.speichern();zaehle(v)}});
       el.querySelector("#b").append(r.el);zaehle(r.werte);
       el.querySelector("#l").onclick=()=>{if(confirm("Ganzes Bild löschen?"))r.setzeAlle(Array(256).fill(0))};
-      el.querySelector("#p").onclick=()=>{const m=el.querySelector("#m"),n=r.werte.filter(x=>x>0).length;
-        if(n<MIN_PIXEL){m.className="msg no";m.textContent=`Mal noch etwas mehr: mindestens ${MIN_PIXEL} Kästchen.`;return}
-        if(!t.value.trim()){m.className="msg no";m.textContent="Gib deinem Bild noch einen Namen.";t.focus();return}
-        m.className="msg ok";m.textContent="Super! Du kannst noch weiter malen oder auf „Fertig“ tippen.";ctx.geschafft(20)};
+      /* „Fertig“ prüft: genug gemalt und Name da? (kein Punktabzug – hier gibt es kein Falsch) */
+      ctx.pruefer=()=>{const m=el.querySelector("#m"),n=r.werte.filter(x=>x>0).length;
+        if(n<MIN_PIXEL){m.className="msg no";m.textContent=`Mal noch etwas mehr: mindestens ${MIN_PIXEL} Kästchen.`;return false}
+        if(!t.value.trim()){m.className="msg no";m.textContent="Gib deinem Bild noch einen Namen.";t.focus();return false}
+        ctx.geschafft(20);return true};
     }},
   ],
   ergebnis(d){

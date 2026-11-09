@@ -217,9 +217,8 @@ function seiteStation(st){
   <div id="body"></div>
   <div class="nav noprint">
     <button class="btn ghost pfeil" id="zur">${i===0?"🏠 Übersicht":"◀ Zurück"}</button>
-    <button class="btn pfeil" id="weiter" ${geloest||VS?"":"disabled"}>${i===st.schritte.length-1?"Fertig 🏁":"Weiter ▶"}</button>
-  </div>
-  ${!geloest&&!VS&&i<st.schritte.length?`<p class="muted small noprint" id="weiterhinweis" style="text-align:right;margin-top:6px">„Weiter“ geht, sobald du diesen Teil gelöst hast.</p>`:""}`;
+    <button class="btn pfeil" id="weiter">${i===st.schritte.length-1?"Fertig 🏁":"Weiter ▶"}</button>
+  </div>`;
   prog.weitester=Math.max(prog.weitester||0,i);
   kopfAktiv();
   prog.daten[i]=prog.daten[i]||{};
@@ -233,15 +232,21 @@ function seiteStation(st){
         if(p>0)toast(`Geschafft! +${p} Punkte`);
         $(".pts").textContent=`⭐ ${summe(prog)} Punkte`;
         $(".steps").children[i].className="ok"}
-      ctx.geloest=true;$("#weiter").disabled=false;$("#weiterhinweis")?.remove()},
+      ctx.geloest=true},
+    pruefer:null,   // Teil setzt hier eine Prüf-Funktion (true = richtig); „Weiter“ ruft sie auf
   };
   sch.zeige($("#body"),ctx);
   document.querySelectorAll("[data-sp]").forEach(x=>x.onclick=()=>{prog.schritt=+x.dataset.sp;speichern();seiteStation(st);scrollTo(0,0)});
   $("#zur").onclick=()=>{if(i===0){location.hash=home()}else{prog.schritt=i-1;speichern();seiteStation(st);scrollTo(0,0)}};
-  $("#weiter").onclick=()=>{if(!(i in prog.punkte)&&!VS)return;
-    if(i===st.schritte.length-1){prog.fertig=Date.now();speichern(true);seiteErgebnis(st,prog)}
+  const vor=()=>{if(i===st.schritte.length-1){prog.fertig=Date.now();speichern(true);seiteErgebnis(st,prog)}
     else{prog.schritt=i+1;speichern();seiteStation(st)}
     scrollTo(0,0)};
+  /* „Weiter“ prüft automatisch: richtig → kurz Erfolg zeigen, dann weiter; falsch → bleiben, Rückmeldung steht da */
+  let sperre=false;
+  $("#weiter").onclick=()=>{if(sperre)return;
+    if(VS||i in prog.punkte)return vor();
+    if(ctx.pruefer){if(ctx.pruefer()){sperre=true;setTimeout(vor,900)}return}
+    toast("Löse zuerst diesen Teil.")};
 }
 
 function seiteErgebnis(st,prog){
@@ -406,6 +411,7 @@ function frage(titel,text,antworten,aha,punkte=5){return{titel,punkte,zeige(el,c
   el.innerHTML=`<p class="frage">${text}</p><div class="antworten">${reihe.map(k=>`<button class="antwort" data-k="${k}">${esc(antworten[k])}</button>`).join("")}</div><div id="aha"></div>`;
   const zeigeAha=()=>{el.querySelector("#aha").innerHTML=`<div class="aha"><b>💡 Aha!</b> ${aha}</div>`;
     el.querySelectorAll(".antwort").forEach(b=>{b.disabled=true;if(b.dataset.k==="0")b.classList.add("richtig")})};
+  ctx.pruefer=()=>{toast("Tippe zuerst auf eine Antwort.");return false};
   if(ctx.geloest)return zeigeAha();
   el.querySelectorAll(".antwort").forEach(b=>b.onclick=()=>{
     if(b.dataset.k==="0"){zeigeAha();ctx.geschafft(punkte)}
