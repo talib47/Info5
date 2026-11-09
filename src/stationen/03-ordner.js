@@ -13,7 +13,7 @@ station({
       merke:"Das Ende (<b>.jpg</b>, <b>.mp3</b> …) heißt <b>Dateiendung</b>. Sie sagt dem Computer, mit welchem Programm er die Datei öffnet."}),
     paare({titel:"Dateiendungen",punkte:10,text:"Welche Endung gehört zu welcher Art von Datei?",
       paare:[[".jpg / .png","🖼️ ein Bild"],[".mp3","🎵 Musik oder ein Hörspiel"],[".mp4","🎬 ein Video"],[".docx","📝 ein Text aus Word"],[".pdf","📄 ein Dokument zum Lesen und Drucken"],[".exe","⚙️ ein Programm – Vorsicht bei Fremden!"]],
-      merke:"Eine <b>.exe</b>-Datei startet ein Programm. Öffne nie eine .exe aus einer fremden E-Mail!"}),
+      merke:"Eine <b>.exe</b>-Datei startet ein Programm. Öffne nie eine .exe aus einer fremden E-Mail."}),
     ordnerPfad({titel:"Das Klassenfoto speichern",punkte:10,datei:"🖼️ klassenfoto.jpg",baum:SCHULE,ziel:["Bilder","Schule"],
       text:"Speichere das Klassenfoto in <b>Bilder › Schule</b>. Klick auf die Ordner, um hineinzugehen. Mit ⬆️ gehst du zurück.",
       merke:"Ordner können weitere Ordner enthalten – wie Schubladen in einem Schrank."}),

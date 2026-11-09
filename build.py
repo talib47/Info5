@@ -28,7 +28,7 @@ html=f'''<!doctype html>
 </head>
 <body>
 <main id="app"></main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="vendor/supabase.js"></script>
 <script>
 {alles}
 </script>

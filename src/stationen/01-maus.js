@@ -25,7 +25,7 @@ station({
       paare({titel:"Was machen die Finger?",punkte:10,text:"Welche Bewegung macht was? Verbinde.",
         paare:[["👆 Tippen","etwas auswählen oder öffnen"],["👆👆 Doppeltippen","schnell hineinzoomen"],["☝️ Lange drücken","Menü mit mehr Möglichkeiten"],["✊ Ziehen","etwas verschieben"],["👉 Wischen","blättern oder scrollen"],["🤏 Zwei Finger auseinander","vergrößern"]]})),
     paare({titel:"Wichtige Tasten",punkte:10,text:"Diese Tasten brauchst du ständig. Was machen sie?",
-      merke:"Suche die Tasten jetzt auf deiner echten Tastatur!",
+      merke:"Suche die Tasten jetzt auf deiner echten Tastatur.",
       paare:[["⇧ Umschalt (Shift)","Großbuchstaben"],["⌫ Rücktaste","löscht das Zeichen links"],["↵ Enter","neue Zeile oder bestätigen"],["␣ Leertaste","Abstand zwischen Wörtern"],["⇥ Tab","springt ins nächste Feld"],["⇪ Feststelltaste","ALLES GROSS (aus Versehen an? Noch mal drücken!)"]]}),
     tastenMissionen({titel:"Wichtige Tasten ausprobieren",punkte:15,text:"Jetzt probierst du die Tasten selbst aus. Du bekommst immer <b>eine</b> Aufgabe. Wenn du die richtige Taste drückst, kommt die nächste.",
       start:"",missionen:[
@@ -57,6 +57,6 @@ station({
       schritte:["Text mit der Maus markieren","Strg + C drücken","Zum Dokument wechseln","Dort hinklicken, wo der Text hin soll","Strg + V drücken"]}),
     tippen({titel:"Tipp-Test",punkte:15,zeilen:["Ich bin ein Profi.","Strg und C kopiert!"],
       text:"Zum Schluss: zwei Sätze mit Großbuchstaben und Satzzeichen. Für Großbuchstaben drückst du ⇧ mit dem kleinen Finger der <b>anderen</b> Hand.",
-      merke:"Geschafft! Ab jetzt kannst du alle Tasten, die du in Informatik brauchst."}),
+      merke:"Geschafft. Ab jetzt kannst du alle Tasten, die du in Informatik brauchst."}),
   ],
 });

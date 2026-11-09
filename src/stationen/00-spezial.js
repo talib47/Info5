@@ -143,7 +143,7 @@ function caesarRad({titel,punkte=10,merke,text,wort,schluessel,modus="ent",antwo
   };
   zeichne();
   ctx.pruefer=()=>{const v=(el.querySelector(".eing input").value||"").toUpperCase().replace(/\s+/g,"");
-    return bewerte(ctx,el,{leer:!v,leerText:"Tippe zuerst deine Lösung ins Feld.",fehler:v===antwort.replace(/\s+/g,"")?0:1,stand:v,punkte,okText:"Richtig entschlüsselt!"})};
+    return bewerte(ctx,el,{leer:!v,leerText:"Tippe zuerst deine Lösung ins Feld.",fehler:v===antwort.replace(/\s+/g,"")?0:1,stand:v,punkte,okText:"Richtig entschlüsselt."})};
   ctx.loesung=()=>{d.v=antwort;if(modus==="knacken")d.k=schluessel;zeichne()};
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -190,7 +190,7 @@ function ampelBauen({titel,punkte=15,merke,text,phasen,namen}){return{titel,punk
   ctx.beimVerlassen(()=>clearInterval(spiel));
   zeichne();
   ctx.pruefer=()=>{const fs=phasen.map((p,i)=>p.join()===d.a[i].join()?-1:i).filter(i=>i>=0);
-    return bewerte(ctx,el,{leer:d.a.every(p=>!p.some(Boolean)),leerText:"Schalte zuerst die Lampen ein.",fehler:fs.length,stand:JSON.stringify(d.a),punkte,okText:"Richtig! Deine Ampel arbeitet wie ein echter Automat. 🚦",markiere:()=>{falsch=new Set(fs);zeichne()}})};
+    return bewerte(ctx,el,{leer:d.a.every(p=>!p.some(Boolean)),leerText:"Schalte zuerst die Lampen ein.",fehler:fs.length,stand:JSON.stringify(d.a),punkte,okText:"Richtig. Deine Ampel arbeitet wie ein echter Automat. 🚦",markiere:()=>{falsch=new Set(fs);zeichne()}})};
   ctx.loesung=()=>{d.a=phasen.map(p=>p.slice());zeichne()};
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -248,7 +248,7 @@ function baumBauen({titel,punkte=20,merke,text,fragen,dinge}){return{titel,punkt
   zeichne();
   const gut=()=>{const b=blaetter();return b&&b.every(([a,c])=>c&&a.length===1&&c.length===1)};
   ctx.pruefer=()=>bewerte(ctx,el,{leer:d.w==null||d.j==null||d.n==null,leerText:"Setze zuerst in alle drei Felder eine Frage.",fehler:gut()?0:1,stand:[d.w,d.j,d.n].join(),punkte,
-    okText:"Richtig! Dein Baum kann jedes Tier erkennen – so ähnlich lernt eine KI. 🌳"});
+    okText:"Richtig. Dein Baum kann jedes Tier erkennen – so ähnlich lernt eine KI. 🌳"});
   ctx.loesung=()=>{for(let w=0;w<fragen.length;w++)for(let j=0;j<fragen.length;j++)for(let n=0;n<fragen.length;n++){d.w=w;d.j=j;d.n=n;if(gut())return zeichne()}};
   if(ctx.geloest)schonGeloest(el);
 }}}

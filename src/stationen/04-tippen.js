@@ -13,7 +13,7 @@ station({
       text:"Rechte Hand auf <b>j k l ö</b>. Schau nur auf den Bildschirm!"}),
     tippen({titel:"Beide Hände",punkte:15,zeilen:["fj dk sl aö","asdf jklö","das all","lass das","als da ja"],
       text:"Jetzt beide Hände zusammen. Lass die Finger immer auf der Grundreihe liegen.",
-      merke:"Langsam und richtig ist besser als schnell und falsch. Die Geschwindigkeit kommt von allein!"}),
+      merke:"Langsam und richtig ist besser als schnell und falsch. Die Geschwindigkeit kommt von allein."}),
     tippen({titel:"Nach oben: E und I",punkte:15,zeilen:["ded kik","die die","sie sie","lied lied","ein dieb"],
       text:"Der <b>Mittelfinger links</b> greift nach oben zum <b>E</b>, der <b>Mittelfinger rechts</b> zum <b>I</b>. Danach sofort zurück!"}),
     tippen({titel:"R, T, U und Z",punkte:15,zeilen:["frf juj","ftf jzj","rufe rufe","guter tag","zur tante"],
@@ -25,6 +25,6 @@ station({
       text:"Jetzt richtige Sätze mit Punkt und Ausrufezeichen."}),
     tippen({titel:"Blind tippen",punkte:20,zeigeTastatur:false,zeilen:["Informatik ist toll.","Mein Tier ist schlau.","Ich kann das!"],
       text:"Profi-Stufe: <b>Keine Hilfe-Tastatur mehr!</b> Deine Finger wissen jetzt, wo die Tasten sind.",
-      merke:"Profis schauen auf den Bildschirm, nicht auf die Tasten. Mit Übung tippst du bald schneller, als du schreibst!"}),
+      merke:"Profis schauen auf den Bildschirm, nicht auf die Tasten. Mit Übung tippst du bald schneller, als du schreibst."}),
   ],
 });

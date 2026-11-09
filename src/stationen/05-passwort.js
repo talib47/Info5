@@ -16,7 +16,7 @@ station({
       merke:"Starke Passwörter sind <b>lang</b> (mindestens 10 Zeichen) und mischen <b>Groß, klein, Zahlen und Zeichen</b>."}),
     paare({titel:"Wie lange braucht ein Hacker?",punkte:10,text:"Ein Hacker-Computer probiert alle Möglichkeiten aus. Wie lange braucht er für diese Passwörter?",
       paare:[["abc",zeitVon("abc")],["Tiger7",zeitVon("Tiger7")],["Tiger7Mond",zeitVon("Tiger7Mond")],["Tiger7!Mond#Eis",zeitVon("Tiger7!Mond#Eis")]],
-      merke:"Jedes Zeichen mehr macht das Knacken <b>viel</b> schwerer – nicht nur ein bisschen!"}),
+      merke:"Jedes Zeichen mehr macht das Knacken <b>viel</b> schwerer – nicht nur ein bisschen."}),
     passwortTester({titel:"Passwort-Labor",punkte:15,
       text:"Bau ein Passwort, das <b>alle Regeln</b> schafft. Schau, wie die Knack-Zeit wächst, wenn du Zeichen dazunimmst!"}),
     reihenfolge({titel:"Der Satz-Trick",punkte:10,text:"Wie merkt man sich ein langes Passwort? Mit dem <b>Satz-Trick</b>! Bring die Schritte in die richtige Reihenfolge.",
@@ -43,7 +43,7 @@ station({
       karten:[["In deinem Kopf","🧠","ok"],["Auf einem Zettel am Bildschirm","📝","no"],["Im Klassenchat","💬","no"],["Auf dem Federmäppchen","✏️","no"],["In einem Passwort-Heft gut versteckt zu Hause","📒","ok"],["In einem Passwort-Programm (mit den Eltern einrichten)","🔐","ok"]]}),
     passwortTester({titel:"Dein Meister-Passwort",punkte:15,
       text:"Zum Schluss: Erfinde mit dem <b>Satz-Trick</b> ein neues Passwort, das alle Regeln schafft. (Ein ausgedachtes – nicht dein echtes!)",
-      merke:"Geschafft! Du weißt jetzt mehr über Passwörter als viele Erwachsene. 🛡️"}),
+      merke:"Geschafft. Du weißt jetzt mehr über Passwörter als viele Erwachsene. 🛡️"}),
   ],
 });
 }

@@ -740,6 +740,10 @@ kbd{border-radius:5px;font-family:var(--mono)}
 .tastaufgabe .wie{font-size:1.0625rem;margin:0 0 12px;max-width:36rem}
 .tastaufgabe .kappen{margin:0;justify-content:flex-start;display:flex}
 .tastaufgabe kbd{font-size:1.0625rem;padding:6px 12px}
+body[data-seite="lehrer"] #app{max-width:76rem}
+.liste tr.auff td{background:color-mix(in srgb,var(--marker) 28%,transparent)}
+.heute-t td,.heute-t th{padding:7px 10px}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .kib .chip{color:var(--ink)}}
 /* Bausteine der Stationen */
 .paar{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;align-items:start;margin-top:8px}
 .px{display:grid;gap:2px;background:var(--line);border:2px solid var(--line);border-radius:10px;overflow:hidden;width:100%;max-width:340px;aspect-ratio:1;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -765,7 +769,7 @@ kbd{border-radius:5px;font-family:var(--mono)}
 </head>
 <body>
 <main id="app"></main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="vendor/supabase.js"></script>
 <script>
 /* =====================================================================
    Informatik 5 — eigene Stunden-Seite für Jahrgang 5 (EKG Homberg, GNDO)
@@ -775,7 +779,7 @@ kbd{border-radius:5px;font-family:var(--mono)}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="f14fb6cb40";
+const VERSION="8905a55f70";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -1046,6 +1050,8 @@ setInterval(()=>{const n=Date.now(),d=Math.min(n-tick,15000);tick=n;
 /* ---------- Seiten ---------- */
 function render(){
   aufraeumen();
+  document.body.dataset.seite=location.hash.startsWith("#lehrer")?"lehrer":"kind";
+  if(ONLINE.url&&/github\.io$/.test(location.hostname)&&!db.online){$("#app").innerHTML=`<div class="msg no">Die Verbindung zur Datenbank konnte nicht geladen werden. Lade die Seite neu. Wenn das nicht hilft, sag deiner Lehrkraft Bescheid.</div>`;return}
   let h=location.hash.slice(1);
   if(h==="lehrer"||h.startsWith("lehrer/"))return seiteLehrer();
   const vs=h==="v"||h.startsWith("v/");if(vs!==VS){VS=vs;laufend=null}
@@ -1310,7 +1316,7 @@ let lDaten=null,lTimer=null,lPlanGesendet=false;
 async function seiteLehrer(){
   laufend=null;clearInterval(lTimer);
   if(!(await db.lSitzung()))return lehrerLogin();
-  $("#app").innerHTML=`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5 · Lehrkraft</span></div><div class="row">${db.online?`<button class="link" id="lraus">Abmelden</button>`:""}<a class="link" href="#v">Stationen ansehen</a></div></div><div id="lb"><p class="muted">Lade …</p></div>`;
+  $("#app").innerHTML=`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5, Lehrkraft</span></div><div class="row">${db.online?`<button class="link" id="lraus">Abmelden</button>`:""}<a class="link" href="#v">Stationen ansehen</a></div></div><div id="lb"><p class="muted">Lade …</p></div>`;
   if($("#lraus"))$("#lraus").onclick=async()=>{await db.lAbmelden();seiteLehrer()};
   if(db.online&&!lPlanGesendet){try{await db.lPlanUebertragen();lPlanGesendet=true}catch(e){toast("Stundenplan konnte nicht übertragen werden")}}
   await lehrerLaden();
@@ -1318,7 +1324,7 @@ async function seiteLehrer(){
 }
 
 function lehrerLogin(){
-  $("#app").innerHTML=`<div class="top"><div class="brand">${LOGO}<span>Informatik 5 · Lehrkraft</span></div></div>
+  $("#app").innerHTML=`<div class="top"><div class="brand">${LOGO}<span>Informatik 5, Lehrkraft</span></div></div>
   <form class="block" id="f" style="max-width:26rem"><h2>Anmelden</h2>
   <label class="f" for="e">E-Mail</label><input type="text" id="e" autocomplete="username" inputmode="email">
   <div style="height:12px"></div><label class="f" for="p">Passwort</label><input type="password" id="p" autocomplete="current-password" class="pw">
@@ -1353,29 +1359,33 @@ function lehrerZeigen(){
     <div><h2 style="margin:0">${offen?`${kl} ist offen`:`${kl} ist zu`}</h2><p class="muted small" style="margin:2px 0 0">${esc(info)}</p></div>
     <div class="row">${hand?`<button class="btn ghost" id="plan">Wieder nach Stundenplan</button>`:""}<button class="btn" id="frei">${offen?"Jetzt schließen":`Jetzt öffnen (${FREIGABE_MIN} Min.)`}</button></div>
   </div>
-  <div class="block" style="overflow-x:auto">
-    ${kinder.length?`<table class="liste"><thead><tr><th>Tier</th><th>Vorname <span class="muted small">(nur hier)</span></th><th>Status</th>${PFAD().map((st,i)=>`<th class="c" title="${esc(st.titel)}">${i+1}<br>${st.ico}</th>`).join("")}<th></th></tr></thead><tbody>${kinder.map(zeile).join("")}</tbody></table>`
-      :`<p style="margin:0">Noch keine Kinder in ${kl}. In der ersten Stunde suchen sich die Kinder selbst ein Tier aus.</p>`}
-    <datalist id="dl-${esc(kl)}">${(listen[kl]||[]).filter(n=>!kinder.some(k=>namen[k.id]===n)).map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
-    ${(listen[kl]||[]).length?`<p class="muted small" style="margin:10px 0 0">${kinder.filter(k=>namen[k.id]).length} von ${listen[kl].length} Kindern zugeordnet.${(()=>{const fehlt=listen[kl].filter(n=>!kinder.some(k=>namen[k.id]===n));return fehlt.length&&fehlt.length<=8?" Noch ohne Tier: "+fehlt.map(esc).join(", "):""})()}</p>`:""}
-  </div>
   ${(()=>{const heute=new Date().toDateString(),zeilen=[];
     kinder.forEach(k=>{const t=tierInfo(k.tier),s=d.staende[k.id]||{};
       PFAD().forEach(st=>{const p=s[st.id];if(!p)return;
         const tag=new Date(p.fertig||p.start||0).toDateString();if(tag!==heute)return;
-        const pz=prozent(st,p),z=zeichenAus(pz);
-        zeilen.push({name:namen[k.id]||`${t.emoji} ${t.name}`,z,st:st.ico+" "+st.titel,pz,fertig:!!p.fertig})})});
-    if(!zeilen.length)return"";
-    zeilen.sort((a,b)=>a.name.localeCompare(b.name,"de"));
-    return`<div class="block"><h2 style="margin-bottom:4px">Für das Notenbuch · heute</h2><p class="muted small">Zeichen aus den Punkten von heute. Wer nicht fertig wurde, bekommt das Zeichen für das, was geschafft ist.</p>
-      <div class="heute">${zeilen.map(x=>`<div><span>${esc(x.name)} <span class="muted small">${esc(x.st)}</span></span><span>${x.fertig?"":`<span class="muted small">nicht fertig · </span>`}<span class="chip ${zeichenKlasse(x.z)} gross-z">${x.z}</span></span></div>`).join("")}</div></div>`})()}
+        const pz=prozent(st,p),z=zeichenAus(pz),f=p.fehler||{},fGes=Object.values(f).reduce((a,b)=>a+b,0),fHier=f[p.schritt||0]||0,min=Math.round((p.aktiv||0)/60000);
+        const hinweis=!p.fertig&&fHier>=3?"hängt an diesem Teil":p.fertig&&min<15?"sehr schnell fertig":fGes>=12?"viele Fehlversuche":"";
+        zeilen.push({name:namen[k.id]||`${t.emoji} ${t.name}`,z,st:st.titel,pz,fertig:!!p.fertig,teil:`Teil ${(p.schritt||0)+1} von ${st.schritte.length}`,min,fGes,hinweis,da:k.besetzt})})});
+    if(!zeilen.length)return`<div class="block"><h2 style="margin-bottom:4px">Heute</h2><p class="muted" style="margin:0">Heute hat in ${kl} noch niemand gearbeitet. Sobald Kinder anfangen, siehst du hier, wer wo ist und wer Hilfe braucht.</p></div>`;
+    zeilen.sort((a,b)=>(b.hinweis?1:0)-(a.hinweis?1:0)||a.name.localeCompare(b.name,"de"));
+    window._noten=zeilen.map(x=>`${x.name}\t${x.st}\t${x.fertig?x.z:x.z+" (nicht fertig)"}`).join("\n");
+    return`<div class="block" style="overflow-x:auto"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Heute</h2><button class="btn ghost noprint" id="kopie" style="min-height:40px;padding:6px 14px">Noten kopieren</button></div>
+      <p class="muted small" style="margin:4px 0 10px">Aktualisiert sich alle 20 Sekunden. Kinder mit Hinweis stehen oben. Wer nicht fertig wurde, bekommt das Zeichen für das, was geschafft ist.</p>
+      <table class="liste heute-t"><thead><tr><th>Kind</th><th>Station</th><th>Stand</th><th class="c">Minuten</th><th class="c">Fehlversuche</th><th>Hinweis</th><th class="c">Note</th></tr></thead><tbody>
+      ${zeilen.map(x=>`<tr class="${x.hinweis?"auff":""}"><td class="t">${esc(x.name)}</td><td>${esc(x.st)}</td><td>${x.fertig?"fertig":x.teil}</td><td class="c">${x.min}</td><td class="c">${x.fGes}</td><td>${x.hinweis?`<b>${x.hinweis}</b>`:""}</td><td class="c"><span class="chip ${zeichenKlasse(x.z)} gross-z">${x.z}</span></td></tr>`).join("")}</tbody></table></div>`})()}
+  <div class="block" style="overflow-x:auto"><h2 style="margin-bottom:8px">Alle Stationen</h2>
+    ${kinder.length?`<table class="liste"><thead><tr><th>Tier</th><th>Vorname <span class="muted small">(nur hier)</span></th><th>Status</th>${PFAD().map((st,i)=>`<th class="c" title="${esc(st.titel)}">${i+1}</th>`).join("")}<th></th></tr></thead><tbody>${kinder.map(zeile).join("")}</tbody></table>`
+      :`<p style="margin:0">Noch keine Kinder in ${kl}. In der ersten Stunde suchen sich die Kinder selbst ein Tier aus.</p>`}
+    <datalist id="dl-${esc(kl)}">${(listen[kl]||[]).filter(n=>!kinder.some(k=>namen[k.id]===n)).map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
+    ${(listen[kl]||[]).length?`<p class="muted small" style="margin:10px 0 0">${kinder.filter(k=>namen[k.id]).length} von ${listen[kl].length} Kindern zugeordnet.${(()=>{const fehlt=listen[kl].filter(n=>!kinder.some(k=>namen[k.id]===n));return fehlt.length&&fehlt.length<=8?" Noch ohne Tier: "+fehlt.map(esc).join(", "):""})()}</p>`:""}
+  </div>
   <div class="row noprint">
     <button class="btn ghost" id="druck" ${kinder.length?"":"disabled"}>Kärtchen drucken</button>
     <button class="btn ghost" id="sichern">Namensliste sichern</button><label class="btn ghost">Namensliste laden<input type="file" id="laden" accept=".json" hidden></label>
   </div>
   <details class="block plan"><summary><b>Lernpfad & Lehrplan</b> <span class="muted small">– alle ${PFAD().length} Stationen mit Bezug zum Kernlehrplan NRW</span></summary>
-    <ol>${PFAD().map(st=>`<li><b>${st.ico} ${esc(st.titel)}</b> <span class="chip">${KAPITEL[st.kapitel]||""}</span><br><span class="small">${esc(st.kurz)}</span>${st.klp?`<br><span class="muted small">KLP: ${esc(st.klp)}</span>`:""}</li>`).join("")}</ol>
-    <p class="muted small">Ablauf: Jede Station ist eine Doppelstunde (60 Min.). Die Kinder gehen den Lernpfad der Reihe nach, höchstens eine neue Station pro Tag. Wer früher fertig ist, darf auf den Spielplatz (Bonus-Spiele, ohne Note).</p></details>
+    <ol>${PFAD().map(st=>`<li><b>${esc(st.titel)}</b> <span class="chip">${KAPITEL_NAME[st.kapitel]||""}</span><br><span class="small">${esc(st.kurz)}</span>${st.klp?`<br><span class="muted small">KLP: ${esc(st.klp)}</span>`:""}</li>`).join("")}</ol>
+    <p class="muted small">Ablauf: Jede Station ist eine Doppelstunde (60 Min.). Die Kinder gehen den Lernpfad der Reihe nach, höchstens eine neue Station pro Tag. Der Spielplatz (Bonus-Spiele, ohne Note) öffnet nur mit einem + in der Station von heute.</p></details>
   <p class="muted small" style="margin-top:14px">Die Vornamen werden nur in diesem Browser gespeichert, nie auf dem Server. Sichere die Namensliste ab und zu (z. B. auf IServ), damit sie bei einem neuen Gerät nicht fehlt.${db.online?"":" <b>Vorschau-Modus:</b> Alles liegt nur in diesem Browser."}</p>`;
 
   document.querySelectorAll("[data-kl]").forEach(b=>b.onclick=()=>{lKlasse=b.dataset.kl;lsSet("if5-lklasse",lKlasse);lehrerZeigen()});
@@ -1386,6 +1396,7 @@ function lehrerZeigen(){
     if(a==="freigeben")return lAktion(()=>db.lAbmeldenKind(id));
     if(a==="mehr")return lMehr(d.kinder.find(k=>k.id===id))});
   $("#druck").onclick=()=>lDruck(kinder);
+  if($("#kopie"))$("#kopie").onclick=async()=>{try{await navigator.clipboard.writeText(window._noten);toast("Noten kopiert. Du kannst sie in eine Tabelle einfügen.")}catch(e){toast("Kopieren hat nicht geklappt")}};
   $("#sichern").onclick=()=>{const b=new Blob([JSON.stringify({art:"if5-namen",gesichert:new Date().toISOString(),namen,listen},null,1)],{type:"application/json"});
     const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`Informatik5-Namensliste-${new Date().toLocaleDateString("sv")}.json`;a.click();URL.revokeObjectURL(a.href)};
   $("#laden").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const j=JSON.parse(await f.text());if(j.art!=="if5-namen")throw 0;
@@ -1529,7 +1540,7 @@ function reihenfolge({titel,punkte=10,merke,text,schritte}){return{titel,punkte,
   zeichne();
   ctx.pruefer=()=>{const fs=d.gew.map((x,k)=>x===k?-1:k).filter(k=>k>=0);
     return bewerte(ctx,el,{leer:d.gew.length<schritte.length,leerText:"Ordne zuerst alle Schritte ein.",fehler:fs.length,stand:d.gew.join(),punkte,
-      okText:"Richtig! Die Reihenfolge stimmt.",markiere:()=>{falsch=new Set(fs);zeichne()}})};
+      okText:"Richtig. Die Reihenfolge stimmt.",markiere:()=>{falsch=new Set(fs);zeichne()}})};
   ctx.loesung=()=>{d.gew=schritte.map((_,i)=>i);zeichne()};
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -1553,7 +1564,7 @@ function paare({titel,punkte=10,merke,text,paare:liste}){return{titel,punkte,mer
   zeichne();
   ctx.pruefer=()=>{const fs=liste.map((_,r)=>r).filter(r=>d.zu[r]!==r);
     return bewerte(ctx,el,{leer:Object.keys(d.zu).length<liste.length,leerText:"Verbinde zuerst alle Paare.",fehler:fs.length,stand:JSON.stringify(d.zu),punkte,
-      okText:"Richtig! Alle Paare passen.",markiere:()=>{falsch=new Set(fs);zeichne()}})};
+      okText:"Richtig. Alle Paare passen.",markiere:()=>{falsch=new Set(fs);zeichne()}})};
   ctx.loesung=()=>{liste.forEach((_,i)=>d.zu[i]=i);zeichne()};
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -1624,7 +1635,7 @@ function ordnerPfad({titel,punkte=10,merke,text,datei,baum,ziel}){return{titel,p
       meldung(el,true,`Gespeichert in: Dieser PC › ${d.pfad.join(" › ")||"(ganz oben)"}. Wenn das richtig ist, tippe auf „Weiter“.`)};
   };
   zeichne();
-  ctx.pruefer=()=>bewerte(ctx,el,{leer:!d.gespeichert,leerText:"Geh in den richtigen Ordner und tippe auf „Hier speichern“.",fehler:d.gespeichert&&d.gespeichert.join("/")===ziel.join("/")?0:1,stand:(d.gespeichert||[]).join("/"),punkte,okText:"Richtig gespeichert! So findest du die Datei immer wieder."});
+  ctx.pruefer=()=>bewerte(ctx,el,{leer:!d.gespeichert,leerText:"Geh in den richtigen Ordner und tippe auf „Hier speichern“.",fehler:d.gespeichert&&d.gespeichert.join("/")===ziel.join("/")?0:1,stand:(d.gespeichert||[]).join("/"),punkte,okText:"Richtig gespeichert. So findest du die Datei immer wieder."});
   ctx.loesung=()=>{d.pfad=ziel.slice();d.gespeichert=ziel.slice();zeichne()};
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -1637,7 +1648,7 @@ function eingabe({titel,punkte=10,merke,text,html="",antwort,zahl,platz="Deine A
   el.innerHTML=kopfText(text)+html+`<div class="eing"><input type="text" ${zahl?'inputmode="numeric"':""} autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${platz}" ${laenge?`maxlength="${laenge}"`:""} value="${esc(d.v||"")}"></div>${MLD}`;
   const inp=el.querySelector(".eing input");inp.oninput=()=>{d.v=inp.value;ctx.speichern()};
   inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();document.getElementById("weiter")?.click()}};
-  ctx.pruefer=()=>bewerte(ctx,el,{leer:!inp.value.trim(),leerText:"Tippe zuerst deine Antwort ins Feld.",fehler:gut.includes(norm(inp.value))?0:1,stand:norm(inp.value),punkte,okText:"Richtig!"});
+  ctx.pruefer=()=>bewerte(ctx,el,{leer:!inp.value.trim(),leerText:"Tippe zuerst deine Antwort ins Feld.",fehler:gut.includes(norm(inp.value))?0:1,stand:norm(inp.value),punkte,okText:"Richtig."});
   ctx.loesung=()=>{inp.value=Array.isArray(antwort)?antwort[0]:antwort;d.v=inp.value};
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -1815,7 +1826,7 @@ function malRoboter({titel,punkte=15,merke,text,w=6,h=6,programm}){return{titel,
   r.el.classList.add("start-ol");el.querySelector("#mr").append(r.el);
   el.querySelector("#mrl").onclick=()=>{if(confirm("Wirklich alles löschen?"))r.setzeAlle(Array(w*h).fill(0))};
   ctx.pruefer=()=>{const fs=soll.map((v,k)=>r.werte[k]!==v?k:-1).filter(k=>k>=0);
-    return bewerte(ctx,el,{leer:r.werte.every(v=>!v),leerText:"Mal zuerst, was der Roboter malt.",fehler:fs.length,stand:r.werte.join(""),punkte,okText:"Richtig! Du hast das Programm genau ausgeführt – wie ein Computer. 🤖",markiere:()=>r.markiere(fs)})};
+    return bewerte(ctx,el,{leer:r.werte.every(v=>!v),leerText:"Mal zuerst, was der Roboter malt.",fehler:fs.length,stand:r.werte.join(""),punkte,okText:"Richtig. Du hast das Programm genau ausgeführt – wie ein Computer. 🤖",markiere:()=>r.markiere(fs)})};
   ctx.loesung=()=>r.setzeAlle(soll);
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -1968,7 +1979,7 @@ function caesarRad({titel,punkte=10,merke,text,wort,schluessel,modus="ent",antwo
   };
   zeichne();
   ctx.pruefer=()=>{const v=(el.querySelector(".eing input").value||"").toUpperCase().replace(/\s+/g,"");
-    return bewerte(ctx,el,{leer:!v,leerText:"Tippe zuerst deine Lösung ins Feld.",fehler:v===antwort.replace(/\s+/g,"")?0:1,stand:v,punkte,okText:"Richtig entschlüsselt!"})};
+    return bewerte(ctx,el,{leer:!v,leerText:"Tippe zuerst deine Lösung ins Feld.",fehler:v===antwort.replace(/\s+/g,"")?0:1,stand:v,punkte,okText:"Richtig entschlüsselt."})};
   ctx.loesung=()=>{d.v=antwort;if(modus==="knacken")d.k=schluessel;zeichne()};
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -2015,7 +2026,7 @@ function ampelBauen({titel,punkte=15,merke,text,phasen,namen}){return{titel,punk
   ctx.beimVerlassen(()=>clearInterval(spiel));
   zeichne();
   ctx.pruefer=()=>{const fs=phasen.map((p,i)=>p.join()===d.a[i].join()?-1:i).filter(i=>i>=0);
-    return bewerte(ctx,el,{leer:d.a.every(p=>!p.some(Boolean)),leerText:"Schalte zuerst die Lampen ein.",fehler:fs.length,stand:JSON.stringify(d.a),punkte,okText:"Richtig! Deine Ampel arbeitet wie ein echter Automat. 🚦",markiere:()=>{falsch=new Set(fs);zeichne()}})};
+    return bewerte(ctx,el,{leer:d.a.every(p=>!p.some(Boolean)),leerText:"Schalte zuerst die Lampen ein.",fehler:fs.length,stand:JSON.stringify(d.a),punkte,okText:"Richtig. Deine Ampel arbeitet wie ein echter Automat. 🚦",markiere:()=>{falsch=new Set(fs);zeichne()}})};
   ctx.loesung=()=>{d.a=phasen.map(p=>p.slice());zeichne()};
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -2073,7 +2084,7 @@ function baumBauen({titel,punkte=20,merke,text,fragen,dinge}){return{titel,punkt
   zeichne();
   const gut=()=>{const b=blaetter();return b&&b.every(([a,c])=>c&&a.length===1&&c.length===1)};
   ctx.pruefer=()=>bewerte(ctx,el,{leer:d.w==null||d.j==null||d.n==null,leerText:"Setze zuerst in alle drei Felder eine Frage.",fehler:gut()?0:1,stand:[d.w,d.j,d.n].join(),punkte,
-    okText:"Richtig! Dein Baum kann jedes Tier erkennen – so ähnlich lernt eine KI. 🌳"});
+    okText:"Richtig. Dein Baum kann jedes Tier erkennen – so ähnlich lernt eine KI. 🌳"});
   ctx.loesung=()=>{for(let w=0;w<fragen.length;w++)for(let j=0;j<fragen.length;j++)for(let n=0;n<fragen.length;n++){d.w=w;d.j=j;d.n=n;if(gut())return zeichne()}};
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -2307,7 +2318,7 @@ station({
       paare({titel:"Was machen die Finger?",punkte:10,text:"Welche Bewegung macht was? Verbinde.",
         paare:[["👆 Tippen","etwas auswählen oder öffnen"],["👆👆 Doppeltippen","schnell hineinzoomen"],["☝️ Lange drücken","Menü mit mehr Möglichkeiten"],["✊ Ziehen","etwas verschieben"],["👉 Wischen","blättern oder scrollen"],["🤏 Zwei Finger auseinander","vergrößern"]]})),
     paare({titel:"Wichtige Tasten",punkte:10,text:"Diese Tasten brauchst du ständig. Was machen sie?",
-      merke:"Suche die Tasten jetzt auf deiner echten Tastatur!",
+      merke:"Suche die Tasten jetzt auf deiner echten Tastatur.",
       paare:[["⇧ Umschalt (Shift)","Großbuchstaben"],["⌫ Rücktaste","löscht das Zeichen links"],["↵ Enter","neue Zeile oder bestätigen"],["␣ Leertaste","Abstand zwischen Wörtern"],["⇥ Tab","springt ins nächste Feld"],["⇪ Feststelltaste","ALLES GROSS (aus Versehen an? Noch mal drücken!)"]]}),
     tastenMissionen({titel:"Wichtige Tasten ausprobieren",punkte:15,text:"Jetzt probierst du die Tasten selbst aus. Du bekommst immer <b>eine</b> Aufgabe. Wenn du die richtige Taste drückst, kommt die nächste.",
       start:"",missionen:[
@@ -2339,7 +2350,7 @@ station({
       schritte:["Text mit der Maus markieren","Strg + C drücken","Zum Dokument wechseln","Dort hinklicken, wo der Text hin soll","Strg + V drücken"]}),
     tippen({titel:"Tipp-Test",punkte:15,zeilen:["Ich bin ein Profi.","Strg und C kopiert!"],
       text:"Zum Schluss: zwei Sätze mit Großbuchstaben und Satzzeichen. Für Großbuchstaben drückst du ⇧ mit dem kleinen Finger der <b>anderen</b> Hand.",
-      merke:"Geschafft! Ab jetzt kannst du alle Tasten, die du in Informatik brauchst."}),
+      merke:"Geschafft. Ab jetzt kannst du alle Tasten, die du in Informatik brauchst."}),
   ],
 });
 
@@ -2370,12 +2381,12 @@ station({
       text:"<b>Hardware</b> sind die Teile, die man anfassen kann. <b>Software</b> sind Programme und Apps. Sortiere!",
       toepfe:[["h","Hardware – zum Anfassen","🔧"],["s","Software – Programme","💿"]],
       karten:[["Maus","🖱️","h"],["Firefox (Browser)","🌐","s"],["Minecraft","🎮","s"],["Prozessor","🧠","h"],["Windows","🪟","s"],["Drucker","🖨️","h"],["Word","📝","s"],["USB-Stick","🔌","h"]],
-      merke:"Ohne Software ist Hardware nur ein teurer Kasten. Ohne Hardware läuft keine Software. Beide brauchen sich!"}),
+      merke:"Ohne Software ist Hardware nur ein teurer Kasten. Ohne Hardware läuft keine Software. Beide brauchen sich."}),
     sortieren({titel:"Was bleibt nach dem Ausschalten?",punkte:10,
       text:"Der <b>Arbeitsspeicher</b> vergisst alles, wenn der Strom weg ist. Die <b>Festplatte</b> behält alles. Was ist nach dem Ausschalten noch da?",
       toepfe:[["weg","Weg! (war nur im Arbeitsspeicher)","💨"],["da","Noch da (auf der Festplatte)","💾"]],
       karten:[["Ein Text, den du nicht gespeichert hast","📝","weg"],["Ein gespeichertes Foto","🖼️","da"],["Das Spiel-Level, das du gerade spielst, ohne zu speichern","🎮","weg"],["Ein heruntergeladenes Lied","🎵","da"],["Deine gespeicherte Hausaufgabe","📄","da"],["Eine Zahl im Taschenrechner-Programm","🧮","weg"]],
-      merke:"<b>Wer nicht speichert, verliert!</b> Drück zwischendurch <b>Strg + S</b>."}),
+      merke:"<b>Wer nicht speichert, verliert.</b> Drück zwischendurch <b>Strg + S</b>."}),
     auswaehlen({titel:"Computer überall",punkte:15,
       text:"Ein Computer hat Eingabe, Verarbeitung und Ausgabe. Welche Dinge haben einen Computer eingebaut? Tippe alle an.",
       karten:[["📱 Handy",true],["⌚ Smartwatch",true],["🚗 modernes Auto",true,"hat sogar viele kleine Computer"],["🎮 Spielkonsole",true],["🏧 Geldautomat",true],["📺 Smart-TV",true],["🪑 Stuhl",false],["✏️ Bleistift",false],["🧺 Wäschekorb",false],["📚 Buch",false]],
@@ -2394,7 +2405,7 @@ station({
       ],merke:"Computer-Profis gehen der Reihe nach vor: <b>Kabel? Strom? Einstellungen?</b> Erst dann Hilfe holen."}),
     reihenfolge({titel:"Richtig starten und beenden",punkte:10,text:"So gehst du mit dem Schul-PC um. Bring die Schritte in die richtige Reihenfolge.",
       schritte:["PC einschalten","Warten, bis Windows fertig geladen ist","Programm öffnen und arbeiten","Arbeit speichern","Programm schließen","PC herunterfahren"],
-      merke:"Nie einfach den Stecker ziehen – immer <b>herunterfahren</b>! Sonst können Daten kaputtgehen."}),
+      merke:"Nie einfach den Stecker ziehen – immer <b>herunterfahren</b>. Sonst können Daten kaputtgehen."}),
   ],
 });
 
@@ -2413,7 +2424,7 @@ station({
       merke:"Das Ende (<b>.jpg</b>, <b>.mp3</b> …) heißt <b>Dateiendung</b>. Sie sagt dem Computer, mit welchem Programm er die Datei öffnet."}),
     paare({titel:"Dateiendungen",punkte:10,text:"Welche Endung gehört zu welcher Art von Datei?",
       paare:[[".jpg / .png","🖼️ ein Bild"],[".mp3","🎵 Musik oder ein Hörspiel"],[".mp4","🎬 ein Video"],[".docx","📝 ein Text aus Word"],[".pdf","📄 ein Dokument zum Lesen und Drucken"],[".exe","⚙️ ein Programm – Vorsicht bei Fremden!"]],
-      merke:"Eine <b>.exe</b>-Datei startet ein Programm. Öffne nie eine .exe aus einer fremden E-Mail!"}),
+      merke:"Eine <b>.exe</b>-Datei startet ein Programm. Öffne nie eine .exe aus einer fremden E-Mail."}),
     ordnerPfad({titel:"Das Klassenfoto speichern",punkte:10,datei:"🖼️ klassenfoto.jpg",baum:SCHULE,ziel:["Bilder","Schule"],
       text:"Speichere das Klassenfoto in <b>Bilder › Schule</b>. Klick auf die Ordner, um hineinzugehen. Mit ⬆️ gehst du zurück.",
       merke:"Ordner können weitere Ordner enthalten – wie Schubladen in einem Schrank."}),
@@ -2464,7 +2475,7 @@ station({
       text:"Rechte Hand auf <b>j k l ö</b>. Schau nur auf den Bildschirm!"}),
     tippen({titel:"Beide Hände",punkte:15,zeilen:["fj dk sl aö","asdf jklö","das all","lass das","als da ja"],
       text:"Jetzt beide Hände zusammen. Lass die Finger immer auf der Grundreihe liegen.",
-      merke:"Langsam und richtig ist besser als schnell und falsch. Die Geschwindigkeit kommt von allein!"}),
+      merke:"Langsam und richtig ist besser als schnell und falsch. Die Geschwindigkeit kommt von allein."}),
     tippen({titel:"Nach oben: E und I",punkte:15,zeilen:["ded kik","die die","sie sie","lied lied","ein dieb"],
       text:"Der <b>Mittelfinger links</b> greift nach oben zum <b>E</b>, der <b>Mittelfinger rechts</b> zum <b>I</b>. Danach sofort zurück!"}),
     tippen({titel:"R, T, U und Z",punkte:15,zeilen:["frf juj","ftf jzj","rufe rufe","guter tag","zur tante"],
@@ -2476,7 +2487,7 @@ station({
       text:"Jetzt richtige Sätze mit Punkt und Ausrufezeichen."}),
     tippen({titel:"Blind tippen",punkte:20,zeigeTastatur:false,zeilen:["Informatik ist toll.","Mein Tier ist schlau.","Ich kann das!"],
       text:"Profi-Stufe: <b>Keine Hilfe-Tastatur mehr!</b> Deine Finger wissen jetzt, wo die Tasten sind.",
-      merke:"Profis schauen auf den Bildschirm, nicht auf die Tasten. Mit Übung tippst du bald schneller, als du schreibst!"}),
+      merke:"Profis schauen auf den Bildschirm, nicht auf die Tasten. Mit Übung tippst du bald schneller, als du schreibst."}),
   ],
 });
 
@@ -2498,7 +2509,7 @@ station({
       merke:"Starke Passwörter sind <b>lang</b> (mindestens 10 Zeichen) und mischen <b>Groß, klein, Zahlen und Zeichen</b>."}),
     paare({titel:"Wie lange braucht ein Hacker?",punkte:10,text:"Ein Hacker-Computer probiert alle Möglichkeiten aus. Wie lange braucht er für diese Passwörter?",
       paare:[["abc",zeitVon("abc")],["Tiger7",zeitVon("Tiger7")],["Tiger7Mond",zeitVon("Tiger7Mond")],["Tiger7!Mond#Eis",zeitVon("Tiger7!Mond#Eis")]],
-      merke:"Jedes Zeichen mehr macht das Knacken <b>viel</b> schwerer – nicht nur ein bisschen!"}),
+      merke:"Jedes Zeichen mehr macht das Knacken <b>viel</b> schwerer – nicht nur ein bisschen."}),
     passwortTester({titel:"Passwort-Labor",punkte:15,
       text:"Bau ein Passwort, das <b>alle Regeln</b> schafft. Schau, wie die Knack-Zeit wächst, wenn du Zeichen dazunimmst!"}),
     reihenfolge({titel:"Der Satz-Trick",punkte:10,text:"Wie merkt man sich ein langes Passwort? Mit dem <b>Satz-Trick</b>! Bring die Schritte in die richtige Reihenfolge.",
@@ -2525,7 +2536,7 @@ station({
       karten:[["In deinem Kopf","🧠","ok"],["Auf einem Zettel am Bildschirm","📝","no"],["Im Klassenchat","💬","no"],["Auf dem Federmäppchen","✏️","no"],["In einem Passwort-Heft gut versteckt zu Hause","📒","ok"],["In einem Passwort-Programm (mit den Eltern einrichten)","🔐","ok"]]}),
     passwortTester({titel:"Dein Meister-Passwort",punkte:15,
       text:"Zum Schluss: Erfinde mit dem <b>Satz-Trick</b> ein neues Passwort, das alle Regeln schafft. (Ein ausgedachtes – nicht dein echtes!)",
-      merke:"Geschafft! Du weißt jetzt mehr über Passwörter als viele Erwachsene. 🛡️"}),
+      merke:"Geschafft. Du weißt jetzt mehr über Passwörter als viele Erwachsene. 🛡️"}),
   ],
 });
 }
@@ -2538,7 +2549,7 @@ station({
   schritte:[
     paare({titel:"Die Tricks der Betrüger",punkte:10,text:"Betrüger spielen mit deinen Gefühlen. Welcher Trick steckt hinter welchem Satz?",
       paare:[["⏰ Zeitdruck","„Nur noch 5 Minuten gültig!“"],["😱 Angst","„Dein Konto wird gelöscht!“"],["🤑 Gier","„Gratis-Handy für dich!“"],["🙈 Neugier","„Bist du das auf dem Video? 😂“"],["🎭 Falscher Freund","„Ich bin's, neue Nummer. Schick mir Geld!“"]],
-      merke:"Wer die Tricks kennt, fällt nicht drauf rein. <b>Zeitdruck, Angst und Geschenke = Alarm!</b>"}),
+      merke:"Wer die Tricks kennt, fällt nicht drauf rein. <b>Zeitdruck, Angst und Geschenke = Alarm.</b>"}),
     fehlerSuche({titel:"Die falsche E-Mail",punkte:15,art:"📧 E-Mail",
       text:"Diese E-Mail ist ein Betrug (man sagt <b>Phishing</b> – „Passwort-Angeln“). Finde die 5 verdächtigen Stellen!",
       kopf:"<b>Betreff:</b> Letzte Warnung!!!",
@@ -2570,7 +2581,7 @@ station({
       merke:"Prüfe immer: <b>Wer</b> hat das geschrieben? Gibt es eine <b>Quelle</b>? Berichten auch <b>andere</b> darüber?"}),
     reihenfolge({titel:"Der Fakten-Check",punkte:10,text:"Du liest eine krasse Nachricht. Wie prüfst du, ob sie stimmt?",
       schritte:["Stopp – nicht sofort weiterschicken","Prüfen: Wer hat das geschrieben?","Nachschauen, ob bekannte Seiten (z. B. logo! oder die Tagesschau) auch darüber berichten","Wenn du unsicher bist: Erwachsene fragen","Nur weiterschicken, was wirklich stimmt"],
-      merke:"Erst denken, dann teilen. So stoppst du Falschmeldungen!"}),
+      merke:"Erst denken, dann teilen. So stoppst du Falschmeldungen."}),
   ],
 });
 
@@ -2594,7 +2605,7 @@ station({
       szenen:[
         {bild:"😢",text:"Jemand aus deiner Klasse wird im Gruppenchat ausgelacht. Viele machen mit.",optionen:[["Nicht mitmachen, einen Screenshot machen und einer Lehrkraft Bescheid sagen",true,"Richtig! Das ist Cybermobbing – und du hilfst, es zu stoppen."],["Mitlachen, sonst bin ich als Nächstes dran",false,"Wer mitmacht, macht es schlimmer – auch mit einem Lach-Emoji."],["Einfach nichts tun",false,"Wegsehen hilft nur den Gemeinen."]]},
         {bild:"📵",text:"Du bekommst selbst gemeine Nachrichten.",optionen:[["Nicht zurückschimpfen, Screenshot machen, blockieren und Erwachsenen zeigen",true,"Genau so! Du bist nicht schuld."],["Genauso gemein zurückschreiben",false,"Dann wird alles nur noch schlimmer."],["Es niemandem erzählen",false,"Allein ist es viel schwerer. Hol dir Hilfe!"]]},
-      ],merke:"<b>Cybermobbing</b> heißt: Jemand wird im Netz immer wieder fertiggemacht. Das ist nie okay – Hilfe holen ist kein Petzen!"}),
+      ],merke:"<b>Cybermobbing</b> heißt: Jemand wird im Netz immer wieder fertiggemacht. Das ist nie okay – Hilfe holen ist kein Petzen."}),
     reihenfolge({titel:"Erste Hilfe bei Gemeinheiten",punkte:10,text:"Was machst du bei gemeinen Nachrichten? Bring die Schritte in eine gute Reihenfolge.",
       schritte:["Nicht zurückschimpfen","Screenshot machen (als Beweis)","Den Absender blockieren und melden","Einer Vertrauensperson zeigen"]}),
     sortieren({titel:"Privat oder okay?",punkte:10,text:"Was darfst du im Netz ruhig erzählen – und was bleibt privat?",
@@ -2604,7 +2615,7 @@ station({
     fehlerSuche({titel:"Fremde im Spiele-Chat",punkte:15,art:"🎮 Chat in einem Online-Spiel",
       text:"Jemand, den du nicht kennst, schreibt dir in einem Spiel. Finde die 4 Stellen, bei denen du sofort <b>Stopp</b> sagen solltest.",
       teile:[["Hey, du spielst echt gut!"],["Wollen wir zusammen ein Level spielen?"],["Schick mir doch mal ein Foto von dir.",true,"Fremde brauchen kein Foto von dir."],["Ich schenk dir 1000 Münzen, wenn du mir deine Handynummer gibst.",true,"Geschenke gegen Daten sind eine Falle."],["Lass uns lieber in einer anderen App privat schreiben.",true,"Fremde wollen oft dorthin, wo niemand mitliest."],["Erzähl deinen Eltern nichts davon, das ist unser Geheimnis.",true,"Alarm! Solche Geheimnisse musst du nie für dich behalten."]],
-      merke:"Kommt dir etwas komisch vor? <b>Chat beenden, blockieren, Erwachsenen zeigen.</b> Du bekommst dafür keinen Ärger!"}),
+      merke:"Kommt dir etwas komisch vor? <b>Chat beenden, blockieren, Erwachsenen zeigen.</b> Du bekommst dafür keinen Ärger."}),
     entscheidung({titel:"Recht am eigenen Bild",punkte:10,
       szenen:[
         {bild:"📸",text:"Du hast ein lustiges Foto von deiner Freundin gemacht und willst es in deinen Status stellen.",optionen:[["Erst fragen, ob sie einverstanden ist",true,"Richtig! Jeder bestimmt selbst über Fotos von sich."],["Einfach posten, ist doch lustig",false,"Vielleicht findet sie es gar nicht lustig."]]},
@@ -2612,7 +2623,7 @@ station({
       ],merke:"<b>Recht am eigenen Bild:</b> Fotos und Videos von anderen darfst du nur mit Erlaubnis posten."}),
     auswaehlen({titel:"Wer hilft dir?",punkte:10,text:"Wenn im Netz etwas Blödes passiert: Wer kann dir helfen? Tippe alle an.",
       karten:[["👨‍👩‍👧 Eltern",true],["🧑‍🏫 Lehrkraft",true],["🤝 Schulsozialarbeit",true],["☎️ Nummer gegen Kummer: 116 111",true],["🌐 juuuport.de (Jugendliche helfen dir online)",true],["👤 Der Fremde aus dem Chat",false],["🙊 Niemand – ich muss das allein schaffen",false]],
-      merke:"<b>Nummer gegen Kummer: 116 111</b> – kostenlos von jedem Telefon. Du musst Probleme nicht allein lösen!"}),
+      merke:"<b>Nummer gegen Kummer: 116 111</b> – kostenlos von jedem Telefon. Du musst Probleme nicht allein lösen."}),
     auswaehlen({titel:"Unsere Chat-Regeln",punkte:10,text:"Eure Klasse macht Regeln für den Klassenchat. Welche Regeln sind <b>gut</b>? Tippe sie an.",
       karten:[["Wir schreiben freundlich.",true],["Keine Fotos von anderen ohne Erlaubnis.",true],["Nach 21 Uhr ist Chat-Pause.",true],["Wer nervt, wird rausgeworfen.",false],["Streit klären wir in echt, nicht im Chat.",true],["Jeder darf alles posten.",false],["Wir lachen niemanden aus.",true]],
       merke:"Gute Regeln schützen <b>alle</b> – auch dich."}),
@@ -2954,7 +2965,7 @@ station({
     auswaehlen({titel:"Gerade oder ungerade?",punkte:10,
       text:"Welche Binärzahlen sind <b>ungerade</b> (1, 3, 5, 7 …)? Rechne sie aus oder finde den Trick! Tippe alle ungeraden an.",
       karten:[["10101 (= 21)",true],["01110 (= 14)",false],["11111 (= 31)",true],["10000 (= 16)",false],["00011 (= 3)",true],["11010 (= 26)",false]],
-      merke:"<b>Trick:</b> Endet eine Binärzahl auf <b>1</b>, ist sie ungerade. Nur die 1er-Karte ist ungerade!"}),
+      merke:"<b>Trick:</b> Endet eine Binärzahl auf <b>1</b>, ist sie ungerade. Nur die 1er-Karte ist ungerade."}),
     eingabe({titel:"Buchstaben-Code knacken",punkte:15,
       text:"Auch Buchstaben speichert der Computer als Zahlen: A = 1, B = 2, C = 3 … Knack das Geheimwort! Rechne jede Zeile in eine Zahl um und such den Buchstaben.",
       html:`${ABC_TAB}${bitTabelle(["01000","00001","01100","01100","01111"])}`,antwort:"HALLO",platz:"Geheimwort",
@@ -2971,7 +2982,7 @@ station({
       merke:"Jede Stufe ist etwa <b>1000-mal</b> größer als die davor (nur von Bit zu Byte ist es 8-mal)."}),
     binaerTresor({titel:"Profi-Tresor",punkte:20,zahlen:[13,27,19],hilfe:false,
       text:"Der Profi-Tresor zeigt keine Summe mehr an. Rechne im Kopf! Der Tresor geht trotzdem auf, wenn es stimmt.",
-      merke:"Super! Du kannst jetzt Binär – die Sprache aller Computer."}),
+      merke:"Super. Du kannst jetzt Binär – die Sprache aller Computer."}),
   ],
 });
 }
@@ -2991,12 +3002,12 @@ station({
       text:"Gleicher Schlüssel (3), längeres Wort. Du schaffst das!"}),
     caesarRad({titel:"Selbst verschlüsseln",punkte:10,wort:"PIZZA",schluessel:1,modus:"ver",antwort:"QJAAB",
       text:"Jetzt andersrum: Verschlüssle <b>PIZZA</b> mit dem Schlüssel <b>1</b>. Such jeden Buchstaben in der <b>oberen</b> Reihe und schreib den Buchstaben darunter auf.",
-      merke:"<b>Verschlüsseln</b>: normaler Text → Geheimtext. <b>Entschlüsseln</b>: Geheimtext → normaler Text. Achtung: Nach Z kommt wieder A!"}),
+      merke:"<b>Verschlüsseln</b>: normaler Text → Geheimtext. <b>Entschlüsseln</b>: Geheimtext → normaler Text. Achtung: Nach Z kommt wieder A."}),
     caesarRad({titel:"Schlüssel 5",punkte:15,wort:"SCHULE",schluessel:5,modus:"ver",antwort:"XHMZQJ",
       text:"Verschlüssle <b>SCHULE</b> mit dem Schlüssel <b>5</b>."}),
     caesarRad({titel:"Den Code knacken",punkte:15,wort:"WHBZL",schluessel:7,modus:"knacken",antwort:"PAUSE",
       text:"Ein Spion hat eine Nachricht abgefangen – aber der Schlüssel ist unbekannt! Probier mit ◀ und ▶ alle Schlüssel aus, bis ein echtes Wort herauskommt.",
-      merke:"Es gibt nur 25 Schlüssel. Ein Computer probiert sie in einer Millisekunde alle durch. Caesar ist also <b>nicht sicher</b>!"}),
+      merke:"Es gibt nur 25 Schlüssel. Ein Computer probiert sie in einer Millisekunde alle durch. Caesar ist also <b>nicht sicher</b>."}),
     eingabe({titel:"Der Gartenzaun",punkte:15,
       text:"Ein ganz anderer Trick: Beim <b>Gartenzaun</b> schreibt man die Buchstaben abwechselnd oben und unten – wie ein Zickzack. Lies diese Geheimnachricht im <b>Zickzack</b>: oben, unten, oben, unten …",
       html:zaun("FREUNDE"),antwort:"FREUNDE",platz:"Lösungswort",
@@ -3042,14 +3053,14 @@ station({
       text:"Jedes Programm besteht aus drei Bausteinen: <b>Sequenz</b> (der Reihe nach), <b>Wiederholung</b> (mehrmals dasselbe) und <b>Verzweigung</b> (wenn … dann …). Sortiere!",
       toepfe:[["s","Sequenz","➡️"],["w","Wiederholung","🔁"],["v","Verzweigung","🔀"]],
       karten:[["Erst Schuhe an, dann Jacke an, dann losgehen","","s"],["Mach 20 Hampelmänner","","w"],["Wenn es klingelt, ist die Pause vorbei","","v"],["Rühre den Teig 30-mal um","","w"],["Wenn der Teller leer ist, darfst du aufstehen","","v"],["Klingeln, warten, Tür aufmachen","","s"]],
-      merke:"<b>Sequenz</b> ➡️ · <b>Wiederholung</b> 🔁 · <b>Verzweigung</b> 🔀 – damit kannst du jedes Programm bauen!"}),
+      merke:"<b>Sequenz</b> ➡️ · <b>Wiederholung</b> 🔁 · <b>Verzweigung</b> 🔀 – damit kannst du jedes Programm bauen."}),
     malRoboter({titel:"Das Muster",punkte:15,w:6,h:6,programm:"M R R M R R M D D M L L M L L M D D M R R M R R M",
       text:"Der Roboter malt ein Muster. Was fällt dir auf? Manche Befehle wiederholen sich!"}),
     eingabe({titel:"Der Zahlen-Zauber",punkte:10,zahl:true,
       text:"Auch Rechnen ist ein Algorithmus. Führe die Anleitung genau aus:",
       html:`<ol class="anleitung"><li>Nimm die Zahl <b>5</b>.</li><li>Verdopple sie.</li><li>Zähle 4 dazu.</li><li>Teile durch 2.</li><li>Ziehe die Zahl vom Anfang (5) ab.</li></ol><p class="frage">Welche Zahl kommt heraus?</p>`,
       antwort:"2",platz:"Ergebnis",
-      merke:"Probier es im Kopf mit einer anderen Zahl – es kommt <b>immer 2</b> heraus! Gute Algorithmen funktionieren immer."}),
+      merke:"Probier es im Kopf mit einer anderen Zahl – es kommt <b>immer 2</b> heraus. Gute Algorithmen funktionieren immer."}),
     reihenfolge({titel:"Zähne putzen für Roboter",punkte:10,text:"Zum Schluss: ein Algorithmus mit <b>Wiederholung</b> und <b>Verzweigung</b>. Bring ihn in die richtige Reihenfolge.",
       schritte:["Zahnpasta auf die Zahnbürste","Wiederhole 3 Minuten lang: Zähne schrubben","Wenn noch Schaum im Mund ist: ausspülen","Zahnbürste abwaschen"]}),
   ],
@@ -3101,7 +3112,7 @@ station({
       paare:[["➡️➡️➡️➡️","🔁 4× ➡️"],["➡️⬇️➡️⬇️➡️⬇️","🔁 3× ➡️⬇️"],["🖌️➡️🖌️➡️","🔁 2× 🖌️➡️"],["⬇️⬇️⬇️⬇️⬇️⬇️","🔁 6× ⬇️"],["➡️➡️⬇️➡️➡️⬇️","🔁 2× ➡️➡️⬇️"]]}),
     robo({titel:"Der lange Gang",punkte:15,karte:["###########","#S.......Z#","###########"],max:2,schleifen:true,loesung:"8x(R)",
       text:"Der Gang ist lang – aber du darfst nur <b>2 Befehle</b> benutzen! Tippe auf <b>Wiederhole</b>, dann auf →. Stell mit + und − ein, wie oft. Dann ✔ fertig.",
-      merke:"Eine Schleife zählt wie ein Befehl – plus die Befehle darin. „Wiederhole 8× →“ sind also nur 2 Befehle!"}),
+      merke:"Eine Schleife zählt wie ein Befehl – plus die Befehle darin. „Wiederhole 8× →“ sind also nur 2 Befehle."}),
     robo({titel:"Die Treppe",punkte:15,karte:["#######","#S#####","#..####","##..###","###..##","####.Z#","#######"],max:3,schleifen:true,loesung:"4x(D R)",
       text:"Runter, rechts, runter, rechts … Erkennst du die Wiederholung? Höchstens <b>3 Befehle</b>!"}),
     malRoboter({titel:"Die Schleifen-Treppe",punkte:15,w:6,h:6,programm:"5x(M R D) M",
@@ -3117,7 +3128,7 @@ station({
       text:"Ein Programm mit drei Schleifen. Geh langsam vor! Der Roboter startet oben links."}),
     robo({titel:"Schleifen-Meister",punkte:20,karte:["##########","#S.......#","########.#","#ZMMMMMM.#","##########"],max:6,schleifen:true,loesung:"7x(R) 2x(D) 7x(L)",
       text:"Das letzte Level: Hin, runter und zurück – mit allen Münzen und höchstens <b>6 Befehlen</b>!",
-      merke:"Super! Schleifen stecken in jedem Spiel und jeder App – zum Beispiel, wenn sich eine Figur immer wieder bewegt."}),
+      merke:"Super. Schleifen stecken in jedem Spiel und jeder App – zum Beispiel, wenn sich eine Figur immer wieder bewegt."}),
   ],
 });
 
@@ -3134,10 +3145,10 @@ station({
       szenen:[
         {bild:"📖",text:"Du suchst im Wörterbuch das Wort <b>Pinguin</b>.",optionen:[["In der Mitte aufschlagen, dann je nach Buchstabe weiter vorne oder hinten",true,"Genau! Das ist binäre Suche – weil das Wörterbuch sortiert ist."],["Auf Seite 1 anfangen und jede Seite lesen",false,"Das dauert ewig! Bei 1000 Seiten bis zu 1000-mal blättern."]]},
         {bild:"🧦",text:"In einem Haufen <b>durcheinander</b> liegender Socken suchst du die rote.",optionen:[["Eine Socke nach der anderen anschauen",true,"Richtig. Wenn nichts sortiert ist, hilft nur: alles durchschauen."],["In der Mitte des Haufens anfangen und halbieren",false,"Halbieren klappt nur, wenn alles sortiert ist."]]},
-      ],merke:"Binäre Suche klappt nur bei <b>sortierten</b> Sachen. Darum sortieren Computer so gern!"}),
+      ],merke:"Binäre Suche klappt nur bei <b>sortierten</b> Sachen. Darum sortieren Computer so gern."}),
     zahlRaten({titel:"Zahlen-Detektiv für Profis",punkte:20,bis:1000,max:10,
       text:"Jetzt eine Zahl von 1 bis <b>1000</b>! Mit dem Mitte-Trick schaffst du das in höchstens <b>10 Versuchen</b>.",
-      merke:"Bei 1000 Zahlen reichen 10 Versuche, bei einer Million nur 20! So findet Google in Sekundenbruchteilen das Richtige."}),
+      merke:"Bei 1000 Zahlen reichen 10 Versuche, bei einer Million nur 20. So findet Google in Sekundenbruchteilen das Richtige."}),
     waage({titel:"Die Balkenwaage",punkte:15,n:4,
       text:"Vier Kisten sind unterschiedlich schwer – aber man sieht es nicht! Leg immer <b>zwei Kisten</b> auf die Waage (antippen) und finde heraus, welche schwerer ist. Ordne sie dann von leicht nach schwer.",
       merke:"Computer sortieren genauso: Sie <b>vergleichen</b> immer nur zwei Dinge miteinander."}),
@@ -3244,7 +3255,7 @@ station({
         {ico:"🍒",name:"Kirsche",f:[1,1,0,1,0,0],ist:"o",label:"g"},{ico:"🍌",name:"Banane",f:[1,1,0,0,0,0],ist:"o"},{ico:"🍓",name:"Erdbeere",f:[1,0,0,0,0,0],ist:"o"},{ico:"🍎",name:"Apfel",f:[1,1,0,1,0,0],ist:"o"},
         {ico:"🥕",name:"Karotte",f:[0,0,1,0,0,0],ist:"g"},{ico:"🥦",name:"Brokkoli",f:[0,0,0,0,1,1],ist:"g"},{ico:"🥔",name:"Kartoffel",f:[0,0,1,0,1,0],ist:"g",label:"o"},{ico:"🥒",name:"Gurke",f:[0,0,0,1,0,1],ist:"g"}],
       tests:[{ico:"🍐",name:"Birne",f:[1,1,0,1,0,0],ist:"o"},{ico:"🧅",name:"Zwiebel",f:[0,0,1,0,1,0],ist:"g"},{ico:"🫑",name:"Paprika",f:[0,0,0,1,0,1],ist:"g"},{ico:"🍋",name:"Zitrone",f:[0,1,0,1,0,0],ist:"o"},{ico:"🥬",name:"Salat",f:[0,0,0,0,0,1],ist:"g"},{ico:"🫐",name:"Heidelbeeren",f:[1,1,0,0,0,0],ist:"o"}],
-      merke:"Eine KI ist nur so gut wie ihre Beispiele. <b>Falsche Trainingsdaten → falsche KI!</b>"}),
+      merke:"Eine KI ist nur so gut wie ihre Beispiele. <b>Falsche Trainingsdaten → falsche KI.</b>"}),
     kiZeichnen({titel:"Die Zeichen-KI",punkte:15,ziel:3,
       text:"Diese KI hat 6 Bilder gelernt: ❤️ Herz, 🏠 Haus, 🙂 Gesicht, ⬆️ Pfeil, 🌲 Baum und ➕ Plus. Mal eins davon – die KI rät live mit. Schaffst du es, dass sie <b>3 verschiedene</b> Bilder erkennt?",
       merke:"Die KI vergleicht dein Bild mit Mustern, die sie gelernt hat. Sie <b>versteht</b> nicht wirklich, was ein Herz ist – sie rechnet nur, wie ähnlich die Kästchen sind."}),
@@ -3281,13 +3292,13 @@ station({
       merke:"Das Internet vergisst nicht: Was einmal gepostet ist, bekommst du kaum zurück."}),
     reihenfolge({titel:"Die Reise eines Fotos",punkte:10,text:"Du postest ein peinliches Foto und löschst es nach einer Stunde wieder. Was kann in der Zwischenzeit passieren? Bring es in die Reihenfolge.",
       schritte:["Du postest das Foto","Deine Freunde sehen es","Jemand macht einen Screenshot","Der Screenshot wird weitergeschickt","Fremde sehen das Foto – auch nachdem du es gelöscht hast"],
-      merke:"<b>Erst denken, dann posten!</b> Frag dich: Wäre es okay, wenn das die ganze Schule sieht?"}),
+      merke:"<b>Erst denken, dann posten.</b> Frag dich: Wäre es okay, wenn das die ganze Schule sieht?"}),
     entscheidung({titel:"Datenschutz-Profi",punkte:15,
       szenen:[
         {bild:"🍪",text:"Eine Webseite fragt: „Alle Cookies akzeptieren?“ Es gibt auch „Nur notwendige“.",optionen:[["„Nur notwendige“ wählen",true,"Richtig! Dann sammelt die Seite weniger Daten über dich."],["„Alle akzeptieren“ – geht schneller",false,"Dann darf die Seite dich überall im Netz verfolgen."]]},
         {bild:"📍",text:"Eine App will deinen Standort mit allen Kontakten teilen.",optionen:[["Ablehnen – nur Eltern dürfen wissen, wo ich bin",true,"Genau! Wo du bist, geht Fremde nichts an."],["Zulassen, ist ja lustig",false,"Dann weiß jeder, wo du gerade bist – auch, wenn du allein bist."]]},
         {bild:"📝",text:"Ein Gewinnspiel will Name, Adresse und Geburtstag – für einen Sticker.",optionen:[["Nicht mitmachen oder erst die Eltern fragen",true,"Super! Deine Daten sind mehr wert als ein Sticker."],["Schnell alles eintippen",false,"Firmen verkaufen solche Daten oft weiter."]]},
-      ],merke:"<b>Deine Daten gehören dir!</b> Du bestimmst, wer was über dich weiß. Das heißt <b>Datenschutz</b>."}),
+      ],merke:"<b>Deine Daten gehören dir.</b> Du bestimmst, wer was über dich weiß. Das heißt <b>Datenschutz</b>."}),
     paare({titel:"Rückblick: Informatik-Wörter",punkte:15,text:"Du hast dieses Jahr viel gelernt! Verbinde die Wörter mit ihrer Bedeutung.",
       paare:[["EVA","Eingabe – Verarbeitung – Ausgabe"],["Bit","eine einzige 0 oder 1"],["Algorithmus","eine genaue Schritt-für-Schritt-Anleitung"],["Schleife","Befehle wiederholen"],["Automat","hat Zustände und Übergänge"],["KI","lernt aus Beispielen"],["Phishing","Betrug, um an Passwörter zu kommen"]]}),
     sortieren({titel:"Rückblick: Wohin gehört das?",punkte:15,text:"Ordne jede Karte dem passenden Thema aus deinem Lernpfad zu.",
@@ -3299,7 +3310,7 @@ station({
         <p class="eyebrow" style="margin-top:14px">2. Geheimwort</p><p style="font:800 2rem ui-monospace,Menlo,Consolas,monospace;letter-spacing:.15em;margin:0">GLSORP</p>
         <p class="muted small">Tipp: Jeden Buchstaben um den Schlüssel im Alphabet <b>zurück</b> schieben.</p></div>`,
       antwort:"DIPLOM",platz:"Lösungswort",
-      merke:"Wer diese Mission knackt, hat den ganzen Lernpfad geschafft – und ist ein echtes <b>Informatik-Ass</b>! 🎓"}),
+      merke:"Wer diese Mission knackt, hat den ganzen Lernpfad geschafft – und ist ein echtes <b>Informatik-Ass</b>. 🎓"}),
   ],
 });
 

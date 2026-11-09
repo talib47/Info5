@@ -724,3 +724,7 @@ kbd{border-radius:5px;font-family:var(--mono)}
 .tastaufgabe .wie{font-size:1.0625rem;margin:0 0 12px;max-width:36rem}
 .tastaufgabe .kappen{margin:0;justify-content:flex-start;display:flex}
 .tastaufgabe kbd{font-size:1.0625rem;padding:6px 12px}
+body[data-seite="lehrer"] #app{max-width:76rem}
+.liste tr.auff td{background:color-mix(in srgb,var(--marker) 28%,transparent)}
+.heute-t td,.heute-t th{padding:7px 10px}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .kib .chip{color:var(--ink)}}

@@ -18,7 +18,7 @@ station({
       szenen:[
         {bild:"😢",text:"Jemand aus deiner Klasse wird im Gruppenchat ausgelacht. Viele machen mit.",optionen:[["Nicht mitmachen, einen Screenshot machen und einer Lehrkraft Bescheid sagen",true,"Richtig! Das ist Cybermobbing – und du hilfst, es zu stoppen."],["Mitlachen, sonst bin ich als Nächstes dran",false,"Wer mitmacht, macht es schlimmer – auch mit einem Lach-Emoji."],["Einfach nichts tun",false,"Wegsehen hilft nur den Gemeinen."]]},
         {bild:"📵",text:"Du bekommst selbst gemeine Nachrichten.",optionen:[["Nicht zurückschimpfen, Screenshot machen, blockieren und Erwachsenen zeigen",true,"Genau so! Du bist nicht schuld."],["Genauso gemein zurückschreiben",false,"Dann wird alles nur noch schlimmer."],["Es niemandem erzählen",false,"Allein ist es viel schwerer. Hol dir Hilfe!"]]},
-      ],merke:"<b>Cybermobbing</b> heißt: Jemand wird im Netz immer wieder fertiggemacht. Das ist nie okay – Hilfe holen ist kein Petzen!"}),
+      ],merke:"<b>Cybermobbing</b> heißt: Jemand wird im Netz immer wieder fertiggemacht. Das ist nie okay – Hilfe holen ist kein Petzen."}),
     reihenfolge({titel:"Erste Hilfe bei Gemeinheiten",punkte:10,text:"Was machst du bei gemeinen Nachrichten? Bring die Schritte in eine gute Reihenfolge.",
       schritte:["Nicht zurückschimpfen","Screenshot machen (als Beweis)","Den Absender blockieren und melden","Einer Vertrauensperson zeigen"]}),
     sortieren({titel:"Privat oder okay?",punkte:10,text:"Was darfst du im Netz ruhig erzählen – und was bleibt privat?",
@@ -28,7 +28,7 @@ station({
     fehlerSuche({titel:"Fremde im Spiele-Chat",punkte:15,art:"🎮 Chat in einem Online-Spiel",
       text:"Jemand, den du nicht kennst, schreibt dir in einem Spiel. Finde die 4 Stellen, bei denen du sofort <b>Stopp</b> sagen solltest.",
       teile:[["Hey, du spielst echt gut!"],["Wollen wir zusammen ein Level spielen?"],["Schick mir doch mal ein Foto von dir.",true,"Fremde brauchen kein Foto von dir."],["Ich schenk dir 1000 Münzen, wenn du mir deine Handynummer gibst.",true,"Geschenke gegen Daten sind eine Falle."],["Lass uns lieber in einer anderen App privat schreiben.",true,"Fremde wollen oft dorthin, wo niemand mitliest."],["Erzähl deinen Eltern nichts davon, das ist unser Geheimnis.",true,"Alarm! Solche Geheimnisse musst du nie für dich behalten."]],
-      merke:"Kommt dir etwas komisch vor? <b>Chat beenden, blockieren, Erwachsenen zeigen.</b> Du bekommst dafür keinen Ärger!"}),
+      merke:"Kommt dir etwas komisch vor? <b>Chat beenden, blockieren, Erwachsenen zeigen.</b> Du bekommst dafür keinen Ärger."}),
     entscheidung({titel:"Recht am eigenen Bild",punkte:10,
       szenen:[
         {bild:"📸",text:"Du hast ein lustiges Foto von deiner Freundin gemacht und willst es in deinen Status stellen.",optionen:[["Erst fragen, ob sie einverstanden ist",true,"Richtig! Jeder bestimmt selbst über Fotos von sich."],["Einfach posten, ist doch lustig",false,"Vielleicht findet sie es gar nicht lustig."]]},
@@ -36,7 +36,7 @@ station({
       ],merke:"<b>Recht am eigenen Bild:</b> Fotos und Videos von anderen darfst du nur mit Erlaubnis posten."}),
     auswaehlen({titel:"Wer hilft dir?",punkte:10,text:"Wenn im Netz etwas Blödes passiert: Wer kann dir helfen? Tippe alle an.",
       karten:[["👨‍👩‍👧 Eltern",true],["🧑‍🏫 Lehrkraft",true],["🤝 Schulsozialarbeit",true],["☎️ Nummer gegen Kummer: 116 111",true],["🌐 juuuport.de (Jugendliche helfen dir online)",true],["👤 Der Fremde aus dem Chat",false],["🙊 Niemand – ich muss das allein schaffen",false]],
-      merke:"<b>Nummer gegen Kummer: 116 111</b> – kostenlos von jedem Telefon. Du musst Probleme nicht allein lösen!"}),
+      merke:"<b>Nummer gegen Kummer: 116 111</b> – kostenlos von jedem Telefon. Du musst Probleme nicht allein lösen."}),
     auswaehlen({titel:"Unsere Chat-Regeln",punkte:10,text:"Eure Klasse macht Regeln für den Klassenchat. Welche Regeln sind <b>gut</b>? Tippe sie an.",
       karten:[["Wir schreiben freundlich.",true],["Keine Fotos von anderen ohne Erlaubnis.",true],["Nach 21 Uhr ist Chat-Pause.",true],["Wer nervt, wird rausgeworfen.",false],["Streit klären wir in echt, nicht im Chat.",true],["Jeder darf alles posten.",false],["Wir lachen niemanden aus.",true]],
       merke:"Gute Regeln schützen <b>alle</b> – auch dich."}),

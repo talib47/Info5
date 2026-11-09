@@ -134,6 +134,8 @@ setInterval(()=>{const n=Date.now(),d=Math.min(n-tick,15000);tick=n;
 /* ---------- Seiten ---------- */
 function render(){
   aufraeumen();
+  document.body.dataset.seite=location.hash.startsWith("#lehrer")?"lehrer":"kind";
+  if(ONLINE.url&&/github\.io$/.test(location.hostname)&&!db.online){$("#app").innerHTML=`<div class="msg no">Die Verbindung zur Datenbank konnte nicht geladen werden. Lade die Seite neu. Wenn das nicht hilft, sag deiner Lehrkraft Bescheid.</div>`;return}
   let h=location.hash.slice(1);
   if(h==="lehrer"||h.startsWith("lehrer/"))return seiteLehrer();
   const vs=h==="v"||h.startsWith("v/");if(vs!==VS){VS=vs;laufend=null}
@@ -398,7 +400,7 @@ let lDaten=null,lTimer=null,lPlanGesendet=false;
 async function seiteLehrer(){
   laufend=null;clearInterval(lTimer);
   if(!(await db.lSitzung()))return lehrerLogin();
-  $("#app").innerHTML=`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5 · Lehrkraft</span></div><div class="row">${db.online?`<button class="link" id="lraus">Abmelden</button>`:""}<a class="link" href="#v">Stationen ansehen</a></div></div><div id="lb"><p class="muted">Lade …</p></div>`;
+  $("#app").innerHTML=`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5, Lehrkraft</span></div><div class="row">${db.online?`<button class="link" id="lraus">Abmelden</button>`:""}<a class="link" href="#v">Stationen ansehen</a></div></div><div id="lb"><p class="muted">Lade …</p></div>`;
   if($("#lraus"))$("#lraus").onclick=async()=>{await db.lAbmelden();seiteLehrer()};
   if(db.online&&!lPlanGesendet){try{await db.lPlanUebertragen();lPlanGesendet=true}catch(e){toast("Stundenplan konnte nicht übertragen werden")}}
   await lehrerLaden();
@@ -406,7 +408,7 @@ async function seiteLehrer(){
 }
 
 function lehrerLogin(){
-  $("#app").innerHTML=`<div class="top"><div class="brand">${LOGO}<span>Informatik 5 · Lehrkraft</span></div></div>
+  $("#app").innerHTML=`<div class="top"><div class="brand">${LOGO}<span>Informatik 5, Lehrkraft</span></div></div>
   <form class="block" id="f" style="max-width:26rem"><h2>Anmelden</h2>
   <label class="f" for="e">E-Mail</label><input type="text" id="e" autocomplete="username" inputmode="email">
   <div style="height:12px"></div><label class="f" for="p">Passwort</label><input type="password" id="p" autocomplete="current-password" class="pw">
@@ -441,29 +443,33 @@ function lehrerZeigen(){
     <div><h2 style="margin:0">${offen?`${kl} ist offen`:`${kl} ist zu`}</h2><p class="muted small" style="margin:2px 0 0">${esc(info)}</p></div>
     <div class="row">${hand?`<button class="btn ghost" id="plan">Wieder nach Stundenplan</button>`:""}<button class="btn" id="frei">${offen?"Jetzt schließen":`Jetzt öffnen (${FREIGABE_MIN} Min.)`}</button></div>
   </div>
-  <div class="block" style="overflow-x:auto">
-    ${kinder.length?`<table class="liste"><thead><tr><th>Tier</th><th>Vorname <span class="muted small">(nur hier)</span></th><th>Status</th>${PFAD().map((st,i)=>`<th class="c" title="${esc(st.titel)}">${i+1}<br>${st.ico}</th>`).join("")}<th></th></tr></thead><tbody>${kinder.map(zeile).join("")}</tbody></table>`
-      :`<p style="margin:0">Noch keine Kinder in ${kl}. In der ersten Stunde suchen sich die Kinder selbst ein Tier aus.</p>`}
-    <datalist id="dl-${esc(kl)}">${(listen[kl]||[]).filter(n=>!kinder.some(k=>namen[k.id]===n)).map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
-    ${(listen[kl]||[]).length?`<p class="muted small" style="margin:10px 0 0">${kinder.filter(k=>namen[k.id]).length} von ${listen[kl].length} Kindern zugeordnet.${(()=>{const fehlt=listen[kl].filter(n=>!kinder.some(k=>namen[k.id]===n));return fehlt.length&&fehlt.length<=8?" Noch ohne Tier: "+fehlt.map(esc).join(", "):""})()}</p>`:""}
-  </div>
   ${(()=>{const heute=new Date().toDateString(),zeilen=[];
     kinder.forEach(k=>{const t=tierInfo(k.tier),s=d.staende[k.id]||{};
       PFAD().forEach(st=>{const p=s[st.id];if(!p)return;
         const tag=new Date(p.fertig||p.start||0).toDateString();if(tag!==heute)return;
-        const pz=prozent(st,p),z=zeichenAus(pz);
-        zeilen.push({name:namen[k.id]||`${t.emoji} ${t.name}`,z,st:st.ico+" "+st.titel,pz,fertig:!!p.fertig})})});
-    if(!zeilen.length)return"";
-    zeilen.sort((a,b)=>a.name.localeCompare(b.name,"de"));
-    return`<div class="block"><h2 style="margin-bottom:4px">Für das Notenbuch · heute</h2><p class="muted small">Zeichen aus den Punkten von heute. Wer nicht fertig wurde, bekommt das Zeichen für das, was geschafft ist.</p>
-      <div class="heute">${zeilen.map(x=>`<div><span>${esc(x.name)} <span class="muted small">${esc(x.st)}</span></span><span>${x.fertig?"":`<span class="muted small">nicht fertig · </span>`}<span class="chip ${zeichenKlasse(x.z)} gross-z">${x.z}</span></span></div>`).join("")}</div></div>`})()}
+        const pz=prozent(st,p),z=zeichenAus(pz),f=p.fehler||{},fGes=Object.values(f).reduce((a,b)=>a+b,0),fHier=f[p.schritt||0]||0,min=Math.round((p.aktiv||0)/60000);
+        const hinweis=!p.fertig&&fHier>=3?"hängt an diesem Teil":p.fertig&&min<15?"sehr schnell fertig":fGes>=12?"viele Fehlversuche":"";
+        zeilen.push({name:namen[k.id]||`${t.emoji} ${t.name}`,z,st:st.titel,pz,fertig:!!p.fertig,teil:`Teil ${(p.schritt||0)+1} von ${st.schritte.length}`,min,fGes,hinweis,da:k.besetzt})})});
+    if(!zeilen.length)return`<div class="block"><h2 style="margin-bottom:4px">Heute</h2><p class="muted" style="margin:0">Heute hat in ${kl} noch niemand gearbeitet. Sobald Kinder anfangen, siehst du hier, wer wo ist und wer Hilfe braucht.</p></div>`;
+    zeilen.sort((a,b)=>(b.hinweis?1:0)-(a.hinweis?1:0)||a.name.localeCompare(b.name,"de"));
+    window._noten=zeilen.map(x=>`${x.name}\t${x.st}\t${x.fertig?x.z:x.z+" (nicht fertig)"}`).join("\n");
+    return`<div class="block" style="overflow-x:auto"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Heute</h2><button class="btn ghost noprint" id="kopie" style="min-height:40px;padding:6px 14px">Noten kopieren</button></div>
+      <p class="muted small" style="margin:4px 0 10px">Aktualisiert sich alle 20 Sekunden. Kinder mit Hinweis stehen oben. Wer nicht fertig wurde, bekommt das Zeichen für das, was geschafft ist.</p>
+      <table class="liste heute-t"><thead><tr><th>Kind</th><th>Station</th><th>Stand</th><th class="c">Minuten</th><th class="c">Fehlversuche</th><th>Hinweis</th><th class="c">Note</th></tr></thead><tbody>
+      ${zeilen.map(x=>`<tr class="${x.hinweis?"auff":""}"><td class="t">${esc(x.name)}</td><td>${esc(x.st)}</td><td>${x.fertig?"fertig":x.teil}</td><td class="c">${x.min}</td><td class="c">${x.fGes}</td><td>${x.hinweis?`<b>${x.hinweis}</b>`:""}</td><td class="c"><span class="chip ${zeichenKlasse(x.z)} gross-z">${x.z}</span></td></tr>`).join("")}</tbody></table></div>`})()}
+  <div class="block" style="overflow-x:auto"><h2 style="margin-bottom:8px">Alle Stationen</h2>
+    ${kinder.length?`<table class="liste"><thead><tr><th>Tier</th><th>Vorname <span class="muted small">(nur hier)</span></th><th>Status</th>${PFAD().map((st,i)=>`<th class="c" title="${esc(st.titel)}">${i+1}</th>`).join("")}<th></th></tr></thead><tbody>${kinder.map(zeile).join("")}</tbody></table>`
+      :`<p style="margin:0">Noch keine Kinder in ${kl}. In der ersten Stunde suchen sich die Kinder selbst ein Tier aus.</p>`}
+    <datalist id="dl-${esc(kl)}">${(listen[kl]||[]).filter(n=>!kinder.some(k=>namen[k.id]===n)).map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
+    ${(listen[kl]||[]).length?`<p class="muted small" style="margin:10px 0 0">${kinder.filter(k=>namen[k.id]).length} von ${listen[kl].length} Kindern zugeordnet.${(()=>{const fehlt=listen[kl].filter(n=>!kinder.some(k=>namen[k.id]===n));return fehlt.length&&fehlt.length<=8?" Noch ohne Tier: "+fehlt.map(esc).join(", "):""})()}</p>`:""}
+  </div>
   <div class="row noprint">
     <button class="btn ghost" id="druck" ${kinder.length?"":"disabled"}>Kärtchen drucken</button>
     <button class="btn ghost" id="sichern">Namensliste sichern</button><label class="btn ghost">Namensliste laden<input type="file" id="laden" accept=".json" hidden></label>
   </div>
   <details class="block plan"><summary><b>Lernpfad & Lehrplan</b> <span class="muted small">– alle ${PFAD().length} Stationen mit Bezug zum Kernlehrplan NRW</span></summary>
-    <ol>${PFAD().map(st=>`<li><b>${st.ico} ${esc(st.titel)}</b> <span class="chip">${KAPITEL[st.kapitel]||""}</span><br><span class="small">${esc(st.kurz)}</span>${st.klp?`<br><span class="muted small">KLP: ${esc(st.klp)}</span>`:""}</li>`).join("")}</ol>
-    <p class="muted small">Ablauf: Jede Station ist eine Doppelstunde (60 Min.). Die Kinder gehen den Lernpfad der Reihe nach, höchstens eine neue Station pro Tag. Wer früher fertig ist, darf auf den Spielplatz (Bonus-Spiele, ohne Note).</p></details>
+    <ol>${PFAD().map(st=>`<li><b>${esc(st.titel)}</b> <span class="chip">${KAPITEL_NAME[st.kapitel]||""}</span><br><span class="small">${esc(st.kurz)}</span>${st.klp?`<br><span class="muted small">KLP: ${esc(st.klp)}</span>`:""}</li>`).join("")}</ol>
+    <p class="muted small">Ablauf: Jede Station ist eine Doppelstunde (60 Min.). Die Kinder gehen den Lernpfad der Reihe nach, höchstens eine neue Station pro Tag. Der Spielplatz (Bonus-Spiele, ohne Note) öffnet nur mit einem + in der Station von heute.</p></details>
   <p class="muted small" style="margin-top:14px">Die Vornamen werden nur in diesem Browser gespeichert, nie auf dem Server. Sichere die Namensliste ab und zu (z. B. auf IServ), damit sie bei einem neuen Gerät nicht fehlt.${db.online?"":" <b>Vorschau-Modus:</b> Alles liegt nur in diesem Browser."}</p>`;
 
   document.querySelectorAll("[data-kl]").forEach(b=>b.onclick=()=>{lKlasse=b.dataset.kl;lsSet("if5-lklasse",lKlasse);lehrerZeigen()});
@@ -474,6 +480,7 @@ function lehrerZeigen(){
     if(a==="freigeben")return lAktion(()=>db.lAbmeldenKind(id));
     if(a==="mehr")return lMehr(d.kinder.find(k=>k.id===id))});
   $("#druck").onclick=()=>lDruck(kinder);
+  if($("#kopie"))$("#kopie").onclick=async()=>{try{await navigator.clipboard.writeText(window._noten);toast("Noten kopiert. Du kannst sie in eine Tabelle einfügen.")}catch(e){toast("Kopieren hat nicht geklappt")}};
   $("#sichern").onclick=()=>{const b=new Blob([JSON.stringify({art:"if5-namen",gesichert:new Date().toISOString(),namen,listen},null,1)],{type:"application/json"});
     const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`Informatik5-Namensliste-${new Date().toLocaleDateString("sv")}.json`;a.click();URL.revokeObjectURL(a.href)};
   $("#laden").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const j=JSON.parse(await f.text());if(j.art!=="if5-namen")throw 0;

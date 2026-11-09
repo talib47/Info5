@@ -11,7 +11,7 @@ station({
       paare:[["➡️➡️➡️➡️","🔁 4× ➡️"],["➡️⬇️➡️⬇️➡️⬇️","🔁 3× ➡️⬇️"],["🖌️➡️🖌️➡️","🔁 2× 🖌️➡️"],["⬇️⬇️⬇️⬇️⬇️⬇️","🔁 6× ⬇️"],["➡️➡️⬇️➡️➡️⬇️","🔁 2× ➡️➡️⬇️"]]}),
     robo({titel:"Der lange Gang",punkte:15,karte:["###########","#S.......Z#","###########"],max:2,schleifen:true,loesung:"8x(R)",
       text:"Der Gang ist lang – aber du darfst nur <b>2 Befehle</b> benutzen! Tippe auf <b>Wiederhole</b>, dann auf →. Stell mit + und − ein, wie oft. Dann ✔ fertig.",
-      merke:"Eine Schleife zählt wie ein Befehl – plus die Befehle darin. „Wiederhole 8× →“ sind also nur 2 Befehle!"}),
+      merke:"Eine Schleife zählt wie ein Befehl – plus die Befehle darin. „Wiederhole 8× →“ sind also nur 2 Befehle."}),
     robo({titel:"Die Treppe",punkte:15,karte:["#######","#S#####","#..####","##..###","###..##","####.Z#","#######"],max:3,schleifen:true,loesung:"4x(D R)",
       text:"Runter, rechts, runter, rechts … Erkennst du die Wiederholung? Höchstens <b>3 Befehle</b>!"}),
     malRoboter({titel:"Die Schleifen-Treppe",punkte:15,w:6,h:6,programm:"5x(M R D) M",
@@ -27,6 +27,6 @@ station({
       text:"Ein Programm mit drei Schleifen. Geh langsam vor! Der Roboter startet oben links."}),
     robo({titel:"Schleifen-Meister",punkte:20,karte:["##########","#S.......#","########.#","#ZMMMMMM.#","##########"],max:6,schleifen:true,loesung:"7x(R) 2x(D) 7x(L)",
       text:"Das letzte Level: Hin, runter und zurück – mit allen Münzen und höchstens <b>6 Befehlen</b>!",
-      merke:"Super! Schleifen stecken in jedem Spiel und jeder App – zum Beispiel, wenn sich eine Figur immer wieder bewegt."}),
+      merke:"Super. Schleifen stecken in jedem Spiel und jeder App – zum Beispiel, wenn sich eine Figur immer wieder bewegt."}),
   ],
 });

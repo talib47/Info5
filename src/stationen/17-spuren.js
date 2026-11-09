@@ -17,13 +17,13 @@ station({
       merke:"Das Internet vergisst nicht: Was einmal gepostet ist, bekommst du kaum zurück."}),
     reihenfolge({titel:"Die Reise eines Fotos",punkte:10,text:"Du postest ein peinliches Foto und löschst es nach einer Stunde wieder. Was kann in der Zwischenzeit passieren? Bring es in die Reihenfolge.",
       schritte:["Du postest das Foto","Deine Freunde sehen es","Jemand macht einen Screenshot","Der Screenshot wird weitergeschickt","Fremde sehen das Foto – auch nachdem du es gelöscht hast"],
-      merke:"<b>Erst denken, dann posten!</b> Frag dich: Wäre es okay, wenn das die ganze Schule sieht?"}),
+      merke:"<b>Erst denken, dann posten.</b> Frag dich: Wäre es okay, wenn das die ganze Schule sieht?"}),
     entscheidung({titel:"Datenschutz-Profi",punkte:15,
       szenen:[
         {bild:"🍪",text:"Eine Webseite fragt: „Alle Cookies akzeptieren?“ Es gibt auch „Nur notwendige“.",optionen:[["„Nur notwendige“ wählen",true,"Richtig! Dann sammelt die Seite weniger Daten über dich."],["„Alle akzeptieren“ – geht schneller",false,"Dann darf die Seite dich überall im Netz verfolgen."]]},
         {bild:"📍",text:"Eine App will deinen Standort mit allen Kontakten teilen.",optionen:[["Ablehnen – nur Eltern dürfen wissen, wo ich bin",true,"Genau! Wo du bist, geht Fremde nichts an."],["Zulassen, ist ja lustig",false,"Dann weiß jeder, wo du gerade bist – auch, wenn du allein bist."]]},
         {bild:"📝",text:"Ein Gewinnspiel will Name, Adresse und Geburtstag – für einen Sticker.",optionen:[["Nicht mitmachen oder erst die Eltern fragen",true,"Super! Deine Daten sind mehr wert als ein Sticker."],["Schnell alles eintippen",false,"Firmen verkaufen solche Daten oft weiter."]]},
-      ],merke:"<b>Deine Daten gehören dir!</b> Du bestimmst, wer was über dich weiß. Das heißt <b>Datenschutz</b>."}),
+      ],merke:"<b>Deine Daten gehören dir.</b> Du bestimmst, wer was über dich weiß. Das heißt <b>Datenschutz</b>."}),
     paare({titel:"Rückblick: Informatik-Wörter",punkte:15,text:"Du hast dieses Jahr viel gelernt! Verbinde die Wörter mit ihrer Bedeutung.",
       paare:[["EVA","Eingabe – Verarbeitung – Ausgabe"],["Bit","eine einzige 0 oder 1"],["Algorithmus","eine genaue Schritt-für-Schritt-Anleitung"],["Schleife","Befehle wiederholen"],["Automat","hat Zustände und Übergänge"],["KI","lernt aus Beispielen"],["Phishing","Betrug, um an Passwörter zu kommen"]]}),
     sortieren({titel:"Rückblick: Wohin gehört das?",punkte:15,text:"Ordne jede Karte dem passenden Thema aus deinem Lernpfad zu.",
@@ -35,6 +35,6 @@ station({
         <p class="eyebrow" style="margin-top:14px">2. Geheimwort</p><p style="font:800 2rem ui-monospace,Menlo,Consolas,monospace;letter-spacing:.15em;margin:0">GLSORP</p>
         <p class="muted small">Tipp: Jeden Buchstaben um den Schlüssel im Alphabet <b>zurück</b> schieben.</p></div>`,
       antwort:"DIPLOM",platz:"Lösungswort",
-      merke:"Wer diese Mission knackt, hat den ganzen Lernpfad geschafft – und ist ein echtes <b>Informatik-Ass</b>! 🎓"}),
+      merke:"Wer diese Mission knackt, hat den ganzen Lernpfad geschafft – und ist ein echtes <b>Informatik-Ass</b>. 🎓"}),
   ],
 });

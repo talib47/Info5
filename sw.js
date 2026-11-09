@@ -1,7 +1,7 @@
 /* Informatik 5: Offline-Kopie der Seite. Netz zuerst (immer beim Server nachfragen, höchstens 3 Sekunden), sonst gespeicherte Kopie.
    Alle Apps teilen sich talib47.github.io: hier werden nur Caches mit dem Präfix „if5-“ gelöscht. */
-const CACHE="if5-v4";
-const CORE=["./","index.html","manifest.webmanifest","icon.svg","favicon.ico","fonts/ahl-latin.woff2","fonts/ahm-latin.woff2","https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"];
+const CACHE="if5-v5";
+const CORE=["./","index.html","manifest.webmanifest","icon.svg","favicon.ico","fonts/ahl-latin.woff2","fonts/ahm-latin.woff2","vendor/supabase.js"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>Promise.all(CORE.map(u=>c.add(u).catch(()=>{})))));self.skipWaiting()});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith("if5-")&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener("fetch",e=>{

@@ -65,7 +65,7 @@ function reihenfolge({titel,punkte=10,merke,text,schritte}){return{titel,punkte,
   zeichne();
   ctx.pruefer=()=>{const fs=d.gew.map((x,k)=>x===k?-1:k).filter(k=>k>=0);
     return bewerte(ctx,el,{leer:d.gew.length<schritte.length,leerText:"Ordne zuerst alle Schritte ein.",fehler:fs.length,stand:d.gew.join(),punkte,
-      okText:"Richtig! Die Reihenfolge stimmt.",markiere:()=>{falsch=new Set(fs);zeichne()}})};
+      okText:"Richtig. Die Reihenfolge stimmt.",markiere:()=>{falsch=new Set(fs);zeichne()}})};
   ctx.loesung=()=>{d.gew=schritte.map((_,i)=>i);zeichne()};
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -89,7 +89,7 @@ function paare({titel,punkte=10,merke,text,paare:liste}){return{titel,punkte,mer
   zeichne();
   ctx.pruefer=()=>{const fs=liste.map((_,r)=>r).filter(r=>d.zu[r]!==r);
     return bewerte(ctx,el,{leer:Object.keys(d.zu).length<liste.length,leerText:"Verbinde zuerst alle Paare.",fehler:fs.length,stand:JSON.stringify(d.zu),punkte,
-      okText:"Richtig! Alle Paare passen.",markiere:()=>{falsch=new Set(fs);zeichne()}})};
+      okText:"Richtig. Alle Paare passen.",markiere:()=>{falsch=new Set(fs);zeichne()}})};
   ctx.loesung=()=>{liste.forEach((_,i)=>d.zu[i]=i);zeichne()};
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -160,7 +160,7 @@ function ordnerPfad({titel,punkte=10,merke,text,datei,baum,ziel}){return{titel,p
       meldung(el,true,`Gespeichert in: Dieser PC › ${d.pfad.join(" › ")||"(ganz oben)"}. Wenn das richtig ist, tippe auf „Weiter“.`)};
   };
   zeichne();
-  ctx.pruefer=()=>bewerte(ctx,el,{leer:!d.gespeichert,leerText:"Geh in den richtigen Ordner und tippe auf „Hier speichern“.",fehler:d.gespeichert&&d.gespeichert.join("/")===ziel.join("/")?0:1,stand:(d.gespeichert||[]).join("/"),punkte,okText:"Richtig gespeichert! So findest du die Datei immer wieder."});
+  ctx.pruefer=()=>bewerte(ctx,el,{leer:!d.gespeichert,leerText:"Geh in den richtigen Ordner und tippe auf „Hier speichern“.",fehler:d.gespeichert&&d.gespeichert.join("/")===ziel.join("/")?0:1,stand:(d.gespeichert||[]).join("/"),punkte,okText:"Richtig gespeichert. So findest du die Datei immer wieder."});
   ctx.loesung=()=>{d.pfad=ziel.slice();d.gespeichert=ziel.slice();zeichne()};
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -173,7 +173,7 @@ function eingabe({titel,punkte=10,merke,text,html="",antwort,zahl,platz="Deine A
   el.innerHTML=kopfText(text)+html+`<div class="eing"><input type="text" ${zahl?'inputmode="numeric"':""} autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${platz}" ${laenge?`maxlength="${laenge}"`:""} value="${esc(d.v||"")}"></div>${MLD}`;
   const inp=el.querySelector(".eing input");inp.oninput=()=>{d.v=inp.value;ctx.speichern()};
   inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();document.getElementById("weiter")?.click()}};
-  ctx.pruefer=()=>bewerte(ctx,el,{leer:!inp.value.trim(),leerText:"Tippe zuerst deine Antwort ins Feld.",fehler:gut.includes(norm(inp.value))?0:1,stand:norm(inp.value),punkte,okText:"Richtig!"});
+  ctx.pruefer=()=>bewerte(ctx,el,{leer:!inp.value.trim(),leerText:"Tippe zuerst deine Antwort ins Feld.",fehler:gut.includes(norm(inp.value))?0:1,stand:norm(inp.value),punkte,okText:"Richtig."});
   ctx.loesung=()=>{inp.value=Array.isArray(antwort)?antwort[0]:antwort;d.v=inp.value};
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -351,7 +351,7 @@ function malRoboter({titel,punkte=15,merke,text,w=6,h=6,programm}){return{titel,
   r.el.classList.add("start-ol");el.querySelector("#mr").append(r.el);
   el.querySelector("#mrl").onclick=()=>{if(confirm("Wirklich alles löschen?"))r.setzeAlle(Array(w*h).fill(0))};
   ctx.pruefer=()=>{const fs=soll.map((v,k)=>r.werte[k]!==v?k:-1).filter(k=>k>=0);
-    return bewerte(ctx,el,{leer:r.werte.every(v=>!v),leerText:"Mal zuerst, was der Roboter malt.",fehler:fs.length,stand:r.werte.join(""),punkte,okText:"Richtig! Du hast das Programm genau ausgeführt – wie ein Computer. 🤖",markiere:()=>r.markiere(fs)})};
+    return bewerte(ctx,el,{leer:r.werte.every(v=>!v),leerText:"Mal zuerst, was der Roboter malt.",fehler:fs.length,stand:r.werte.join(""),punkte,okText:"Richtig. Du hast das Programm genau ausgeführt – wie ein Computer. 🤖",markiere:()=>r.markiere(fs)})};
   ctx.loesung=()=>r.setzeAlle(soll);
   if(ctx.geloest)schonGeloest(el);
 }}}

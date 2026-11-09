@@ -27,7 +27,7 @@ station({
     auswaehlen({titel:"Gerade oder ungerade?",punkte:10,
       text:"Welche Binärzahlen sind <b>ungerade</b> (1, 3, 5, 7 …)? Rechne sie aus oder finde den Trick! Tippe alle ungeraden an.",
       karten:[["10101 (= 21)",true],["01110 (= 14)",false],["11111 (= 31)",true],["10000 (= 16)",false],["00011 (= 3)",true],["11010 (= 26)",false]],
-      merke:"<b>Trick:</b> Endet eine Binärzahl auf <b>1</b>, ist sie ungerade. Nur die 1er-Karte ist ungerade!"}),
+      merke:"<b>Trick:</b> Endet eine Binärzahl auf <b>1</b>, ist sie ungerade. Nur die 1er-Karte ist ungerade."}),
     eingabe({titel:"Buchstaben-Code knacken",punkte:15,
       text:"Auch Buchstaben speichert der Computer als Zahlen: A = 1, B = 2, C = 3 … Knack das Geheimwort! Rechne jede Zeile in eine Zahl um und such den Buchstaben.",
       html:`${ABC_TAB}${bitTabelle(["01000","00001","01100","01100","01111"])}`,antwort:"HALLO",platz:"Geheimwort",
@@ -44,7 +44,7 @@ station({
       merke:"Jede Stufe ist etwa <b>1000-mal</b> größer als die davor (nur von Bit zu Byte ist es 8-mal)."}),
     binaerTresor({titel:"Profi-Tresor",punkte:20,zahlen:[13,27,19],hilfe:false,
       text:"Der Profi-Tresor zeigt keine Summe mehr an. Rechne im Kopf! Der Tresor geht trotzdem auf, wenn es stimmt.",
-      merke:"Super! Du kannst jetzt Binär – die Sprache aller Computer."}),
+      merke:"Super. Du kannst jetzt Binär – die Sprache aller Computer."}),
   ],
 });
 }

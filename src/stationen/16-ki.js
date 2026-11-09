@@ -29,7 +29,7 @@ station({
         {ico:"🍒",name:"Kirsche",f:[1,1,0,1,0,0],ist:"o",label:"g"},{ico:"🍌",name:"Banane",f:[1,1,0,0,0,0],ist:"o"},{ico:"🍓",name:"Erdbeere",f:[1,0,0,0,0,0],ist:"o"},{ico:"🍎",name:"Apfel",f:[1,1,0,1,0,0],ist:"o"},
         {ico:"🥕",name:"Karotte",f:[0,0,1,0,0,0],ist:"g"},{ico:"🥦",name:"Brokkoli",f:[0,0,0,0,1,1],ist:"g"},{ico:"🥔",name:"Kartoffel",f:[0,0,1,0,1,0],ist:"g",label:"o"},{ico:"🥒",name:"Gurke",f:[0,0,0,1,0,1],ist:"g"}],
       tests:[{ico:"🍐",name:"Birne",f:[1,1,0,1,0,0],ist:"o"},{ico:"🧅",name:"Zwiebel",f:[0,0,1,0,1,0],ist:"g"},{ico:"🫑",name:"Paprika",f:[0,0,0,1,0,1],ist:"g"},{ico:"🍋",name:"Zitrone",f:[0,1,0,1,0,0],ist:"o"},{ico:"🥬",name:"Salat",f:[0,0,0,0,0,1],ist:"g"},{ico:"🫐",name:"Heidelbeeren",f:[1,1,0,0,0,0],ist:"o"}],
-      merke:"Eine KI ist nur so gut wie ihre Beispiele. <b>Falsche Trainingsdaten → falsche KI!</b>"}),
+      merke:"Eine KI ist nur so gut wie ihre Beispiele. <b>Falsche Trainingsdaten → falsche KI.</b>"}),
     kiZeichnen({titel:"Die Zeichen-KI",punkte:15,ziel:3,
       text:"Diese KI hat 6 Bilder gelernt: ❤️ Herz, 🏠 Haus, 🙂 Gesicht, ⬆️ Pfeil, 🌲 Baum und ➕ Plus. Mal eins davon – die KI rät live mit. Schaffst du es, dass sie <b>3 verschiedene</b> Bilder erkennt?",
       merke:"Die KI vergleicht dein Bild mit Mustern, die sie gelernt hat. Sie <b>versteht</b> nicht wirklich, was ein Herz ist – sie rechnet nur, wie ähnlich die Kästchen sind."}),

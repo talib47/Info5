@@ -6,7 +6,7 @@ station({
   schritte:[
     paare({titel:"Die Tricks der Betrüger",punkte:10,text:"Betrüger spielen mit deinen Gefühlen. Welcher Trick steckt hinter welchem Satz?",
       paare:[["⏰ Zeitdruck","„Nur noch 5 Minuten gültig!“"],["😱 Angst","„Dein Konto wird gelöscht!“"],["🤑 Gier","„Gratis-Handy für dich!“"],["🙈 Neugier","„Bist du das auf dem Video? 😂“"],["🎭 Falscher Freund","„Ich bin's, neue Nummer. Schick mir Geld!“"]],
-      merke:"Wer die Tricks kennt, fällt nicht drauf rein. <b>Zeitdruck, Angst und Geschenke = Alarm!</b>"}),
+      merke:"Wer die Tricks kennt, fällt nicht drauf rein. <b>Zeitdruck, Angst und Geschenke = Alarm.</b>"}),
     fehlerSuche({titel:"Die falsche E-Mail",punkte:15,art:"📧 E-Mail",
       text:"Diese E-Mail ist ein Betrug (man sagt <b>Phishing</b> – „Passwort-Angeln“). Finde die 5 verdächtigen Stellen!",
       kopf:"<b>Betreff:</b> Letzte Warnung!!!",
@@ -38,6 +38,6 @@ station({
       merke:"Prüfe immer: <b>Wer</b> hat das geschrieben? Gibt es eine <b>Quelle</b>? Berichten auch <b>andere</b> darüber?"}),
     reihenfolge({titel:"Der Fakten-Check",punkte:10,text:"Du liest eine krasse Nachricht. Wie prüfst du, ob sie stimmt?",
       schritte:["Stopp – nicht sofort weiterschicken","Prüfen: Wer hat das geschrieben?","Nachschauen, ob bekannte Seiten (z. B. logo! oder die Tagesschau) auch darüber berichten","Wenn du unsicher bist: Erwachsene fragen","Nur weiterschicken, was wirklich stimmt"],
-      merke:"Erst denken, dann teilen. So stoppst du Falschmeldungen!"}),
+      merke:"Erst denken, dann teilen. So stoppst du Falschmeldungen."}),
   ],
 });

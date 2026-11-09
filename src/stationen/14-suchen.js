@@ -11,10 +11,10 @@ station({
       szenen:[
         {bild:"📖",text:"Du suchst im Wörterbuch das Wort <b>Pinguin</b>.",optionen:[["In der Mitte aufschlagen, dann je nach Buchstabe weiter vorne oder hinten",true,"Genau! Das ist binäre Suche – weil das Wörterbuch sortiert ist."],["Auf Seite 1 anfangen und jede Seite lesen",false,"Das dauert ewig! Bei 1000 Seiten bis zu 1000-mal blättern."]]},
         {bild:"🧦",text:"In einem Haufen <b>durcheinander</b> liegender Socken suchst du die rote.",optionen:[["Eine Socke nach der anderen anschauen",true,"Richtig. Wenn nichts sortiert ist, hilft nur: alles durchschauen."],["In der Mitte des Haufens anfangen und halbieren",false,"Halbieren klappt nur, wenn alles sortiert ist."]]},
-      ],merke:"Binäre Suche klappt nur bei <b>sortierten</b> Sachen. Darum sortieren Computer so gern!"}),
+      ],merke:"Binäre Suche klappt nur bei <b>sortierten</b> Sachen. Darum sortieren Computer so gern."}),
     zahlRaten({titel:"Zahlen-Detektiv für Profis",punkte:20,bis:1000,max:10,
       text:"Jetzt eine Zahl von 1 bis <b>1000</b>! Mit dem Mitte-Trick schaffst du das in höchstens <b>10 Versuchen</b>.",
-      merke:"Bei 1000 Zahlen reichen 10 Versuche, bei einer Million nur 20! So findet Google in Sekundenbruchteilen das Richtige."}),
+      merke:"Bei 1000 Zahlen reichen 10 Versuche, bei einer Million nur 20. So findet Google in Sekundenbruchteilen das Richtige."}),
     waage({titel:"Die Balkenwaage",punkte:15,n:4,
       text:"Vier Kisten sind unterschiedlich schwer – aber man sieht es nicht! Leg immer <b>zwei Kisten</b> auf die Waage (antippen) und finde heraus, welche schwerer ist. Ordne sie dann von leicht nach schwer.",
       merke:"Computer sortieren genauso: Sie <b>vergleichen</b> immer nur zwei Dinge miteinander."}),
