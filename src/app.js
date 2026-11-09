@@ -1,7 +1,8 @@
 /* =====================================================================
    Informatik 5 — eigene Stunden-Seite für Jahrgang 5 (EKG Homberg, GNDO)
-   Kinder: Klasse → Tier → Geheimtier antippen (beim ersten Mal selbst aussuchen), Station lösen, Ergebniskarte zeigen.
-   Lehrkraft (#lehrer): Klassen freischalten, Tiere vergeben, Stände sehen, Kärtchen drucken.
+   Kinder: Klasse → Tier antippen (beim ersten Mal selbst aussuchen), Station lösen, Ergebniskarte zeigen.
+   Anmelden geht nur während der eigenen Stunde (Stundenplan unten) oder wenn die Lehrkraft von Hand öffnet.
+   Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
 const VERSION="__VERSION__";
@@ -14,8 +15,20 @@ function toast(t){document.querySelectorAll(".toast").forEach(x=>x.remove());con
 
 /* Klassen: hier jedes Schuljahr anpassen */
 const KLASSEN=["5B","5D","5E"];
-/* So lange ist eine Klasse nach dem Freischalten offen */
+/* So lange öffnet „Jetzt öffnen“ von Hand */
 const FREIGABE_MIN=90;
+
+/* Stundenplan Informatik (deutsche Zeit). tag: 1=Mo … 5=Fr. Jedes Schuljahr anpassen.
+   Die Klasse ist PUFFER Minuten vor Beginn bis PUFFER Minuten nach Ende offen. */
+const PUFFER=10;
+const STUNDENPLAN=[
+  {klasse:"5E",tag:1,von:"08:00",min:60},   // Gruppe 1
+  {klasse:"5E",tag:5,von:"10:20",min:60},   // Gruppe 2
+  // {klasse:"5B",tag:?,von:"??:??",min:60},
+  // {klasse:"5D",tag:?,von:"??:??",min:60},
+];
+/* Ferien NRW 2026/27 (erster und letzter Ferientag). Bewegliche Ferientage der Schule hier ergänzen. */
+const FERIEN=[["2026-12-23","2027-01-06"],["2027-03-22","2027-04-03"],["2027-05-18","2027-05-18"],["2027-07-19","2027-08-31"]];
 
 /*@@DATEN@@*/
 
@@ -104,64 +117,41 @@ async function seiteTier(klasse){
   <div class="plate"><p class="eyebrow">Klasse ${esc(klasse)}</p><h1>Welches Tier bist du?</h1></div><div id="liste"><p class="muted">Einen Moment …</p></div>`;
   $("#zur").onclick=seiteKlasse;
   let r;try{r=await db.tiere(klasse)}catch(e){$("#liste").innerHTML=`<div class="msg no">Keine Verbindung. Versuch es gleich noch mal.</div><button class="btn ghost" id="neu" style="margin-top:12px">Noch mal</button>`;$("#neu").onclick=()=>seiteTier(klasse);return}
-  if(!r.offen){$("#liste").innerHTML=`<div class="block"><h2>Noch zu 🔒</h2><p>Deine Lehrkraft schaltet die Klasse gleich frei.</p><button class="btn" id="neu">Noch mal schauen</button></div>`;$("#neu").onclick=()=>seiteTier(klasse);return}
-  $("#liste").innerHTML=(r.liste.length?`<div class="tiere">${r.liste.map(x=>{const t=tierInfo(x.tier);const zu=x.besetzt||x.gesperrt;
-    return`<button class="tier${zu?" zu":""}" data-t="${esc(x.tier)}" data-n="${x.neuGeheim?1:0}" ${zu?"disabled":""}><span class="e">${t.emoji}</span><span>${esc(t.name)}</span>${x.gesperrt?`<span class="chip">🔒 gesperrt</span>`:x.besetzt?`<span class="chip">besetzt</span>`:""}</button>`}).join("")}</div>
+  if(!r.offen){const n=naechsteStunde(klasse);
+    $("#liste").innerHTML=`<div class="block"><h2>Gerade geschlossen 🔒</h2><p>Du kannst dich nur in deiner Informatik-Stunde anmelden.${n?` Nächste Stunde: <b>${esc(n)}</b>.`:""}</p><button class="btn" id="neu">Noch mal schauen</button></div>`;$("#neu").onclick=()=>seiteTier(klasse);return}
+  $("#liste").innerHTML=(r.liste.length?`<div class="tiere">${r.liste.map(x=>{const t=tierInfo(x.tier);
+    return`<button class="tier${x.besetzt?" zu":""}" data-t="${esc(x.tier)}" ${x.besetzt?"disabled":""}><span class="e">${t.emoji}</span><span>${esc(t.name)}</span>${x.besetzt?`<span class="chip">besetzt</span>`:""}</button>`}).join("")}</div>
     <p class="muted small" style="margin-top:12px">Dein Tier ist grau? Dann sag sofort deiner Lehrkraft Bescheid.</p>`:`<p class="muted">Hier ist noch niemand. Sei die oder der Erste!</p>`)+
-    `<button class="btn ghost wide" id="ichneu" style="margin-top:16px">Ich bin neu hier – Tier aussuchen</button>`;
-  document.querySelectorAll(".tier[data-t]:not([disabled])").forEach(b=>b.onclick=()=>seiteGeheim(klasse,b.dataset.t,b.dataset.n==="1"));
+    `<button class="btn ghost wide" id="ichneu" style="margin-top:16px">Ich bin neu hier – Tier aussuchen</button><div id="m"></div>`;
+  document.querySelectorAll(".tier[data-t]:not([disabled])").forEach(b=>b.onclick=async()=>{
+    document.querySelectorAll(".tier[data-t]").forEach(x=>x.disabled=true);
+    let r;try{r=await db.anmelden(klasse,b.dataset.t)}catch(e){r={fehler:"netz"}}
+    anmeldeErgebnis(klasse,b.dataset.t,r,()=>seiteTier(klasse))});
   $("#ichneu").onclick=()=>seiteNeuTier(klasse,new Set(r.liste.map(x=>x.tier)));
 }
 
-/* Raster mit allen Tieren */
-function tierRaster(sperre=new Set()){return`<div class="tiere klein">${TIERE.map(([e,n])=>`<button class="tier${sperre.has(n)?" zu":""}" data-w="${esc(n)}" ${sperre.has(n)?"disabled":""}><span class="e">${e}</span><span>${esc(n)}</span></button>`).join("")}</div>`}
-
-/* Neu: 1. eigenes Tier (in der Klasse noch frei) */
+/* Neu: eigenes Tier aussuchen (in der Klasse noch frei) */
 function seiteNeuTier(klasse,vergeben){
   $("#app").innerHTML=kopf()+`<button class="link" id="zur">‹ Zurück</button>
-  <div class="plate"><p class="eyebrow">Neu · Klasse ${esc(klasse)} · Schritt 1 von 2</p><h1>Such dir dein Tier aus</h1><p>Das ist ab jetzt dein Name hier. Alle können es sehen. Graue Tiere sind schon vergeben.</p></div>${tierRaster(vergeben)}`;
+  <div class="plate"><p class="eyebrow">Neu · Klasse ${esc(klasse)}</p><h1>Such dir dein Tier aus</h1><p>Das ist ab jetzt dein Name hier. Graue Tiere sind schon vergeben.</p></div>
+  <div class="tiere klein">${TIERE.map(([e,n])=>`<button class="tier${vergeben.has(n)?" zu":""}" data-w="${esc(n)}" ${vergeben.has(n)?"disabled":""}><span class="e">${e}</span><span>${esc(n)}</span></button>`).join("")}</div><div id="m"></div>`;
   $("#zur").onclick=()=>seiteTier(klasse);
-  document.querySelectorAll("[data-w]:not([disabled])").forEach(b=>b.onclick=()=>seiteNeuGeheim(klasse,b.dataset.w));
-}
-/* Neu: 2. Geheimtier */
-function seiteNeuGeheim(klasse,tier,nurGeheim=false){
-  const t=tierInfo(tier);
-  $("#app").innerHTML=kopf()+`<button class="link" id="zur">‹ Zurück</button>
-  <div class="plate"><p class="eyebrow">${nurGeheim?"":"Neu · Schritt 2 von 2 · "}${t.emoji} ${esc(t.name)}</p><h1>Such dir dein Geheimtier aus</h1><p>Das weißt nur du! Sag es niemandem. Damit kommst du immer wieder rein.</p></div>${tierRaster()}<div id="m"></div>`;
-  $("#zur").onclick=()=>nurGeheim?seiteTier(klasse):seiteTier(klasse);
-  document.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{const g=tierInfo(b.dataset.w);
-    $("#app").innerHTML=kopf()+`<div class="plate"><p class="eyebrow">Merk dir gut</p><h1>${t.emoji} ${esc(t.name)} &nbsp;+&nbsp; ${g.emoji} ${esc(g.name)}</h1>
-      <p>Dein Tier: <b>${esc(t.name)}</b>. Dein Geheimtier: <b>${esc(g.name)}</b>. Das Geheimtier verrätst du niemandem.</p></div>
-      <div class="row"><button class="btn" id="ok">Ja, gemerkt!</button><button class="btn ghost" id="nein">Anderes Geheimtier</button></div><div id="m"></div>`;
-    $("#nein").onclick=()=>seiteNeuGeheim(klasse,tier,nurGeheim);
-    $("#ok").onclick=async()=>{$("#ok").disabled=true;let r;
-      try{r=nurGeheim?await db.anmelden(klasse,tier,b.dataset.w):await db.neu(klasse,tier,b.dataset.w)}catch(e){r={fehler:"netz"}}
-      anmeldeErgebnis(klasse,tier,r,()=>{$("#ok").disabled=false})};
-  });
-}
-
-/* 3. Geheimtier antippen */
-function seiteGeheim(klasse,tier,neuGeheim){
-  if(neuGeheim)return seiteNeuGeheim(klasse,tier,true);
-  const t=tierInfo(tier);
-  $("#app").innerHTML=kopf()+`<button class="link" id="zur">‹ Anderes Tier</button>
-  <div class="plate"><p class="eyebrow">Klasse ${esc(klasse)} · ${t.emoji} ${esc(t.name)}</p><h1>Was ist dein Geheimtier?</h1></div>${tierRaster()}<div id="m"></div>`;
-  $("#zur").onclick=()=>seiteTier(klasse);
-  document.querySelectorAll("[data-w]").forEach(b=>b.onclick=async()=>{
-    document.querySelectorAll("[data-w]").forEach(x=>x.disabled=true);
-    let r;try{r=await db.anmelden(klasse,tier,b.dataset.w)}catch(e){r={fehler:"netz"}}
-    anmeldeErgebnis(klasse,tier,r,()=>document.querySelectorAll("[data-w]").forEach(x=>x.disabled=false));
+  document.querySelectorAll("[data-w]:not([disabled])").forEach(b=>b.onclick=()=>{const t=tierInfo(b.dataset.w);
+    $("#app").innerHTML=kopf()+`<div class="plate"><p class="eyebrow">Merk dir gut</p><h1>Du bist ab jetzt: ${t.emoji} ${esc(t.name)}</h1><p>Nächstes Mal tippst du einfach auf dein Tier.</p></div>
+      <div class="row"><button class="btn" id="ok">Ja, das bin ich!</button><button class="btn ghost" id="nein">Anderes Tier</button></div><div id="m"></div>`;
+    $("#nein").onclick=()=>seiteNeuTier(klasse,vergeben);
+    $("#ok").onclick=async()=>{$("#ok").disabled=true;let r;try{r=await db.neu(klasse,b.dataset.w)}catch(e){r={fehler:"netz"}}
+      anmeldeErgebnis(klasse,b.dataset.w,r,()=>{$("#ok").disabled=false})};
   });
 }
 
 function anmeldeErgebnis(klasse,tier,r,nochmal){
   const t=tierInfo(tier);
   if(r.token){sitzung={klasse,tier,token:r.token};lsSet("if5-sitzung",sitzung);staende=r.staende||{};staendeLokal();toast(`Hallo ${t.name}!`);location.hash="";render();return}
-  const T={falsch:"Das ist nicht dein Geheimtier. Du hast noch einen Versuch.",gesperrt:"Dein Tier ist jetzt gesperrt 🔒. Geh zu deiner Lehrkraft.",
-    besetzt:"Dieses Tier ist schon an einem anderen Platz angemeldet. Sag deiner Lehrkraft Bescheid.",zu:"Die Klasse ist gerade nicht freigeschaltet.",
+  const T={besetzt:"Dieses Tier ist schon an einem anderen Platz angemeldet. Sag deiner Lehrkraft Bescheid.",zu:"Die Klasse ist gerade geschlossen.",
     unbekannt:"Dieses Tier gibt es nicht mehr.",vergeben:"Dieses Tier hat sich gerade jemand anderes genommen. Such dir ein anderes aus.",voll:"Die Klasse ist voll. Sag deiner Lehrkraft Bescheid.",netz:"Keine Verbindung. Versuch es noch mal."};
   const m=$("#m");m.className="msg no";m.textContent=T[r.fehler]||"Das hat nicht geklappt.";m.scrollIntoView({block:"center",behavior:"smooth"});
-  if(r.fehler==="falsch"||r.fehler==="netz")nochmal();
+  if(r.fehler==="netz")nochmal();else if(r.fehler==="vergeben"||r.fehler==="besetzt")setTimeout(nochmal,2500);
 }
 
 function seiteStart(){
@@ -241,13 +231,14 @@ function seiteErgebnis(st,prog){
    ===================================================================== */
 let namen=lsGet("if5-namen")||{};      // {kindId: "Vorname"}
 let lKlasse=lsGet("if5-lklasse")||KLASSEN[0];
-let lDaten=null,lTimer=null;
+let lDaten=null,lTimer=null,lPlanGesendet=false;
 
 async function seiteLehrer(){
   laufend=null;clearInterval(lTimer);
   if(!(await db.lSitzung()))return lehrerLogin();
   $("#app").innerHTML=`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5 · Lehrkraft</span></div><div class="row">${db.online?`<button class="link" id="lraus">Abmelden</button>`:""}<a class="link" href="#">Zur Kinder-Seite</a></div></div><div id="lb"><p class="muted">Lade …</p></div>`;
   if($("#lraus"))$("#lraus").onclick=async()=>{await db.lAbmelden();seiteLehrer()};
+  if(db.online&&!lPlanGesendet){try{await db.lPlanUebertragen();lPlanGesendet=true}catch(e){toast("Stundenplan konnte nicht übertragen werden")}}
   await lehrerLaden();
   lTimer=setInterval(()=>{if(location.hash==="#lehrer"&&!document.hidden&&!document.activeElement?.matches("input"))lehrerLaden()},20000);
 }
@@ -269,39 +260,41 @@ async function lehrerLaden(){
 function lehrerZeigen(){
   const d=lDaten,kl=lKlasse;
   const kinder=d.kinder.filter(k=>k.klasse===kl);
-  const bis=d.freigaben[kl]||0,offen=bis>Date.now();
-  const restMin=Math.max(0,Math.round((bis-Date.now())/60000));
+  const fg=d.freigaben[kl]||{},nun=Date.now();
+  const offen=offenAus(kl,fg),hand=(fg.zu_bis||0)>nun?"zu":(fg.offen_bis||0)>nun?"offen":null;
+  const naechste=naechsteStunde(kl);
+  const info=hand==="offen"?`Von Hand geöffnet bis ${new Date(fg.offen_bis).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})} Uhr.`
+    :hand==="zu"?`Von Hand geschlossen bis ${new Date(fg.zu_bis).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})} Uhr.`
+    :offen?"Nach Stundenplan offen.":`Nach Stundenplan zu.${naechste?" Nächste Stunde: "+naechste+".":""}`;
   const zeile=k=>{const t=tierInfo(k.tier),s=d.staende[k.id]||{};
-    const g=k.geheim?tierInfo(k.geheim):null;
-    const status=k.gesperrt?`<span class="chip bad">🔒 gesperrt</span> <button class="link" data-a="entsperren" data-id="${k.id}">entsperren</button>`
-      :k.besetzt?`<span class="chip good">angemeldet</span> <button class="link" data-a="freigeben" data-id="${k.id}">abmelden</button>`:`<span class="muted small">–</span>`;
+    const status=k.besetzt?`<span class="chip good">angemeldet</span> <button class="link" data-a="freigeben" data-id="${k.id}">abmelden</button>`:`<span class="muted small">–</span>`;
     const zellen=STATIONEN.map(st=>{const p=s[st.id];if(!p)return`<td class="muted">–</td>`;const pz=prozent(st,p);
       return`<td><b>${p.fertig?noteAus(pz):"…"}</b> <span class="muted small">${pz} %${p.fertig?"":" · Teil "+((p.schritt||0)+1)}</span></td>`}).join("");
-    return`<tr><td class="t"><span class="e">${t.emoji}</span>${esc(t.name)}</td><td class="muted small">${g?`${g.emoji} ${esc(g.name)}`:"wählt neu"}</td>
+    return`<tr><td class="t"><span class="e">${t.emoji}</span>${esc(t.name)}</td>
       <td><input type="text" class="vn" data-id="${k.id}" value="${esc(namen[k.id]||"")}" placeholder="Vorname"></td><td>${status}</td>${zellen}
       <td><button class="link" data-a="mehr" data-id="${k.id}" aria-label="Mehr">⋯</button></td></tr>`};
   $("#lb").innerHTML=`
   <div class="tabs noprint">${KLASSEN.map(k=>`<button class="${k===kl?"an":""}" data-kl="${k}">${k} <span class="muted small">${d.kinder.filter(x=>x.klasse===k).length}</span></button>`).join("")}</div>
   <div class="block frei-box ${offen?"offen":""}">
-    <div><h2 style="margin:0">${offen?`${kl} ist offen`:`${kl} ist zu`}</h2><p class="muted small" style="margin:2px 0 0">${offen?`Kinder können sich noch ${restMin} Min. anmelden.`:"Kinder können sich gerade nicht anmelden."}</p></div>
-    <button class="btn" id="frei">${offen?"Schließen":`Freischalten (${FREIGABE_MIN} Min.)`}</button>
+    <div><h2 style="margin:0">${offen?`${kl} ist offen`:`${kl} ist zu`}</h2><p class="muted small" style="margin:2px 0 0">${esc(info)}</p></div>
+    <div class="row">${hand?`<button class="btn ghost" id="plan">Wieder nach Stundenplan</button>`:""}<button class="btn" id="frei">${offen?"Jetzt schließen":`Jetzt öffnen (${FREIGABE_MIN} Min.)`}</button></div>
   </div>
   <div class="block" style="overflow-x:auto">
-    ${kinder.length?`<table class="liste"><thead><tr><th>Tier</th><th>Geheimtier</th><th>Vorname <span class="muted small">(nur hier)</span></th><th>Status</th>${STATIONEN.map(st=>`<th>${st.ico} ${esc(st.titel)}</th>`).join("")}<th></th></tr></thead><tbody>${kinder.map(zeile).join("")}</tbody></table>`
-      :`<p style="margin:0">Noch keine Kinder in ${kl}. Schalte die Klasse frei: Die Kinder suchen sich beim ersten Mal selbst ein Tier und ein Geheimtier aus.</p>`}
+    ${kinder.length?`<table class="liste"><thead><tr><th>Tier</th><th>Vorname <span class="muted small">(nur hier)</span></th><th>Status</th>${STATIONEN.map(st=>`<th>${st.ico} ${esc(st.titel)}</th>`).join("")}<th></th></tr></thead><tbody>${kinder.map(zeile).join("")}</tbody></table>`
+      :`<p style="margin:0">Noch keine Kinder in ${kl}. In der ersten Stunde suchen sich die Kinder selbst ein Tier aus.</p>`}
   </div>
   <div class="row noprint">
-    <button class="btn ghost" id="druck" ${kinder.length?"":"disabled"}>Notfall-Kärtchen drucken</button>
+    <button class="btn ghost" id="druck" ${kinder.length?"":"disabled"}>Kärtchen drucken</button>
     <button class="btn ghost" id="sichern">Namensliste sichern</button><label class="btn ghost">Namensliste laden<input type="file" id="laden" accept=".json" hidden></label>
   </div>
   <p class="muted small" style="margin-top:14px">Die Vornamen werden nur in diesem Browser gespeichert, nie auf dem Server. Sichere die Namensliste ab und zu (z. B. auf IServ), damit sie bei einem neuen Gerät nicht fehlt.${db.online?"":" <b>Vorschau-Modus:</b> Alles liegt nur in diesem Browser."}</p>`;
 
   document.querySelectorAll("[data-kl]").forEach(b=>b.onclick=()=>{lKlasse=b.dataset.kl;lsSet("if5-lklasse",lKlasse);lehrerZeigen()});
-  $("#frei").onclick=async()=>{await lAktion(()=>db.lFreigabe(kl,offen?null:Date.now()+FREIGABE_MIN*60000))};
+  $("#frei").onclick=()=>lAktion(()=>db.lFreigabe(kl,offen?{zu_bis:Date.now()+FREIGABE_MIN*60000}:{offen_bis:Date.now()+FREIGABE_MIN*60000}));
+  if($("#plan"))$("#plan").onclick=()=>lAktion(()=>db.lFreigabe(kl,{}));
   document.querySelectorAll(".vn").forEach(i=>i.oninput=()=>{const v=i.value.trim();if(v)namen[i.dataset.id]=v;else delete namen[i.dataset.id];lsSet("if5-namen",namen)});
   document.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{const id=b.dataset.id,a=b.dataset.a;
-    if(a==="entsperren")return lAktion(()=>db.lKindAendern(id,{entsperren:true}));
-    if(a==="freigeben")return lAktion(()=>db.lKindAendern(id,{freigeben:true}));
+    if(a==="freigeben")return lAktion(()=>db.lAbmeldenKind(id));
     if(a==="mehr")return lMehr(d.kinder.find(k=>k.id===id))});
   $("#druck").onclick=()=>lDruck(kinder);
   $("#sichern").onclick=()=>{const b=new Blob([JSON.stringify({art:"if5-namen",gesichert:new Date().toISOString(),namen},null,1)],{type:"application/json"});
@@ -314,11 +307,10 @@ async function lAktion(f){try{await f();await lehrerLaden()}catch(e){toast("Hat 
 
 function lMehr(k){
   const t=tierInfo(k.tier);
-  const wahl=prompt(`${t.emoji} ${t.name}${namen[k.id]?" ("+namen[k.id]+")":""}\n\n1 = Geheimtier vergessen? Kind darf ein neues wählen\n2 = Stand einer Station löschen\n3 = Tier ganz löschen`);
-  if(wahl==="1"){lAktion(()=>db.lKindAendern(k.id,{geheimNeu:true})).then(()=>toast(`${t.name} wählt beim nächsten Anmelden ein neues Geheimtier`))}
-  else if(wahl==="2"){const st=STATIONEN.length===1?STATIONEN[0]:STATIONEN[parseInt(prompt(STATIONEN.map((s,i)=>`${i+1} = ${s.titel}`).join("\n")),10)-1];
+  const wahl=prompt(`${t.emoji} ${t.name}${namen[k.id]?" ("+namen[k.id]+")":""}\n\n1 = Stand einer Station löschen\n2 = Tier ganz löschen`);
+  if(wahl==="1"){const st=STATIONEN.length===1?STATIONEN[0]:STATIONEN[parseInt(prompt(STATIONEN.map((s,i)=>`${i+1} = ${s.titel}`).join("\n")),10)-1];
     if(st&&confirm(`Stand „${st.titel}“ von ${t.name} löschen?`))lAktion(()=>db.lStandLoeschen(k.id,st.id))}
-  else if(wahl==="3"){if(confirm(`${t.name} mit allen Punkten löschen?`)){delete namen[k.id];lsSet("if5-namen",namen);lAktion(()=>db.lKindLoeschen(k.id))}}
+  else if(wahl==="2"){if(confirm(`${t.name} mit allen Punkten löschen?`)){delete namen[k.id];lsSet("if5-namen",namen);lAktion(()=>db.lKindLoeschen(k.id))}}
 }
 
 function lDruck(kinder){
@@ -328,9 +320,9 @@ function lDruck(kinder){
     .k{border:1px dashed #999;padding:10px 12px;height:42mm;display:flex;flex-direction:column;justify-content:space-between;break-inside:avoid}
     .e{font-size:40px;line-height:1}.n{font-size:20px;font-weight:700}.f{display:flex;align-items:center;gap:8px;font-weight:700}
     .f i{width:22px;height:22px;border-radius:50%;display:inline-block;-webkit-print-color-adjust:exact;print-color-adjust:exact}.s{color:#666;font-size:12px}
-    </style></head><body><div class="g">${kinder.map(k=>{const t=tierInfo(k.tier),g=k.geheim?tierInfo(k.geheim):{emoji:"",name:"wählt neu"};
+    </style></head><body><div class="g">${kinder.map(k=>{const t=tierInfo(k.tier);
     return`<div class="k"><div style="display:flex;justify-content:space-between"><span class="e">${t.emoji}</span><span class="s">Informatik 5 · ${esc(k.klasse)}<br>${esc(namen[k.id]||"")}</span></div>
-    <div class="n">${esc(t.name)}</div><div class="f">Geheimtier: ${g.emoji} ${esc(g.name)}</div></div>`}).join("")}</div>
+    <div class="n">${esc(t.name)}</div><div class="f">Klasse ${esc(k.klasse)}</div></div>`}).join("")}</div>
     <script>onload=()=>print()<\/script></body></html>`);
   w.document.close();
 }
