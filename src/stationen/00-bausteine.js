@@ -74,12 +74,16 @@ function reihenfolge({titel,punkte=10,merke,text,schritte}){return{titel,punkte,
    paare({titel,punkte,merke,text,paare:[["links","rechts"],…]}) */
 const PAAR_FARBEN=["#4338CA","#E5383B","#2DA44E","#F08A24","#8E5BD6","#0EA5B7","#C2185B","#8B5A2B"];
 function paare({titel,punkte=10,merke,text,paare:liste}){return{titel,punkte,merke,zeige(el,ctx){
-  const d=ctx.daten;if(!d.reihe){d.reihe=mischenAnders(liste.map((_,i)=>i));ctx.speichern()}d.zu=d.zu||{};   // rechtsIndex → linksIndex
-  let wahl=null,falsch=new Set();
-  const zeichne=()=>{
-    el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Tippe links etwas an, dann rechts das Passende</p>
-      <div class="paare"><div>${liste.map(([l],i)=>{const vergeben=Object.values(d.zu).includes(i);return`<button class="karte links${wahl===i?" an":""}" data-l="${i}" style="--pf:${PAAR_FARBEN[i%8]}"><span class="pnr${vergeben?" voll":""}">${i+1}</span>${l}</button>`}).join("")}</div>
-      <div>${d.reihe.map(r=>{const l=d.zu[r];return`<button class="karte rechts${falsch.has(r)?" falsch":""}" data-r="${r}" ${l!=null?`style="--pf:${PAAR_FARBEN[l%8]}"`:""}><span class="pnr${l!=null?" voll":""}">${l!=null?l+1:"?"}</span>${liste[r][1]}</button>`}).join("")}</div></div>${MLD}`;
+  /* Häppchenweise: höchstens 3 bis 4 Paare auf einmal, dann die nächsten */
+  const gruppen=[];for(let k=0;k<liste.length;k+=3)gruppen.push(liste.map((_,i)=>i).slice(k,k+3));
+  if(gruppen.length>1&&gruppen[gruppen.length-1].length===1)gruppen[gruppen.length-2].push(...gruppen.pop());
+  const d=ctx.daten;if(!d.reihe){d.reihe=mischenAnders(liste.map((_,i)=>i));ctx.speichern()}d.zu=d.zu||{};d.runde=Math.min(d.runde||0,gruppen.length-1);   // d.zu: rechtsIndex → linksIndex
+  let wahl=null,falsch=new Set(),lob="";
+  const zeichne=()=>{const g=gruppen[d.runde],rechts=d.reihe.filter(r=>g.includes(r));
+    el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">${gruppen.length>1?`Runde ${d.runde+1} von ${gruppen.length}. `:""}Tippe links etwas an, dann rechts das Passende</p>
+      <div class="paare"><div>${g.map((i,n)=>{const vergeben=Object.values(d.zu).includes(i);return`<button class="karte links${wahl===i?" an":""}" data-l="${i}" style="--pf:${PAAR_FARBEN[n%8]}"><span class="pnr${vergeben?" voll":""}">${n+1}</span>${liste[i][0]}</button>`}).join("")}</div>
+      <div>${rechts.map(r=>{const l=d.zu[r],n=g.indexOf(l);return`<button class="karte rechts${falsch.has(r)?" falsch":""}" data-r="${r}" ${l!=null?`style="--pf:${PAAR_FARBEN[n%8]}"`:""}><span class="pnr${l!=null?" voll":""}">${l!=null?n+1:"?"}</span>${liste[r][1]}</button>`}).join("")}</div></div>${MLD}`;
+    if(lob){meldung(el,true,lob);lob=""}
     el.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>{const i=+b.dataset.l;wahl=wahl===i?null:i;zeichne()});
     el.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{const r=+b.dataset.r;
       if(wahl==null){if(d.zu[r]!=null){delete d.zu[r];ctx.speichern();zeichne()}else toast("Tippe zuerst links etwas an.");return}
@@ -87,10 +91,11 @@ function paare({titel,punkte=10,merke,text,paare:liste}){return{titel,punkte,mer
       d.zu[r]=wahl;wahl=null;falsch.delete(r);ctx.speichern();zeichne()});
   };
   zeichne();
-  ctx.pruefer=()=>{const fs=liste.map((_,r)=>r).filter(r=>d.zu[r]!==r);
-    return bewerte(ctx,el,{leer:Object.keys(d.zu).length<liste.length,leerText:"Verbinde zuerst alle Paare.",fehler:fs.length,stand:JSON.stringify(d.zu),punkte,
+  ctx.pruefer=()=>{const g=gruppen[d.runde],fs=g.filter(r=>d.zu[r]!==r),leer=g.some(r=>d.zu[r]==null),letzte=d.runde===gruppen.length-1;
+    if(!leer&&!fs.length&&!letzte){d.runde++;d.letzterFehler=null;d.versuche=0;ctx.speichern();lob="Richtig. Jetzt die nächsten Paare.";zeichne();return false}
+    return bewerte(ctx,el,{leer,leerText:"Verbinde zuerst alle Paare.",fehler:fs.length,stand:JSON.stringify(d.zu),punkte,
       okText:"Richtig. Alle Paare passen.",markiere:()=>{falsch=new Set(fs);zeichne()}})};
-  ctx.loesung=()=>{liste.forEach((_,i)=>d.zu[i]=i);zeichne()};
+  ctx.loesung=()=>{gruppen[d.runde].forEach(i=>d.zu[i]=i);zeichne()};
   if(ctx.geloest)schonGeloest(el);
 }}}
 
