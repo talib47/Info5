@@ -117,6 +117,9 @@ const db={
     const klar=await crypto.subtle.decrypt({name:"AES-GCM",iv:roh.slice(0,12)},key,roh.slice(12));
     return JSON.parse(new TextDecoder().decode(klar));
   },
+  /* Einmalige Übergabe: vorbereitete Namen-Zuordnung abholen; sie wird danach verschlüsselt gesichert und hier gelöscht */
+  async lUebergabeHolen(){if(!CLOUD)return null;const {data,error}=await sb.from("lehrer_uebergabe").select("inhalt").maybeSingle();if(error)throw error;return data?data.inhalt:null},
+  async lUebergabeLoeschen(){if(CLOUD)await sb.from("lehrer_uebergabe").delete().eq("id",1)},
   async lGeheimSpeichern(obj){
     if(!CLOUD)return false;const key=await this._key();if(!key)return false;
     const {data:u}=await sb.auth.getUser();if(!u?.user)return false;

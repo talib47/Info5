@@ -403,6 +403,10 @@ function namenMerken(){lsSet("if5-namen",namen);lsSet("if5-listen",listen);clear
 async function namenHolen(){
   try{const g=await db.lGeheimLaden();if(g){namen={...(g.namen||{}),...namen};listen={...(g.listen||{}),...listen};lsSet("if5-namen",namen);lsSet("if5-listen",listen);namenStand="gesichert"}
     else if(db.online&&db.hatSchluessel()&&(Object.keys(namen).length||Object.keys(listen).length))namenMerken()}
+  catch(e){namenStand="fehler"}
+  try{const u=await db.lUebergabeHolen();
+    if(u){namen={...namen,...(u.namen||{})};listen={...listen,...(u.listen||{})};lsSet("if5-namen",namen);lsSet("if5-listen",listen);
+      if(await db.lGeheimSpeichern({namen,listen})){await db.lUebergabeLoeschen();namenStand="gesichert"}}}
   catch(e){namenStand="fehler"}}
 
 async function seiteLehrer(){

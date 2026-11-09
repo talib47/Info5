@@ -134,3 +134,9 @@ create table if not exists lehrer_daten(user_id uuid primary key references auth
 alter table lehrer_daten enable row level security;
 drop policy if exists ld_eigene on lehrer_daten;
 create policy ld_eigene on lehrer_daten for all to authenticated using (user_id=auth.uid() and ist_lehrkraft()) with check (user_id=auth.uid() and ist_lehrkraft());
+
+-- Einmalige Übergabe einer vorbereiteten Namen-Zuordnung (nur Lehrkraft); wird nach dem Abholen gelöscht.
+create table if not exists lehrer_uebergabe(id int primary key default 1, inhalt jsonb not null);
+alter table lehrer_uebergabe enable row level security;
+drop policy if exists lu_lehrkraft on lehrer_uebergabe;
+create policy lu_lehrkraft on lehrer_uebergabe for all to authenticated using (ist_lehrkraft()) with check (ist_lehrkraft());

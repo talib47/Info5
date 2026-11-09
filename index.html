@@ -779,7 +779,7 @@ body[data-seite="lehrer"] #app{max-width:76rem}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="4c502a19bd";
+const VERSION="6bc5f206aa";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -926,6 +926,9 @@ const db={
     const klar=await crypto.subtle.decrypt({name:"AES-GCM",iv:roh.slice(0,12)},key,roh.slice(12));
     return JSON.parse(new TextDecoder().decode(klar));
   },
+  /* Einmalige Übergabe: vorbereitete Namen-Zuordnung abholen; sie wird danach verschlüsselt gesichert und hier gelöscht */
+  async lUebergabeHolen(){if(!CLOUD)return null;const {data,error}=await sb.from("lehrer_uebergabe").select("inhalt").maybeSingle();if(error)throw error;return data?data.inhalt:null},
+  async lUebergabeLoeschen(){if(CLOUD)await sb.from("lehrer_uebergabe").delete().eq("id",1)},
   async lGeheimSpeichern(obj){
     if(!CLOUD)return false;const key=await this._key();if(!key)return false;
     const {data:u}=await sb.auth.getUser();if(!u?.user)return false;
@@ -1348,6 +1351,10 @@ function namenMerken(){lsSet("if5-namen",namen);lsSet("if5-listen",listen);clear
 async function namenHolen(){
   try{const g=await db.lGeheimLaden();if(g){namen={...(g.namen||{}),...namen};listen={...(g.listen||{}),...listen};lsSet("if5-namen",namen);lsSet("if5-listen",listen);namenStand="gesichert"}
     else if(db.online&&db.hatSchluessel()&&(Object.keys(namen).length||Object.keys(listen).length))namenMerken()}
+  catch(e){namenStand="fehler"}
+  try{const u=await db.lUebergabeHolen();
+    if(u){namen={...namen,...(u.namen||{})};listen={...listen,...(u.listen||{})};lsSet("if5-namen",namen);lsSet("if5-listen",listen);
+      if(await db.lGeheimSpeichern({namen,listen})){await db.lUebergabeLoeschen();namenStand="gesichert"}}}
   catch(e){namenStand="fehler"}}
 
 async function seiteLehrer(){
