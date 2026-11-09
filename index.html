@@ -6,7 +6,9 @@
 <title>Informatik 5</title>
 <meta name="theme-color" content="#4338CA">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Informatik 5">
 <style>@font-face{font-family:"Newsreader";font-style:normal;font-weight:200 800;font-display:swap;src:url("fonts/newsreader-latin.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
@@ -611,7 +613,7 @@ ol.anleitung{margin:12px 0;padding-left:24px;font-size:1.125rem;display:grid;gap
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="4e8a2586c0";
+const VERSION="7630fc5e83";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -889,7 +891,7 @@ function render(){
 }
 window.addEventListener("hashchange",render);
 
-const LOGO=`<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="var(--accent)"/><g fill="var(--accent-ink)"><rect x="9" y="9" width="6" height="6" rx="1"/><rect x="17" y="9" width="6" height="6" rx="1" opacity=".45"/><rect x="25" y="9" width="6" height="6" rx="1"/><rect x="9" y="17" width="6" height="6" rx="1" opacity=".45"/><rect x="17" y="17" width="6" height="6" rx="1"/><rect x="25" y="17" width="6" height="6" rx="1" opacity=".45"/><rect x="9" y="25" width="6" height="6" rx="1"/><rect x="17" y="25" width="6" height="6" rx="1" opacity=".45"/><rect x="25" y="25" width="6" height="6" rx="1"/></g></svg>`;
+const LOGO=`<svg viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lg5" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5B50E8"/><stop offset="1" stop-color="#3426A8"/></linearGradient></defs><rect width="40" height="40" rx="11" fill="url(#lg5)"/><rect x="9" y="9" width="6" height="6" rx="1.3" fill="#fff"/><rect x="17" y="9" width="6" height="6" rx="1.3" fill="#FACC15"/><rect x="25" y="9" width="6" height="6" rx="1.3" fill="#fff"/><rect x="9" y="17" width="6" height="6" rx="1.3" fill="#FB7185"/><rect x="17" y="17" width="6" height="6" rx="1.3" fill="#fff"/><rect x="25" y="17" width="6" height="6" rx="1.3" fill="#34D399"/><rect x="9" y="25" width="6" height="6" rx="1.3" fill="#fff"/><rect x="17" y="25" width="6" height="6" rx="1.3" fill="#38BDF8"/><rect x="25" y="25" width="6" height="6" rx="1.3" fill="#fff"/></svg>`;
 const ich=()=>{if(VS)return"👀 Lehrkraft";const t=tierInfo(sitzung.tier);return`${t.emoji} ${esc(t.name)}`};
 const kopf=()=>`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5</span></div>${VS?`<div class="row"><span class="who">👀 Lehrer-Vorschau</span><a class="link" href="#lehrer">Zur Lehrer-Ansicht</a></div>`:sitzung?`<div class="row"><span class="who">${ich()} · ${esc(sitzung.klasse)}</span><button class="link" id="raus">Abmelden</button></div>`:""}</div>`;
 function kopfAktiv(){const b=$("#raus");if(b)b.onclick=async()=>{

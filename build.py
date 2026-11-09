@@ -18,7 +18,9 @@ html=f'''<!doctype html>
 <title>Informatik 5</title>
 <meta name="theme-color" content="#4338CA">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Informatik 5">
 <style>{FACE}{base}{stc}</style>
