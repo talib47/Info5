@@ -149,14 +149,25 @@ async function seiteTier(klasse){
   let r;try{r=await db.tiere(klasse)}catch(e){$("#liste").innerHTML=`<div class="msg no">Keine Verbindung. Versuch es gleich noch mal.</div><button class="btn ghost" id="neu" style="margin-top:12px">Noch mal</button>`;$("#neu").onclick=()=>seiteTier(klasse);return}
   if(!r.offen){const n=naechsteStunde(klasse);
     $("#liste").innerHTML=`<div class="block"><h2>Gerade geschlossen 🔒</h2><p>Du kannst dich nur in deiner Informatik-Stunde anmelden.${n?` Nächste Stunde: <b>${esc(n)}</b>.`:""}</p><button class="btn" id="neu">Noch mal schauen</button></div>`;$("#neu").onclick=()=>seiteTier(klasse);return}
-  $("#liste").innerHTML=(r.liste.length?`<div class="tiere">${r.liste.map(x=>{const t=tierInfo(x.tier);
+  /* Auf diesem PC war zuletzt dieses Tier angemeldet: groß vorschlagen (die meisten sitzen am selben Platz) */
+  const zl=lsGet("if5-zuletzt"),zt=zl&&zl.klasse===klasse&&r.liste.find(x=>x.tier===zl.tier&&!x.besetzt);
+  $("#liste").innerHTML=(zt?`<div class="block vorschlag"><span class="e">${tierInfo(zt.tier).emoji}</span><div><p class="eyebrow">Letztes Mal an diesem Platz</p><h2 style="margin:0">Bist du ${artikel(zt.tier)} ${esc(zt.tier)}?</h2></div><button class="btn" id="dasbinich">Ja, das bin ich</button></div><p class="muted" style="margin:6px 2px 10px">Nein? Dann tippe auf dein Tier:</p>`:"")+
+    (r.liste.length?`<div class="tiere">${r.liste.map(x=>{const t=tierInfo(x.tier);
     return`<button class="tier${x.besetzt?" zu":""}" data-t="${esc(x.tier)}" ${x.besetzt?"disabled":""}><span class="e">${t.emoji}</span><span>${esc(t.name)}</span>${x.besetzt?`<span class="chip">besetzt</span>`:""}</button>`}).join("")}</div>
     <p class="muted small" style="margin-top:12px">Dein Tier ist grau? Dann sag sofort deiner Lehrkraft Bescheid.</p>`:`<p class="muted">Hier ist noch niemand. Sei die oder der Erste!</p>`)+
     `<button class="btn ghost wide" id="ichneu" style="margin-top:16px">Ich bin neu hier – Tier aussuchen</button><div id="m"></div>`;
-  document.querySelectorAll(".tier[data-t]:not([disabled])").forEach(b=>b.onclick=async()=>{
-    document.querySelectorAll(".tier[data-t]").forEach(x=>x.disabled=true);
-    let r;try{r=await db.anmelden(klasse,b.dataset.t)}catch(e){r={fehler:"netz"}}
-    anmeldeErgebnis(klasse,b.dataset.t,r,()=>seiteTier(klasse))});
+  const rein=async tier=>{document.querySelectorAll("#app button").forEach(x=>x.disabled=true);
+    let r;try{r=await db.anmelden(klasse,tier)}catch(e){r={fehler:"netz"}}
+    anmeldeErgebnis(klasse,tier,r,()=>seiteTier(klasse))};
+  if(zt)$("#dasbinich").onclick=()=>rein(zt.tier);
+  /* Fremdes Tier? Einmal nachfragen – Kinder tippen gern auf das Tier, das ihnen gefällt */
+  document.querySelectorAll(".tier[data-t]:not([disabled])").forEach(b=>b.onclick=()=>{
+    if(zt&&b.dataset.t===zt.tier)return rein(zt.tier);
+    const t=tierInfo(b.dataset.t);
+    $("#app").innerHTML=kopf()+`<div class="plate gross-tier"><span class="e">${t.emoji}</span><h1>Bist du ${artikel(t.name)} ${esc(t.name)}?</h1>
+      <p>Tippe nur auf „Ja“, wenn das <b>dein</b> Tier ist. Mit einem fremden Tier sammelst du Punkte für jemand anderen.</p></div>
+      <div class="row"><button class="btn" id="ja">Ja, das bin ich</button><button class="btn ghost" id="nein">Nein, zurück</button></div><div id="m"></div>`;
+    $("#nein").onclick=()=>seiteTier(klasse);$("#ja").onclick=()=>rein(b.dataset.t)});
   $("#ichneu").onclick=()=>seiteNeuTier(klasse,new Set(r.liste.map(x=>x.tier)));
 }
 
@@ -164,10 +175,11 @@ async function seiteTier(klasse){
 function seiteNeuTier(klasse,vergeben){
   $("#app").innerHTML=kopf()+`<button class="link" id="zur">‹ Zurück</button>
   <div class="plate"><p class="eyebrow">Neu · Klasse ${esc(klasse)}</p><h1>Such dir dein Tier aus</h1><p>Das ist ab jetzt dein Name hier. Graue Tiere sind schon vergeben.</p></div>
+  <div class="msg no" style="margin:0 0 14px">⚠️ Nur wenn du <b>zum ersten Mal</b> hier bist! Hast du schon ein Tier? Dann tippe oben auf „‹ Zurück“.</div>
   <div class="tiere klein">${TIERE.map(([e,n])=>`<button class="tier${vergeben.has(n)?" zu":""}" data-w="${esc(n)}" ${vergeben.has(n)?"disabled":""}><span class="e">${e}</span><span>${esc(n)}</span></button>`).join("")}</div><div id="m"></div>`;
   $("#zur").onclick=()=>seiteTier(klasse);
   document.querySelectorAll("[data-w]:not([disabled])").forEach(b=>b.onclick=()=>{const t=tierInfo(b.dataset.w);
-    $("#app").innerHTML=kopf()+`<div class="plate"><p class="eyebrow">Merk dir gut</p><h1>Du bist ab jetzt: ${t.emoji} ${esc(t.name)}</h1><p>Nächstes Mal tippst du einfach auf dein Tier.</p></div>
+    $("#app").innerHTML=kopf()+`<div class="plate"><p class="eyebrow">Merk dir gut</p><h1>Du bist ab jetzt: ${t.emoji} ${esc(t.name)}</h1><p>Merk es dir gut! Nächstes Mal tippst du einfach auf dein Tier.</p></div>
       <div class="row"><button class="btn" id="ok">Ja, das bin ich!</button><button class="btn ghost" id="nein">Anderes Tier</button></div><div id="m"></div>`;
     $("#nein").onclick=()=>seiteNeuTier(klasse,vergeben);
     $("#ok").onclick=async()=>{$("#ok").disabled=true;let r;try{r=await db.neu(klasse,b.dataset.w)}catch(e){r={fehler:"netz"}}
@@ -177,7 +189,7 @@ function seiteNeuTier(klasse,vergeben){
 
 function anmeldeErgebnis(klasse,tier,r,nochmal){
   const t=tierInfo(tier);
-  if(r.token){sitzung={klasse,tier,token:r.token};lsSet("if5-sitzung",sitzung);staende=r.staende||{};staendeLokal();toast(`Hallo ${t.name}!`);location.hash="";render();return}
+  if(r.token){sitzung={klasse,tier,token:r.token};lsSet("if5-sitzung",sitzung);lsSet("if5-zuletzt",{klasse,tier});staende=r.staende||{};staendeLokal();toast(`Hallo ${t.name}!`);location.hash="";render();return}
   const T={besetzt:"Dieses Tier ist schon an einem anderen Platz angemeldet. Sag deiner Lehrkraft Bescheid.",zu:"Die Klasse ist gerade geschlossen.",
     unbekannt:"Dieses Tier gibt es nicht mehr.",vergeben:"Dieses Tier hat sich gerade jemand anderes genommen. Such dir ein anderes aus.",voll:"Die Klasse ist voll. Sag deiner Lehrkraft Bescheid.",netz:"Keine Verbindung. Versuch es noch mal."};
   const m=$("#m");m.className="msg no";m.textContent=T[r.fehler]||"Das hat nicht geklappt.";m.scrollIntoView({block:"center",behavior:"smooth"});
@@ -213,7 +225,7 @@ function seiteStation(st){
   <div class="steps noprint springen">${st.schritte.map((_,k)=>{const darf=VS||k in prog.punkte||k<=(prog.weitester||0);
     return`<i class="${k in prog.punkte?"ok":k===i?"now":""}${darf?"":" zu"}"${darf?` data-sp="${k}" title="Zu Teil ${k+1}"`:""}></i>`}).join("")}</div>
   <div class="stephead"><p class="eyebrow">${st.ico} ${esc(st.titel)} · Teil ${i+1} von ${st.schritte.length}</p><span class="pts">⭐ ${summe(prog)} Punkte</span></div>
-  <h2>${esc(sch.titel)}</h2>
+  <div class="titelzeile"><h2>${esc(sch.titel)}</h2><button class="vorlesen noprint" id="vorlesen" aria-label="Vorlesen">🔊 Vorlesen</button></div>
   <div id="body"></div>
   <div class="nav noprint">
     <button class="btn ghost pfeil" id="zur">${i===0?"🏠 Übersicht":"◀ Zurück"}</button>
@@ -236,6 +248,10 @@ function seiteStation(st){
     pruefer:null,   // Teil setzt hier eine Prüf-Funktion (true = richtig); „Weiter“ ruft sie auf
   };
   sch.zeige($("#body"),ctx);
+  stopVorlesen();
+  $("#vorlesen").onclick=()=>{if(speechSynthesis?.speaking)return stopVorlesen();
+    const teile=[sch.titel,...[...$("#body").querySelectorAll("p:not(.muted):not(.eyebrow),.frage,.antwort,.legende span")].map(x=>x.textContent)];
+    vorlesen(teile.join(". "))};
   document.querySelectorAll("[data-sp]").forEach(x=>x.onclick=()=>{prog.schritt=+x.dataset.sp;speichern();seiteStation(st);scrollTo(0,0)});
   $("#zur").onclick=()=>{if(i===0){location.hash=home()}else{prog.schritt=i-1;speichern();seiteStation(st);scrollTo(0,0)}};
   const vor=()=>{if(i===st.schritte.length-1){prog.fertig=Date.now();speichern(true);seiteErgebnis(st,prog)}
@@ -249,7 +265,15 @@ function seiteStation(st){
     toast("Löse zuerst diesen Teil.")};
 }
 
+function konfetti(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const box=document.createElement("div");box.className="konfetti";box.setAttribute("aria-hidden","true");
+  for(let k=0;k<40;k++){const i=document.createElement("i");i.textContent=["🎉","⭐","✨","🎊"][k%4];
+    i.style.left=Math.random()*100+"%";i.style.animationDelay=Math.random()*.8+"s";i.style.fontSize=(16+Math.random()*18)+"px";box.append(i)}
+  document.body.append(box);setTimeout(()=>box.remove(),3500);
+}
 function seiteErgebnis(st,prog){
+  if(prog.fertig&&Date.now()-prog.fertig<5000&&zeichenAus(prozent(st,prog))!=="−")konfetti();
   const pz=prozent(st,prog);
   $("#app").innerHTML=kopf()+`
   <div class="plate result">
@@ -385,6 +409,16 @@ function lDruck(kinder){
   w.document.close();
 }
 
+/* ---------- Vorlesen (für Kinder, die noch nicht gut lesen): Sprachausgabe des Browsers, deutsch ---------- */
+function vorlesen(text){
+  if(!("speechSynthesis" in window))return toast("Vorlesen geht auf diesem Gerät leider nicht.");
+  stopVorlesen();const u=new SpeechSynthesisUtterance(text.replace(/\s+/g," "));u.lang="de-DE";u.rate=.92;
+  const v=speechSynthesis.getVoices().find(x=>x.lang&&x.lang.startsWith("de"));if(v)u.voice=v;
+  u.onend=()=>{const b=$("#vorlesen");if(b)b.textContent="🔊 Vorlesen"};
+  speechSynthesis.speak(u);const b=$("#vorlesen");if(b)b.textContent="⏹ Stopp";
+}
+function stopVorlesen(){try{speechSynthesis.cancel()}catch(e){}const b=$("#vorlesen");if(b)b.textContent="🔊 Vorlesen"}
+
 /* ---------- Bausteine für Stationen ---------- */
 
 /* Pixel-Raster: w×h Kästchen, Werte = Index in palette. Malen mit Maus, Finger oder Stift (auch Ziehen). */
@@ -422,7 +456,8 @@ function frage(titel,text,antworten,aha,punkte=5){return{titel,punkte,zeige(el,c
 function farbLeiste(palette,nm,start=1,ohneWeiss=false){
   const el=document.createElement("div");el.className="pal";let wahl=start;
   palette.forEach((f,k)=>{if(ohneWeiss&&k===0)return;const b=document.createElement("button");b.type="button";b.style.setProperty("--c",f);
-    b.setAttribute("aria-label",nm[k]);b.title=nm[k];b.innerHTML=`<span>${k}</span>`;b.className=k===wahl?"an":"";
+    const rad=k===0;b.setAttribute("aria-label",rad?"Radierer":nm[k]);b.title=rad?"Radierer (macht weiß)":nm[k];
+    b.innerHTML=rad?`<span class="rad">🧽</span>`:`<span>${k}</span>`;b.className=(k===wahl?"an":"")+(rad?" radierer":"");
     b.onclick=()=>{wahl=k;el.querySelectorAll("button").forEach(x=>x.classList.remove("an"));b.classList.add("an")};el.append(b)});
   return{el,farbe:()=>wahl};
 }

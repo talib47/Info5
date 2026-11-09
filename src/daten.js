@@ -18,6 +18,8 @@ const TIERE=[["🦊","Fuchs"],["🐼","Panda"],["🐸","Frosch"],["🦁","Löwe"
   ["🐞","Marienkäfer"],["🦄","Einhorn"],["🐉","Drache"],["🐳","Wal"],["🦀","Krabbe"],["🐌","Schnecke"],["🐺","Wolf"],["🐻","Bär"],
   ["🐰","Hase"],["🐴","Pferd"],["🦅","Adler"],["🦖","Dino"]];
 const tierInfo=n=>{const t=TIERE.find(x=>x[1]===n);return t?{emoji:t[0],name:t[1]}:{emoji:"❓",name:n}};
+const WEIBLICH=new Set(["Eule","Krake","Schildkröte","Giraffe","Biene","Schnecke","Krabbe"]),SAECHLICH=new Set(["Zebra","Känguru","Eichhörnchen","Einhorn","Krokodil","Pferd"]);
+const artikel=n=>WEIBLICH.has(n)?"die":SAECHLICH.has(n)?"das":"der";
 
 /* Gerätekennung (für „besetzt“): bleibt auf dem PC, auch nach dem Abmelden */
 const GERAET=(()=>{let g=lsGet("if5-geraet");if(!g){g=Math.random().toString(36).slice(2,12);lsSet("if5-geraet",g)}return g})();

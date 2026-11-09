@@ -146,6 +146,20 @@ label.btn{cursor:pointer}
 .antwort.richtig{border-color:var(--good);background:var(--good-soft);color:var(--good)}
 .antwort:disabled{cursor:default}
 .aha{margin-top:16px;border-radius:16px;padding:16px 18px;background:color-mix(in srgb,var(--gold) 12%,var(--surface));border:2px solid color-mix(in srgb,var(--gold) 35%,transparent);font-size:1.0625rem}
+.vorschlag{display:flex;align-items:center;gap:14px;flex-wrap:wrap;border:2px solid var(--accent)}
+.vorschlag .e{font-size:3rem;line-height:1}
+.vorschlag .btn{margin-left:auto}
+.gross-tier .e{font-size:4.5rem;line-height:1;display:block;margin-bottom:6px}
+.titelzeile{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.titelzeile h2{margin:0}
+.vorlesen{border:0;border-radius:999px;background:var(--tint);color:var(--accent);font-weight:650;padding:8px 14px;min-height:42px;white-space:nowrap}
+.code li{border-radius:6px;transition:background .1s}
+.code li.an{background:color-mix(in srgb,var(--accent) 18%,transparent);outline:2px solid var(--accent)}
+.pal button.radierer{background:repeating-linear-gradient(45deg,#fff 0 6px,#eee 6px 12px)}
+.pal button .rad{background:none;font-size:1.25rem;padding:0}
+.konfetti{position:fixed;inset:0;pointer-events:none;z-index:20;overflow:hidden}
+.konfetti i{position:absolute;top:-40px;font-style:normal;animation:fall 2.6s ease-in forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
 /* Bausteine der Stationen */
 .paar{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;align-items:start;margin-top:8px}
 .px{display:grid;gap:2px;background:var(--line);border:2px solid var(--line);border-radius:10px;overflow:hidden;width:100%;max-width:340px;aspect-ratio:1;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -180,7 +194,7 @@ label.btn{cursor:pointer}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="d5e22afb02";
+const VERSION="e68a195012";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -228,6 +242,8 @@ const TIERE=[["🦊","Fuchs"],["🐼","Panda"],["🐸","Frosch"],["🦁","Löwe"
   ["🐞","Marienkäfer"],["🦄","Einhorn"],["🐉","Drache"],["🐳","Wal"],["🦀","Krabbe"],["🐌","Schnecke"],["🐺","Wolf"],["🐻","Bär"],
   ["🐰","Hase"],["🐴","Pferd"],["🦅","Adler"],["🦖","Dino"]];
 const tierInfo=n=>{const t=TIERE.find(x=>x[1]===n);return t?{emoji:t[0],name:t[1]}:{emoji:"❓",name:n}};
+const WEIBLICH=new Set(["Eule","Krake","Schildkröte","Giraffe","Biene","Schnecke","Krabbe"]),SAECHLICH=new Set(["Zebra","Känguru","Eichhörnchen","Einhorn","Krokodil","Pferd"]);
+const artikel=n=>WEIBLICH.has(n)?"die":SAECHLICH.has(n)?"das":"der";
 
 /* Gerätekennung (für „besetzt“): bleibt auf dem PC, auch nach dem Abmelden */
 const GERAET=(()=>{let g=lsGet("if5-geraet");if(!g){g=Math.random().toString(36).slice(2,12);lsSet("if5-geraet",g)}return g})();
@@ -465,14 +481,25 @@ async function seiteTier(klasse){
   let r;try{r=await db.tiere(klasse)}catch(e){$("#liste").innerHTML=`<div class="msg no">Keine Verbindung. Versuch es gleich noch mal.</div><button class="btn ghost" id="neu" style="margin-top:12px">Noch mal</button>`;$("#neu").onclick=()=>seiteTier(klasse);return}
   if(!r.offen){const n=naechsteStunde(klasse);
     $("#liste").innerHTML=`<div class="block"><h2>Gerade geschlossen 🔒</h2><p>Du kannst dich nur in deiner Informatik-Stunde anmelden.${n?` Nächste Stunde: <b>${esc(n)}</b>.`:""}</p><button class="btn" id="neu">Noch mal schauen</button></div>`;$("#neu").onclick=()=>seiteTier(klasse);return}
-  $("#liste").innerHTML=(r.liste.length?`<div class="tiere">${r.liste.map(x=>{const t=tierInfo(x.tier);
+  /* Auf diesem PC war zuletzt dieses Tier angemeldet: groß vorschlagen (die meisten sitzen am selben Platz) */
+  const zl=lsGet("if5-zuletzt"),zt=zl&&zl.klasse===klasse&&r.liste.find(x=>x.tier===zl.tier&&!x.besetzt);
+  $("#liste").innerHTML=(zt?`<div class="block vorschlag"><span class="e">${tierInfo(zt.tier).emoji}</span><div><p class="eyebrow">Letztes Mal an diesem Platz</p><h2 style="margin:0">Bist du ${artikel(zt.tier)} ${esc(zt.tier)}?</h2></div><button class="btn" id="dasbinich">Ja, das bin ich</button></div><p class="muted" style="margin:6px 2px 10px">Nein? Dann tippe auf dein Tier:</p>`:"")+
+    (r.liste.length?`<div class="tiere">${r.liste.map(x=>{const t=tierInfo(x.tier);
     return`<button class="tier${x.besetzt?" zu":""}" data-t="${esc(x.tier)}" ${x.besetzt?"disabled":""}><span class="e">${t.emoji}</span><span>${esc(t.name)}</span>${x.besetzt?`<span class="chip">besetzt</span>`:""}</button>`}).join("")}</div>
     <p class="muted small" style="margin-top:12px">Dein Tier ist grau? Dann sag sofort deiner Lehrkraft Bescheid.</p>`:`<p class="muted">Hier ist noch niemand. Sei die oder der Erste!</p>`)+
     `<button class="btn ghost wide" id="ichneu" style="margin-top:16px">Ich bin neu hier – Tier aussuchen</button><div id="m"></div>`;
-  document.querySelectorAll(".tier[data-t]:not([disabled])").forEach(b=>b.onclick=async()=>{
-    document.querySelectorAll(".tier[data-t]").forEach(x=>x.disabled=true);
-    let r;try{r=await db.anmelden(klasse,b.dataset.t)}catch(e){r={fehler:"netz"}}
-    anmeldeErgebnis(klasse,b.dataset.t,r,()=>seiteTier(klasse))});
+  const rein=async tier=>{document.querySelectorAll("#app button").forEach(x=>x.disabled=true);
+    let r;try{r=await db.anmelden(klasse,tier)}catch(e){r={fehler:"netz"}}
+    anmeldeErgebnis(klasse,tier,r,()=>seiteTier(klasse))};
+  if(zt)$("#dasbinich").onclick=()=>rein(zt.tier);
+  /* Fremdes Tier? Einmal nachfragen – Kinder tippen gern auf das Tier, das ihnen gefällt */
+  document.querySelectorAll(".tier[data-t]:not([disabled])").forEach(b=>b.onclick=()=>{
+    if(zt&&b.dataset.t===zt.tier)return rein(zt.tier);
+    const t=tierInfo(b.dataset.t);
+    $("#app").innerHTML=kopf()+`<div class="plate gross-tier"><span class="e">${t.emoji}</span><h1>Bist du ${artikel(t.name)} ${esc(t.name)}?</h1>
+      <p>Tippe nur auf „Ja“, wenn das <b>dein</b> Tier ist. Mit einem fremden Tier sammelst du Punkte für jemand anderen.</p></div>
+      <div class="row"><button class="btn" id="ja">Ja, das bin ich</button><button class="btn ghost" id="nein">Nein, zurück</button></div><div id="m"></div>`;
+    $("#nein").onclick=()=>seiteTier(klasse);$("#ja").onclick=()=>rein(b.dataset.t)});
   $("#ichneu").onclick=()=>seiteNeuTier(klasse,new Set(r.liste.map(x=>x.tier)));
 }
 
@@ -480,10 +507,11 @@ async function seiteTier(klasse){
 function seiteNeuTier(klasse,vergeben){
   $("#app").innerHTML=kopf()+`<button class="link" id="zur">‹ Zurück</button>
   <div class="plate"><p class="eyebrow">Neu · Klasse ${esc(klasse)}</p><h1>Such dir dein Tier aus</h1><p>Das ist ab jetzt dein Name hier. Graue Tiere sind schon vergeben.</p></div>
+  <div class="msg no" style="margin:0 0 14px">⚠️ Nur wenn du <b>zum ersten Mal</b> hier bist! Hast du schon ein Tier? Dann tippe oben auf „‹ Zurück“.</div>
   <div class="tiere klein">${TIERE.map(([e,n])=>`<button class="tier${vergeben.has(n)?" zu":""}" data-w="${esc(n)}" ${vergeben.has(n)?"disabled":""}><span class="e">${e}</span><span>${esc(n)}</span></button>`).join("")}</div><div id="m"></div>`;
   $("#zur").onclick=()=>seiteTier(klasse);
   document.querySelectorAll("[data-w]:not([disabled])").forEach(b=>b.onclick=()=>{const t=tierInfo(b.dataset.w);
-    $("#app").innerHTML=kopf()+`<div class="plate"><p class="eyebrow">Merk dir gut</p><h1>Du bist ab jetzt: ${t.emoji} ${esc(t.name)}</h1><p>Nächstes Mal tippst du einfach auf dein Tier.</p></div>
+    $("#app").innerHTML=kopf()+`<div class="plate"><p class="eyebrow">Merk dir gut</p><h1>Du bist ab jetzt: ${t.emoji} ${esc(t.name)}</h1><p>Merk es dir gut! Nächstes Mal tippst du einfach auf dein Tier.</p></div>
       <div class="row"><button class="btn" id="ok">Ja, das bin ich!</button><button class="btn ghost" id="nein">Anderes Tier</button></div><div id="m"></div>`;
     $("#nein").onclick=()=>seiteNeuTier(klasse,vergeben);
     $("#ok").onclick=async()=>{$("#ok").disabled=true;let r;try{r=await db.neu(klasse,b.dataset.w)}catch(e){r={fehler:"netz"}}
@@ -493,7 +521,7 @@ function seiteNeuTier(klasse,vergeben){
 
 function anmeldeErgebnis(klasse,tier,r,nochmal){
   const t=tierInfo(tier);
-  if(r.token){sitzung={klasse,tier,token:r.token};lsSet("if5-sitzung",sitzung);staende=r.staende||{};staendeLokal();toast(`Hallo ${t.name}!`);location.hash="";render();return}
+  if(r.token){sitzung={klasse,tier,token:r.token};lsSet("if5-sitzung",sitzung);lsSet("if5-zuletzt",{klasse,tier});staende=r.staende||{};staendeLokal();toast(`Hallo ${t.name}!`);location.hash="";render();return}
   const T={besetzt:"Dieses Tier ist schon an einem anderen Platz angemeldet. Sag deiner Lehrkraft Bescheid.",zu:"Die Klasse ist gerade geschlossen.",
     unbekannt:"Dieses Tier gibt es nicht mehr.",vergeben:"Dieses Tier hat sich gerade jemand anderes genommen. Such dir ein anderes aus.",voll:"Die Klasse ist voll. Sag deiner Lehrkraft Bescheid.",netz:"Keine Verbindung. Versuch es noch mal."};
   const m=$("#m");m.className="msg no";m.textContent=T[r.fehler]||"Das hat nicht geklappt.";m.scrollIntoView({block:"center",behavior:"smooth"});
@@ -529,7 +557,7 @@ function seiteStation(st){
   <div class="steps noprint springen">${st.schritte.map((_,k)=>{const darf=VS||k in prog.punkte||k<=(prog.weitester||0);
     return`<i class="${k in prog.punkte?"ok":k===i?"now":""}${darf?"":" zu"}"${darf?` data-sp="${k}" title="Zu Teil ${k+1}"`:""}></i>`}).join("")}</div>
   <div class="stephead"><p class="eyebrow">${st.ico} ${esc(st.titel)} · Teil ${i+1} von ${st.schritte.length}</p><span class="pts">⭐ ${summe(prog)} Punkte</span></div>
-  <h2>${esc(sch.titel)}</h2>
+  <div class="titelzeile"><h2>${esc(sch.titel)}</h2><button class="vorlesen noprint" id="vorlesen" aria-label="Vorlesen">🔊 Vorlesen</button></div>
   <div id="body"></div>
   <div class="nav noprint">
     <button class="btn ghost pfeil" id="zur">${i===0?"🏠 Übersicht":"◀ Zurück"}</button>
@@ -552,6 +580,10 @@ function seiteStation(st){
     pruefer:null,   // Teil setzt hier eine Prüf-Funktion (true = richtig); „Weiter“ ruft sie auf
   };
   sch.zeige($("#body"),ctx);
+  stopVorlesen();
+  $("#vorlesen").onclick=()=>{if(speechSynthesis?.speaking)return stopVorlesen();
+    const teile=[sch.titel,...[...$("#body").querySelectorAll("p:not(.muted):not(.eyebrow),.frage,.antwort,.legende span")].map(x=>x.textContent)];
+    vorlesen(teile.join(". "))};
   document.querySelectorAll("[data-sp]").forEach(x=>x.onclick=()=>{prog.schritt=+x.dataset.sp;speichern();seiteStation(st);scrollTo(0,0)});
   $("#zur").onclick=()=>{if(i===0){location.hash=home()}else{prog.schritt=i-1;speichern();seiteStation(st);scrollTo(0,0)}};
   const vor=()=>{if(i===st.schritte.length-1){prog.fertig=Date.now();speichern(true);seiteErgebnis(st,prog)}
@@ -565,7 +597,15 @@ function seiteStation(st){
     toast("Löse zuerst diesen Teil.")};
 }
 
+function konfetti(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const box=document.createElement("div");box.className="konfetti";box.setAttribute("aria-hidden","true");
+  for(let k=0;k<40;k++){const i=document.createElement("i");i.textContent=["🎉","⭐","✨","🎊"][k%4];
+    i.style.left=Math.random()*100+"%";i.style.animationDelay=Math.random()*.8+"s";i.style.fontSize=(16+Math.random()*18)+"px";box.append(i)}
+  document.body.append(box);setTimeout(()=>box.remove(),3500);
+}
 function seiteErgebnis(st,prog){
+  if(prog.fertig&&Date.now()-prog.fertig<5000&&zeichenAus(prozent(st,prog))!=="−")konfetti();
   const pz=prozent(st,prog);
   $("#app").innerHTML=kopf()+`
   <div class="plate result">
@@ -701,6 +741,16 @@ function lDruck(kinder){
   w.document.close();
 }
 
+/* ---------- Vorlesen (für Kinder, die noch nicht gut lesen): Sprachausgabe des Browsers, deutsch ---------- */
+function vorlesen(text){
+  if(!("speechSynthesis" in window))return toast("Vorlesen geht auf diesem Gerät leider nicht.");
+  stopVorlesen();const u=new SpeechSynthesisUtterance(text.replace(/\s+/g," "));u.lang="de-DE";u.rate=.92;
+  const v=speechSynthesis.getVoices().find(x=>x.lang&&x.lang.startsWith("de"));if(v)u.voice=v;
+  u.onend=()=>{const b=$("#vorlesen");if(b)b.textContent="🔊 Vorlesen"};
+  speechSynthesis.speak(u);const b=$("#vorlesen");if(b)b.textContent="⏹ Stopp";
+}
+function stopVorlesen(){try{speechSynthesis.cancel()}catch(e){}const b=$("#vorlesen");if(b)b.textContent="🔊 Vorlesen"}
+
 /* ---------- Bausteine für Stationen ---------- */
 
 /* Pixel-Raster: w×h Kästchen, Werte = Index in palette. Malen mit Maus, Finger oder Stift (auch Ziehen). */
@@ -738,7 +788,8 @@ function frage(titel,text,antworten,aha,punkte=5){return{titel,punkte,zeige(el,c
 function farbLeiste(palette,nm,start=1,ohneWeiss=false){
   const el=document.createElement("div");el.className="pal";let wahl=start;
   palette.forEach((f,k)=>{if(ohneWeiss&&k===0)return;const b=document.createElement("button");b.type="button";b.style.setProperty("--c",f);
-    b.setAttribute("aria-label",nm[k]);b.title=nm[k];b.innerHTML=`<span>${k}</span>`;b.className=k===wahl?"an":"";
+    const rad=k===0;b.setAttribute("aria-label",rad?"Radierer":nm[k]);b.title=rad?"Radierer (macht weiß)":nm[k];
+    b.innerHTML=rad?`<span class="rad">🧽</span>`:`<span>${k}</span>`;b.className=(k===wahl?"an":"")+(rad?" radierer":"");
     b.onclick=()=>{wahl=k;el.querySelectorAll("button").forEach(x=>x.classList.remove("an"));b.classList.add("an")};el.append(b)});
   return{el,farbe:()=>wahl};
 }
@@ -765,10 +816,12 @@ const BILDER={
 /* Wird beim Tippen auf „Weiter“ aufgerufen. true = richtig. Ab dem 3. Fehlversuch werden falsche Kästchen rot umrandet. */
 function pruefen(ctx,raster,soll,punkte,box){
   if(raster.werte.every(x=>x===0)){box.className="msg no";box.textContent="Mal zuerst das Bild, dann tippe auf „Weiter“.";return false} // aus Versehen getippt: kein Abzug
+  const stand=raster.werte.join("");
   const falsch=[];soll.forEach((x,k)=>{if(raster.werte[k]!==x)falsch.push(k)});
+  if(falsch.length&&stand===ctx.daten.letzterFehler){box.className="msg no";box.textContent=`Du hast noch nichts geändert. Noch ${falsch.length===1?"1 Kästchen ist":falsch.length+" Kästchen sind"} falsch.`;return false}
   ctx.daten.versuche=(ctx.daten.versuche||0)+1;ctx.speichern();
   if(!falsch.length){raster.markiere([]);box.className="msg ok";box.textContent="Richtig! Alle Kästchen stimmen.";ctx.geschafft(punkte);return true}
-  ctx.fehler();
+  ctx.fehler();ctx.daten.letzterFehler=stand;ctx.speichern();
   box.className="msg no";
   box.textContent=falsch.length===1?"Fast! Noch 1 Kästchen ist falsch.":`Noch ${falsch.length} Kästchen sind falsch.`;
   if(ctx.daten.versuche>=3){raster.markiere(falsch);box.textContent+=" Sie sind jetzt rot umrandet."}
@@ -785,7 +838,7 @@ function abmalen(name,titel,punkte){return{titel,punkte,zeige(el,ctx){
   const r=pixelRaster({w:8,h:8,werte:ctx.daten.bild,palette:SW,malbar:true,onAenderung:v=>{ctx.daten.bild=v.slice();ctx.speichern()}});
   el.querySelector("#b").append(r.el);
   ctx.pruefer=()=>pruefen(ctx,r,soll,punkte,el.querySelector("#m"));
-  el.querySelector("#l").onclick=()=>r.setzeAlle(Array(64).fill(0));
+  el.querySelector("#l").onclick=()=>{if(confirm("Wirklich alles löschen?"))r.setzeAlle(Array(64).fill(0))};
   if(ctx.geloest){const m=el.querySelector("#m");m.className="msg ok";m.textContent="Schon gelöst. Weiter geht's!"}
 }}}
 
@@ -793,18 +846,23 @@ function codeBild(name,titel,punkte,farbig){return{titel,punkte,zeige(el,ctx){
   const roh=BILDER[name],soll=zahlen(roh),pal=farbig?PAL:SW;
   const genutzt=[...new Set(soll)].sort((a,b)=>a-b);
   el.innerHTML=(farbig
-    ?`<p>Jede Zahl ist eine Farbe. Wähl unten eine Farbe aus und mal Zeile für Zeile. Die <b>0</b> bleibt weiß.</p>`
+    ?`<p>Jede Zahl ist eine Farbe. Wähl unten eine Farbe aus und mal Zeile für Zeile. Die <b>0</b> bleibt weiß. Verklickt? Nimm den Radierer 🧽.</p>`
     :`<p>Das ist ein Geheimcode. <b>1</b> heißt schwarz, <b>0</b> heißt weiß. Mal jede Zeile so, wie der Code es sagt. Was kommt heraus?</p>`)+
     `<div class="paar"><div><p class="eyebrow">Code</p><ol class="code">${roh.map(z=>`<li>${z.split("").map(c=>`<span>${c}</span>`).join("")}</li>`).join("")}</ol></div>
     <div><p class="eyebrow">Dein Bild</p><div id="b"></div></div></div>
     ${farbig?`<div class="legende">${genutzt.map(k=>`<span><i style="background:${PAL[k]}"></i>${k} = ${NAMEN[k]}</span>`).join("")}</div><div id="pal"></div>`:""}
     <div class="row noprint" style="margin-top:14px"><button class="btn ghost" id="l">Alles löschen</button><span class="muted small">Fertig? Tippe unten auf „Weiter“ – dann wird geprüft.</span></div><div id="m"></div>`;
   let leiste=null;
-  if(farbig){leiste=farbLeiste(PAL.slice(0,Math.max(...genutzt)+1),NAMEN,genutzt.find(k=>k>0),true);el.querySelector("#pal").append(leiste.el)}
+  if(farbig){leiste=farbLeiste(PAL.slice(0,Math.max(...genutzt)+1),NAMEN,genutzt.find(k=>k>0));el.querySelector("#pal").append(leiste.el)}
   const r=pixelRaster({w:8,h:8,werte:ctx.daten.bild,palette:pal,malbar:true,farbe:leiste?leiste.farbe:()=>1,onAenderung:v=>{ctx.daten.bild=v.slice();ctx.speichern()}});
   el.querySelector("#b").append(r.el);
+  const zeilen=el.querySelectorAll(".code li");
+  const leuchte=z=>zeilen.forEach((li,k)=>li.classList.toggle("an",k===z));
+  r.el.addEventListener("pointerover",e=>{const k=e.target.dataset?.k;if(k!=null)leuchte(Math.floor(k/8))});
+  r.el.addEventListener("pointermove",e=>{const t=document.elementFromPoint(e.clientX,e.clientY);if(t&&t.dataset?.k!=null&&t.parentNode===r.el)leuchte(Math.floor(t.dataset.k/8))});
+  r.el.addEventListener("pointerleave",()=>leuchte(-1));
   ctx.pruefer=()=>pruefen(ctx,r,soll,punkte,el.querySelector("#m"));
-  el.querySelector("#l").onclick=()=>r.setzeAlle(Array(64).fill(0));
+  el.querySelector("#l").onclick=()=>{if(confirm("Wirklich alles löschen?"))r.setzeAlle(Array(64).fill(0))};
   if(ctx.geloest){const m=el.querySelector("#m");m.className="msg ok";m.textContent="Schon gelöst. Weiter geht's!"}
 }}}
 

@@ -133,3 +133,17 @@ label.btn{cursor:pointer}
 .antwort.richtig{border-color:var(--good);background:var(--good-soft);color:var(--good)}
 .antwort:disabled{cursor:default}
 .aha{margin-top:16px;border-radius:16px;padding:16px 18px;background:color-mix(in srgb,var(--gold) 12%,var(--surface));border:2px solid color-mix(in srgb,var(--gold) 35%,transparent);font-size:1.0625rem}
+.vorschlag{display:flex;align-items:center;gap:14px;flex-wrap:wrap;border:2px solid var(--accent)}
+.vorschlag .e{font-size:3rem;line-height:1}
+.vorschlag .btn{margin-left:auto}
+.gross-tier .e{font-size:4.5rem;line-height:1;display:block;margin-bottom:6px}
+.titelzeile{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.titelzeile h2{margin:0}
+.vorlesen{border:0;border-radius:999px;background:var(--tint);color:var(--accent);font-weight:650;padding:8px 14px;min-height:42px;white-space:nowrap}
+.code li{border-radius:6px;transition:background .1s}
+.code li.an{background:color-mix(in srgb,var(--accent) 18%,transparent);outline:2px solid var(--accent)}
+.pal button.radierer{background:repeating-linear-gradient(45deg,#fff 0 6px,#eee 6px 12px)}
+.pal button .rad{background:none;font-size:1.25rem;padding:0}
+.konfetti{position:fixed;inset:0;pointer-events:none;z-index:20;overflow:hidden}
+.konfetti i{position:absolute;top:-40px;font-style:normal;animation:fall 2.6s ease-in forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}

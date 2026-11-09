@@ -20,10 +20,12 @@ const BILDER={
 /* Wird beim Tippen auf „Weiter“ aufgerufen. true = richtig. Ab dem 3. Fehlversuch werden falsche Kästchen rot umrandet. */
 function pruefen(ctx,raster,soll,punkte,box){
   if(raster.werte.every(x=>x===0)){box.className="msg no";box.textContent="Mal zuerst das Bild, dann tippe auf „Weiter“.";return false} // aus Versehen getippt: kein Abzug
+  const stand=raster.werte.join("");
   const falsch=[];soll.forEach((x,k)=>{if(raster.werte[k]!==x)falsch.push(k)});
+  if(falsch.length&&stand===ctx.daten.letzterFehler){box.className="msg no";box.textContent=`Du hast noch nichts geändert. Noch ${falsch.length===1?"1 Kästchen ist":falsch.length+" Kästchen sind"} falsch.`;return false}
   ctx.daten.versuche=(ctx.daten.versuche||0)+1;ctx.speichern();
   if(!falsch.length){raster.markiere([]);box.className="msg ok";box.textContent="Richtig! Alle Kästchen stimmen.";ctx.geschafft(punkte);return true}
-  ctx.fehler();
+  ctx.fehler();ctx.daten.letzterFehler=stand;ctx.speichern();
   box.className="msg no";
   box.textContent=falsch.length===1?"Fast! Noch 1 Kästchen ist falsch.":`Noch ${falsch.length} Kästchen sind falsch.`;
   if(ctx.daten.versuche>=3){raster.markiere(falsch);box.textContent+=" Sie sind jetzt rot umrandet."}
@@ -40,7 +42,7 @@ function abmalen(name,titel,punkte){return{titel,punkte,zeige(el,ctx){
   const r=pixelRaster({w:8,h:8,werte:ctx.daten.bild,palette:SW,malbar:true,onAenderung:v=>{ctx.daten.bild=v.slice();ctx.speichern()}});
   el.querySelector("#b").append(r.el);
   ctx.pruefer=()=>pruefen(ctx,r,soll,punkte,el.querySelector("#m"));
-  el.querySelector("#l").onclick=()=>r.setzeAlle(Array(64).fill(0));
+  el.querySelector("#l").onclick=()=>{if(confirm("Wirklich alles löschen?"))r.setzeAlle(Array(64).fill(0))};
   if(ctx.geloest){const m=el.querySelector("#m");m.className="msg ok";m.textContent="Schon gelöst. Weiter geht's!"}
 }}}
 
@@ -48,18 +50,23 @@ function codeBild(name,titel,punkte,farbig){return{titel,punkte,zeige(el,ctx){
   const roh=BILDER[name],soll=zahlen(roh),pal=farbig?PAL:SW;
   const genutzt=[...new Set(soll)].sort((a,b)=>a-b);
   el.innerHTML=(farbig
-    ?`<p>Jede Zahl ist eine Farbe. Wähl unten eine Farbe aus und mal Zeile für Zeile. Die <b>0</b> bleibt weiß.</p>`
+    ?`<p>Jede Zahl ist eine Farbe. Wähl unten eine Farbe aus und mal Zeile für Zeile. Die <b>0</b> bleibt weiß. Verklickt? Nimm den Radierer 🧽.</p>`
     :`<p>Das ist ein Geheimcode. <b>1</b> heißt schwarz, <b>0</b> heißt weiß. Mal jede Zeile so, wie der Code es sagt. Was kommt heraus?</p>`)+
     `<div class="paar"><div><p class="eyebrow">Code</p><ol class="code">${roh.map(z=>`<li>${z.split("").map(c=>`<span>${c}</span>`).join("")}</li>`).join("")}</ol></div>
     <div><p class="eyebrow">Dein Bild</p><div id="b"></div></div></div>
     ${farbig?`<div class="legende">${genutzt.map(k=>`<span><i style="background:${PAL[k]}"></i>${k} = ${NAMEN[k]}</span>`).join("")}</div><div id="pal"></div>`:""}
     <div class="row noprint" style="margin-top:14px"><button class="btn ghost" id="l">Alles löschen</button><span class="muted small">Fertig? Tippe unten auf „Weiter“ – dann wird geprüft.</span></div><div id="m"></div>`;
   let leiste=null;
-  if(farbig){leiste=farbLeiste(PAL.slice(0,Math.max(...genutzt)+1),NAMEN,genutzt.find(k=>k>0),true);el.querySelector("#pal").append(leiste.el)}
+  if(farbig){leiste=farbLeiste(PAL.slice(0,Math.max(...genutzt)+1),NAMEN,genutzt.find(k=>k>0));el.querySelector("#pal").append(leiste.el)}
   const r=pixelRaster({w:8,h:8,werte:ctx.daten.bild,palette:pal,malbar:true,farbe:leiste?leiste.farbe:()=>1,onAenderung:v=>{ctx.daten.bild=v.slice();ctx.speichern()}});
   el.querySelector("#b").append(r.el);
+  const zeilen=el.querySelectorAll(".code li");
+  const leuchte=z=>zeilen.forEach((li,k)=>li.classList.toggle("an",k===z));
+  r.el.addEventListener("pointerover",e=>{const k=e.target.dataset?.k;if(k!=null)leuchte(Math.floor(k/8))});
+  r.el.addEventListener("pointermove",e=>{const t=document.elementFromPoint(e.clientX,e.clientY);if(t&&t.dataset?.k!=null&&t.parentNode===r.el)leuchte(Math.floor(t.dataset.k/8))});
+  r.el.addEventListener("pointerleave",()=>leuchte(-1));
   ctx.pruefer=()=>pruefen(ctx,r,soll,punkte,el.querySelector("#m"));
-  el.querySelector("#l").onclick=()=>r.setzeAlle(Array(64).fill(0));
+  el.querySelector("#l").onclick=()=>{if(confirm("Wirklich alles löschen?"))r.setzeAlle(Array(64).fill(0))};
   if(ctx.geloest){const m=el.querySelector("#m");m.className="msg ok";m.textContent="Schon gelöst. Weiter geht's!"}
 }}}
 
