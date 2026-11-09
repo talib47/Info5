@@ -210,21 +210,26 @@ function seiteStation(st){
   const geloest=i in prog.punkte;
   $("#app").innerHTML=kopf()+`
   ${VS?`<div class="msg ok noprint" style="margin:0 0 12px">👀 Vorschau: Du kannst jeden Teil anklicken und ohne Lösen weitergehen. Nichts wird gespeichert.</div>`:""}
-  <div class="steps noprint${VS?" springen":""}">${st.schritte.map((_,k)=>`<i class="${k in prog.punkte?"ok":k===i?"now":""}"${VS?` data-sp="${k}" title="Teil ${k+1}"`:""}></i>`).join("")}</div>
+  <div class="steps noprint springen">${st.schritte.map((_,k)=>{const darf=VS||k in prog.punkte||k<=(prog.weitester||0);
+    return`<i class="${k in prog.punkte?"ok":k===i?"now":""}${darf?"":" zu"}"${darf?` data-sp="${k}" title="Zu Teil ${k+1}"`:""}></i>`}).join("")}</div>
   <div class="stephead"><p class="eyebrow">${st.ico} ${esc(st.titel)} · Teil ${i+1} von ${st.schritte.length}</p><span class="pts">⭐ ${summe(prog)} Punkte</span></div>
   <h2>${esc(sch.titel)}</h2>
   <div id="body"></div>
   <div class="nav noprint">
-    <button class="btn ghost" id="zur">${i===0?"Übersicht":"Zurück"}</button>
-    <button class="btn" id="weiter" ${geloest||VS?"":"disabled"}>${i===st.schritte.length-1?"Fertig – Ergebnis zeigen":"Weiter"}</button>
-  </div>`;
+    <button class="btn ghost pfeil" id="zur">${i===0?"🏠 Übersicht":"◀ Zurück"}</button>
+    <button class="btn pfeil" id="weiter" ${geloest||VS?"":"disabled"}>${i===st.schritte.length-1?"Fertig 🏁":"Weiter ▶"}</button>
+  </div>
+  ${!geloest&&!VS&&i<st.schritte.length?`<p class="muted small noprint" style="text-align:right;margin-top:6px">„Weiter“ geht, sobald du diesen Teil gelöst hast.</p>`:""}`;
+  prog.weitester=Math.max(prog.weitester||0,i);
   kopfAktiv();
   prog.daten[i]=prog.daten[i]||{};
   const ctx={
     daten:prog.daten[i],
     geloest,
     speichern:()=>speichern(),
-    geschafft(p){if(!(i in prog.punkte)){prog.punkte[i]=p;speichern(true);
+    /* Ein falscher Versuch kostet 2 Punkte, aber höchstens die Hälfte der Punkte dieses Teils */
+    fehler(){prog.fehler=prog.fehler||{};prog.fehler[i]=(prog.fehler[i]||0)+1;speichern()},
+    geschafft(p){if(!(i in prog.punkte)){const f=(prog.fehler||{})[i]||0;p=Math.max(Math.ceil(p/2),p-2*f);prog.punkte[i]=p;speichern(true);
         if(p>0)toast(`Geschafft! +${p} Punkte`);
         $(".pts").textContent=`⭐ ${summe(prog)} Punkte`;
         $(".steps").children[i].className="ok"}
@@ -325,12 +330,12 @@ function lehrerZeigen(){
     kinder.forEach(k=>{const t=tierInfo(k.tier),s=d.staende[k.id]||{};
       STATIONEN.forEach(st=>{const p=s[st.id];if(!p)return;
         const tag=new Date(p.fertig||p.start||0).toDateString();if(tag!==heute)return;
-        const pz=prozent(st,p),z=p.fertig?zeichenAus(pz):null;
-        zeilen.push({name:namen[k.id]||`${t.emoji} ${t.name}`,z,st:st.titel,pz})})});
+        const pz=prozent(st,p),z=zeichenAus(pz);
+        zeilen.push({name:namen[k.id]||`${t.emoji} ${t.name}`,z,st:st.titel,pz,fertig:!!p.fertig})})});
     if(!zeilen.length)return"";
     zeilen.sort((a,b)=>a.name.localeCompare(b.name,"de"));
-    return`<div class="block"><h2 style="margin-bottom:4px">Für das Notenbuch · heute</h2><p class="muted small">Was die Kinder heute geschafft haben. Noch nicht fertig = „…“.</p>
-      <div class="heute">${zeilen.map(x=>`<div><span>${esc(x.name)}</span>${x.z?`<span class="chip ${zeichenKlasse(x.z)} gross-z">${x.z}</span>`:`<span class="muted">… ${x.pz} %</span>`}</div>`).join("")}</div></div>`})()}
+    return`<div class="block"><h2 style="margin-bottom:4px">Für das Notenbuch · heute</h2><p class="muted small">Zeichen aus den Punkten von heute. Wer nicht fertig wurde, bekommt das Zeichen für das, was geschafft ist.</p>
+      <div class="heute">${zeilen.map(x=>`<div><span>${esc(x.name)}</span><span>${x.fertig?"":`<span class="muted small">nicht fertig · </span>`}<span class="chip ${zeichenKlasse(x.z)} gross-z">${x.z}</span></span></div>`).join("")}</div></div>`})()}
   <div class="row noprint">
     <button class="btn ghost" id="druck" ${kinder.length?"":"disabled"}>Kärtchen drucken</button>
     <button class="btn ghost" id="sichern">Namensliste sichern</button><label class="btn ghost">Namensliste laden<input type="file" id="laden" accept=".json" hidden></label>

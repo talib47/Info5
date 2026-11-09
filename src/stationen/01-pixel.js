@@ -22,6 +22,7 @@ function pruefen(ctx,raster,soll,punkte,box){
   const falsch=[];soll.forEach((x,k)=>{if(raster.werte[k]!==x)falsch.push(k)});
   ctx.daten.versuche=(ctx.daten.versuche||0)+1;ctx.speichern();
   if(!falsch.length){raster.markiere([]);box.className="msg ok";box.textContent="Richtig! Alle Kästchen stimmen.";ctx.geschafft(punkte);return}
+  ctx.fehler();
   box.className="msg no";
   box.textContent=falsch.length===1?"Fast! Noch 1 Kästchen ist falsch.":`Noch ${falsch.length} Kästchen sind falsch.`;
   if(ctx.daten.versuche>=3){raster.markiere(falsch);box.textContent+=" Sie sind jetzt rot umrandet."}
