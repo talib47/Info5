@@ -51,8 +51,11 @@ const BALD=[
   {ico:"0️⃣",titel:"Geheimsprache 0 und 1",kurz:"Zahlen und Wörter in Binär"}
 ];
 
-/* Notenvorschlag aus Prozent (nur Vorschlag, Lehrkraft entscheidet) */
-const noteAus=p=>p>=90?"1":p>=75?"2":p>=60?"3":p>=45?"4":p>=20?"5":"6";
+/* Bewertung wie im Notenbuch: + / o / − aus den Prozent der Punkte (Grenzen hier anpassen) */
+const PLUS_AB=75,O_AB=40;
+const zeichenAus=p=>p>=PLUS_AB?"+":p>=O_AB?"o":"−";
+const ZEICHEN_TEXT={"+":"Super gemacht!","o":"Gut, da geht noch mehr.","−":"Das war noch zu wenig."};
+const zeichenKlasse=z=>z==="+"?"good":z==="o"?"":"bad";
 const zeit=ms=>{const m=Math.round((ms||0)/60000);return m<1?"unter 1 Min.":m+" Min."};
 const maxPunkte=st=>st.schritte.reduce((a,s)=>a+(s.punkte||0),0);
 const summe=prog=>Object.values(prog?.punkte||{}).reduce((a,b)=>a+b,0);
@@ -243,7 +246,7 @@ function seiteErgebnis(st,prog){
     <p class="eyebrow">Ergebniskarte · ${st.ico} ${esc(st.titel)}</p>
     <div class="row" style="justify-content:space-between;align-items:flex-start">
       <div><h1 style="margin:0">${ich()}</h1><p style="margin:2px 0 0">${VS?"Vorschau":"Klasse "+esc(sitzung.klasse)}</p></div>
-      <div style="text-align:right"><div class="note">${noteAus(pz)}</div><span class="small">Vorschlag</span></div>
+      <div style="text-align:right"><div class="note zeichen">${zeichenAus(pz)}</div><span class="small">${ZEICHEN_TEXT[zeichenAus(pz)]}</span></div>
     </div>
     <dl><dt>Punkte</dt><dd>${summe(prog)} von ${maxPunkte(st)} (${pz} %)</dd>
     <dt>Gearbeitet</dt><dd>${zeit(prog.aktiv)}</dd>
@@ -302,7 +305,7 @@ function lehrerZeigen(){
   const zeile=k=>{const t=tierInfo(k.tier),s=d.staende[k.id]||{};
     const status=k.besetzt?`<span class="chip good">angemeldet</span> <button class="link" data-a="freigeben" data-id="${k.id}">abmelden</button>`:`<span class="muted small">–</span>`;
     const zellen=STATIONEN.map(st=>{const p=s[st.id];if(!p)return`<td class="muted">–</td>`;const pz=prozent(st,p);
-      return`<td><b>${p.fertig?noteAus(pz):"…"}</b> <span class="muted small">${pz} %${p.fertig?"":" · Teil "+((p.schritt||0)+1)}</span></td>`}).join("");
+      return`<td>${p.fertig?`<span class="chip ${zeichenKlasse(zeichenAus(pz))} gross-z">${zeichenAus(pz)}</span>`:"<b>…</b>"} <span class="muted small">${pz} %${p.fertig?"":" · Teil "+((p.schritt||0)+1)}</span></td>`}).join("");
     return`<tr><td class="t"><span class="e">${t.emoji}</span>${esc(t.name)}</td>
       <td><input type="text" class="vn" data-id="${k.id}" value="${esc(namen[k.id]||"")}" placeholder="Wer ist das?" list="dl-${esc(kl)}"></td><td>${status}</td>${zellen}
       <td><button class="link" data-a="mehr" data-id="${k.id}" aria-label="Mehr">⋯</button></td></tr>`};
@@ -318,6 +321,16 @@ function lehrerZeigen(){
     <datalist id="dl-${esc(kl)}">${(listen[kl]||[]).filter(n=>!kinder.some(k=>namen[k.id]===n)).map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
     ${(listen[kl]||[]).length?`<p class="muted small" style="margin:10px 0 0">${kinder.filter(k=>namen[k.id]).length} von ${listen[kl].length} Kindern zugeordnet.${(()=>{const fehlt=listen[kl].filter(n=>!kinder.some(k=>namen[k.id]===n));return fehlt.length&&fehlt.length<=8?" Noch ohne Tier: "+fehlt.map(esc).join(", "):""})()}</p>`:""}
   </div>
+  ${(()=>{const heute=new Date().toDateString(),zeilen=[];
+    kinder.forEach(k=>{const t=tierInfo(k.tier),s=d.staende[k.id]||{};
+      STATIONEN.forEach(st=>{const p=s[st.id];if(!p)return;
+        const tag=new Date(p.fertig||p.start||0).toDateString();if(tag!==heute)return;
+        const pz=prozent(st,p),z=p.fertig?zeichenAus(pz):null;
+        zeilen.push({name:namen[k.id]||`${t.emoji} ${t.name}`,z,st:st.titel,pz})})});
+    if(!zeilen.length)return"";
+    zeilen.sort((a,b)=>a.name.localeCompare(b.name,"de"));
+    return`<div class="block"><h2 style="margin-bottom:4px">Für das Notenbuch · heute</h2><p class="muted small">Was die Kinder heute geschafft haben. Noch nicht fertig = „…“.</p>
+      <div class="heute">${zeilen.map(x=>`<div><span>${esc(x.name)}</span>${x.z?`<span class="chip ${zeichenKlasse(x.z)} gross-z">${x.z}</span>`:`<span class="muted">… ${x.pz} %</span>`}</div>`).join("")}</div></div>`})()}
   <div class="row noprint">
     <button class="btn ghost" id="druck" ${kinder.length?"":"disabled"}>Kärtchen drucken</button>
     <button class="btn ghost" id="sichern">Namensliste sichern</button><label class="btn ghost">Namensliste laden<input type="file" id="laden" accept=".json" hidden></label>

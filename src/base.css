@@ -119,3 +119,7 @@ table.liste{border-collapse:collapse;width:100%;font-size:.9375rem}
 label.btn{cursor:pointer}
 .steps.springen i{cursor:pointer;height:14px}
 .steps.springen i:hover{filter:brightness(.85)}
+.note.zeichen{font-family:var(--sans);font-size:4rem;font-weight:800}
+.chip.gross-z{font-size:1rem;min-width:2rem;text-align:center;padding:2px 10px}
+.heute{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px 18px;margin-top:10px}
+.heute div{display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid var(--line);padding:6px 0}

@@ -35,6 +35,6 @@ Bausteine in `src/app.js`: `pixelRaster`, `farbLeiste`, `toast`, `esc`.
 
 Klassenliste jedes Schuljahr oben in `src/app.js` (`KLASSEN`) anpassen. Geplante Stationen stehen in `BALD` und erscheinen grau.
 
-## Notenvorschlag
+## Bewertung
 
-Aus den Prozent der Punkte: ab 90 % → 1, ab 75 % → 2, ab 60 % → 3, ab 45 % → 4, ab 20 % → 5. Nur ein Vorschlag; Kreativität und Mitarbeit bewertet die Lehrkraft.
+Wie im Notenbuch: **+** ab 75 % der Punkte, **o** ab 40 %, sonst **−** (Grenzen `PLUS_AB`, `O_AB` in `src/app.js`). Die Lehrer-Ansicht zeigt unter „Für das Notenbuch · heute“ alle Zeichen des Tages zum Übertragen.
