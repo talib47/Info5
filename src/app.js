@@ -396,12 +396,22 @@ let listen=lsGet("if5-listen")||{};    // {klasse: ["Vorname", …]} – Klassen
 let lKlasse=lsGet("if5-lklasse")||KLASSEN[0];
 let lDaten=null,lTimer=null,lPlanGesendet=false;
 
+/* Namen: lokal merken und (online) verschlüsselt beim Lehrer-Konto sichern, damit sie auf jedem Gerät da sind */
+let namenTimer=null,namenStand="";
+function namenMerken(){lsSet("if5-namen",namen);lsSet("if5-listen",listen);clearTimeout(namenTimer);
+  namenTimer=setTimeout(async()=>{try{if(await db.lGeheimSpeichern({namen,listen}))namenStand="gesichert"}catch(e){namenStand="fehler"}},800)}
+async function namenHolen(){
+  try{const g=await db.lGeheimLaden();if(g){namen={...(g.namen||{}),...namen};listen={...(g.listen||{}),...listen};lsSet("if5-namen",namen);lsSet("if5-listen",listen);namenStand="gesichert"}
+    else if(db.online&&db.hatSchluessel()&&(Object.keys(namen).length||Object.keys(listen).length))namenMerken()}
+  catch(e){namenStand="fehler"}}
+
 async function seiteLehrer(){
   laufend=null;clearInterval(lTimer);
   if(!(await db.lSitzung()))return lehrerLogin();
   $("#app").innerHTML=`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5, Lehrkraft</span></div><div class="row">${db.online?`<button class="link" id="lraus">Abmelden</button>`:""}<a class="link" href="#v">Stationen ansehen</a></div></div><div id="lb"><p class="muted">Lade …</p></div>`;
   if($("#lraus"))$("#lraus").onclick=async()=>{await db.lAbmelden();seiteLehrer()};
   if(db.online&&!lPlanGesendet){try{await db.lPlanUebertragen();lPlanGesendet=true}catch(e){toast("Stundenplan konnte nicht übertragen werden")}}
+  await namenHolen();
   await lehrerLaden();
   lTimer=setInterval(()=>{if(location.hash==="#lehrer"&&!document.hidden&&!document.activeElement?.matches("input"))lehrerLaden()},20000);
 }
@@ -463,7 +473,7 @@ function lehrerZeigen(){
     ${(listen[kl]||[]).length?`<p class="muted small" style="margin:10px 0 0">${kinder.filter(k=>namen[k.id]).length} von ${listen[kl].length} Kindern zugeordnet.${(()=>{const fehlt=listen[kl].filter(n=>!kinder.some(k=>namen[k.id]===n));return fehlt.length&&fehlt.length<=8?" Noch ohne Tier: "+fehlt.map(esc).join(", "):""})()}</p>`:""}
   </div>
   <details class="block noprint" ${kinder.length?"":"open"}><summary><b>Klassenliste und Tiere zuteilen</b> <span class="muted small">– ${kinder.length} Kinder haben ein Tier</span></summary>
-    <p class="small" style="margin:10px 0 6px">Ein Vorname pro Zeile. Jedes neue Kind bekommt ein freies Tier. Wer schon ein Tier hat, behält es. Die Namen bleiben nur in diesem Browser.</p>
+    <p class="small" style="margin:10px 0 6px">Ein Name pro Zeile (Vorname oder Vor- und Nachname). Jedes neue Kind bekommt ein freies Tier. Wer schon ein Tier hat, behält es. Die Namen sieht nur dein Lehrer-Konto.</p>
     <textarea class="uebfeld" id="kliste" style="min-height:160px" spellcheck="false">${esc([...new Set([...(listen[kl]||[]),...kinder.map(k=>namen[k.id]).filter(Boolean)])].join("\n"))}</textarea>
     <div class="row" style="margin-top:10px"><button class="btn" id="zuteilen">Speichern und Tiere zuteilen</button><span class="muted small">Danach: Kärtchen drucken und verteilen.</span></div></details>
   <div class="row noprint">
@@ -473,18 +483,20 @@ function lehrerZeigen(){
   <details class="block plan"><summary><b>Lernpfad & Lehrplan</b> <span class="muted small">– alle ${PFAD().length} Stationen mit Bezug zum Kernlehrplan NRW</span></summary>
     <ol>${PFAD().map(st=>`<li><b>${esc(st.titel)}</b> <span class="chip">${KAPITEL_NAME[st.kapitel]||""}</span><br><span class="small">${esc(st.kurz)}</span>${st.klp?`<br><span class="muted small">KLP: ${esc(st.klp)}</span>`:""}</li>`).join("")}</ol>
     <p class="muted small">Ablauf: Jede Station ist eine Doppelstunde (60 Min.). Die Kinder gehen den Lernpfad der Reihe nach, höchstens eine neue Station pro Tag. Der Spielplatz (Bonus-Spiele, ohne Note) öffnet nur mit einem + in der Station von heute.</p></details>
-  <p class="muted small" style="margin-top:14px">Die Vornamen werden nur in diesem Browser gespeichert, nie auf dem Server. Sichere die Namensliste ab und zu (z. B. auf IServ), damit sie bei einem neuen Gerät nicht fehlt.${db.online?"":" <b>Vorschau-Modus:</b> Alles liegt nur in diesem Browser."}</p>`;
+  <p class="muted small" style="margin-top:14px">${!db.online?"<b>Vorschau-Modus:</b> Alles liegt nur in diesem Browser."
+    :db.hatSchluessel()?"Die Namen sehen nur du und dieses Konto. Sie werden mit deinem Passwort verschlüsselt gesichert und sind nach der Anmeldung auf jedem Gerät da. Kinder sehen nur Tiere."+(namenStand==="fehler"?" <b>Die Sicherung hat gerade nicht geklappt.</b>":"")
+    :"<b>Melde dich einmal ab und wieder an</b>, dann werden die Namen verschlüsselt bei deinem Konto gesichert. Bis dahin liegen sie nur in diesem Browser."}</p>`;
 
   document.querySelectorAll("[data-kl]").forEach(b=>b.onclick=()=>{lKlasse=b.dataset.kl;lsSet("if5-lklasse",lKlasse);lehrerZeigen()});
   $("#frei").onclick=()=>lAktion(()=>db.lFreigabe(kl,offen?{zu_bis:Date.now()+FREIGABE_MIN*60000}:{offen_bis:Date.now()+FREIGABE_MIN*60000}));
   if($("#plan"))$("#plan").onclick=()=>lAktion(()=>db.lFreigabe(kl,{}));
-  document.querySelectorAll(".vn").forEach(i=>{i.oninput=()=>{const v=i.value.trim();if(v)namen[i.dataset.id]=v;else delete namen[i.dataset.id];lsSet("if5-namen",namen)};i.onchange=()=>lehrerZeigen()});
+  document.querySelectorAll(".vn").forEach(i=>{i.oninput=()=>{const v=i.value.trim();if(v)namen[i.dataset.id]=v;else delete namen[i.dataset.id];namenMerken()};i.onchange=()=>lehrerZeigen()});
   document.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{const id=b.dataset.id,a=b.dataset.a;
     if(a==="freigeben")return lAktion(()=>db.lAbmeldenKind(id));
     if(a==="mehr")return lMehr(d.kinder.find(k=>k.id===id))});
   $("#druck").onclick=()=>lDruck(kinder);
   $("#zuteilen").onclick=async()=>{const liste=[...new Set($("#kliste").value.split("\n").map(x=>x.trim()).filter(Boolean))];
-    listen[kl]=liste;lsSet("if5-listen",listen);
+    listen[kl]=liste;namenMerken();
     const neu=liste.filter(n=>!kinder.some(k=>namen[k.id]===n)),frei=TIERE.map(t=>t[1]).filter(t=>!kinder.some(k=>k.tier===t));
     /* erst Kinder ohne Namen (z. B. alte Tiere) übernehmen, dann neue anlegen */
     const ohne=kinder.filter(k=>!namen[k.id]);
@@ -493,13 +505,13 @@ function lehrerZeigen(){
     try{for(const n of neu){let id;const k=ohne.shift();
         if(k)id=k.id;else{const t=frei.splice(Math.floor(Math.random()*frei.length),1)[0];id=await db.lKindAnlegen(kl,t)}
         namen[id]=n}
-      lsSet("if5-namen",namen);toast(neu.length?`${neu.length} Kinder haben ein Tier bekommen.`:"Liste gespeichert.");await lehrerLaden()}
-    catch(e){lsSet("if5-namen",namen);toast("Hat nicht geklappt: "+(e.message||e));await lehrerLaden()}};
+      namenMerken();toast(neu.length?`${neu.length} Kinder haben ein Tier bekommen.`:"Liste gespeichert.");await lehrerLaden()}
+    catch(e){namenMerken();toast("Hat nicht geklappt: "+(e.message||e));await lehrerLaden()}};
   if($("#kopie"))$("#kopie").onclick=async()=>{try{await navigator.clipboard.writeText(window._noten);toast("Noten kopiert. Du kannst sie in eine Tabelle einfügen.")}catch(e){toast("Kopieren hat nicht geklappt")}};
   $("#sichern").onclick=()=>{const b=new Blob([JSON.stringify({art:"if5-namen",gesichert:new Date().toISOString(),namen,listen},null,1)],{type:"application/json"});
     const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`Informatik5-Namensliste-${new Date().toLocaleDateString("sv")}.json`;a.click();URL.revokeObjectURL(a.href)};
   $("#laden").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const j=JSON.parse(await f.text());if(j.art!=="if5-namen")throw 0;
-    namen={...namen,...(j.namen||{})};lsSet("if5-namen",namen);if(j.listen){listen={...listen,...j.listen};lsSet("if5-listen",listen)}toast("Namensliste geladen");lehrerZeigen()}catch(err){toast("Das ist keine Namensliste")}};
+    namen={...namen,...(j.namen||{})};namenMerken();if(j.listen){listen={...listen,...j.listen};namenMerken()}toast("Namensliste geladen");lehrerZeigen()}catch(err){toast("Das ist keine Namensliste")}};
 }
 
 async function lAktion(f){try{await f();await lehrerLaden()}catch(e){toast("Hat nicht geklappt: "+(e.message||e))}}
@@ -509,7 +521,7 @@ function lMehr(k){
   const wahl=prompt(`${t.emoji} ${t.name}${namen[k.id]?" ("+namen[k.id]+")":""}\n\n1 = Stand einer Station löschen\n2 = Tier ganz löschen`);
   if(wahl==="1"){const P=PFAD(),st=P[parseInt(prompt(P.map((s,i)=>`${i+1} = ${s.titel}`).join("\n")),10)-1];
     if(st&&confirm(`Stand „${st.titel}“ von ${t.name} löschen?`))lAktion(()=>db.lStandLoeschen(k.id,st.id))}
-  else if(wahl==="2"){if(confirm(`${t.name} mit allen Punkten löschen?`)){delete namen[k.id];lsSet("if5-namen",namen);lAktion(()=>db.lKindLoeschen(k.id))}}
+  else if(wahl==="2"){if(confirm(`${t.name} mit allen Punkten löschen?`)){delete namen[k.id];namenMerken();lAktion(()=>db.lKindLoeschen(k.id))}}
 }
 
 function lDruck(kinder){

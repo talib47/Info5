@@ -128,3 +128,9 @@ grant execute on function klasse_offen(text), offene_klassen(text[]), kind_tiere
 -- Zum Schluss mit der eigenen E-Mail:
 -- insert into lehrkraefte(user_id) select id from auth.users where email='DEINE@EMAIL.de';
 revoke execute on function kind_neu(text,text,text) from anon, authenticated, public;
+
+-- Namensliste der Lehrkraft: im Browser mit dem Passwort verschlüsselt, hier liegt nur der verschlüsselte Text.
+create table if not exists lehrer_daten(user_id uuid primary key references auth.users on delete cascade, inhalt text not null, geaendert timestamptz not null default now());
+alter table lehrer_daten enable row level security;
+drop policy if exists ld_eigene on lehrer_daten;
+create policy ld_eigene on lehrer_daten for all to authenticated using (user_id=auth.uid() and ist_lehrkraft()) with check (user_id=auth.uid() and ist_lehrkraft());

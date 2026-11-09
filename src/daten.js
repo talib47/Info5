@@ -100,8 +100,31 @@ const db={
 
   /* --- Lehrkraft --- */
   async lSitzung(){if(!CLOUD)return true;const {data}=await sb.auth.getSession();return!!data.session},
-  async lAnmelden(email,pw){const {error}=await sb.auth.signInWithPassword({email,password:pw});if(error)throw error},
-  async lAbmelden(){if(CLOUD)await sb.auth.signOut()},
+  async lAnmelden(email,pw){const {error}=await sb.auth.signInWithPassword({email,password:pw});if(error)throw error;
+    /* Aus dem Passwort entsteht ein Schlüssel, der nur in diesem Browser bleibt. Damit wird die Namensliste verschlüsselt,
+       bevor sie zum Server geht: Dort liegt nur Zeichensalat, den ohne das Passwort niemand lesen kann. */
+    try{const enc=new TextEncoder(),roh=await crypto.subtle.importKey("raw",enc.encode(pw),"PBKDF2",false,["deriveBits"]);
+      const bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt:enc.encode("if5:"+email.toLowerCase()),iterations:250000,hash:"SHA-256"},roh,256);
+      localStorage.setItem("if5-schluessel",btoa(String.fromCharCode(...new Uint8Array(bits))))}catch(e){}},
+  hatSchluessel(){return!!localStorage.getItem("if5-schluessel")},
+  async _key(){const b=localStorage.getItem("if5-schluessel");if(!b)return null;
+    return crypto.subtle.importKey("raw",Uint8Array.from(atob(b),c=>c.charCodeAt(0)),"AES-GCM",false,["encrypt","decrypt"])},
+  /* Verschlüsselte Namensliste der Lehrkraft holen / sichern (nur online) */
+  async lGeheimLaden(){
+    if(!CLOUD)return null;const key=await this._key();if(!key)return null;
+    const {data,error}=await sb.from("lehrer_daten").select("inhalt").maybeSingle();if(error)throw error;if(!data)return null;
+    const roh=Uint8Array.from(atob(data.inhalt),c=>c.charCodeAt(0));
+    const klar=await crypto.subtle.decrypt({name:"AES-GCM",iv:roh.slice(0,12)},key,roh.slice(12));
+    return JSON.parse(new TextDecoder().decode(klar));
+  },
+  async lGeheimSpeichern(obj){
+    if(!CLOUD)return false;const key=await this._key();if(!key)return false;
+    const {data:u}=await sb.auth.getUser();if(!u?.user)return false;
+    const iv=crypto.getRandomValues(new Uint8Array(12)),geh=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},key,new TextEncoder().encode(JSON.stringify(obj))));
+    const alles=new Uint8Array(12+geh.length);alles.set(iv);alles.set(geh,12);let s="";alles.forEach(b=>s+=String.fromCharCode(b));
+    const {error}=await sb.from("lehrer_daten").upsert({user_id:u.user.id,inhalt:btoa(s),geaendert:new Date().toISOString()});if(error)throw error;return true;
+  },
+  async lAbmelden(){if(CLOUD)await sb.auth.signOut();localStorage.removeItem("if5-schluessel")},
   /* Stundenplan und Ferien aus src/app.js zum Server bringen (beim Öffnen der Lehrer-Ansicht) */
   async lPlanUebertragen(){
     if(!CLOUD)return;
