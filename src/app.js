@@ -460,7 +460,12 @@ stundeVorbeiPruefen().finally(render);
 
 /* Neue Version holen (wie KT Schule): beim Start und beim Zurückkehren */
 async function versionPruefen(){if(!/github\.io$/.test(location.hostname))return;
-  try{const r=await fetch("version.txt?"+Date.now(),{cache:"no-store"});const v=(await r.text()).trim();if(v&&v!==VERSION){await hochladen();location.reload()}}catch(e){}}
+  try{const r=await fetch("version.txt?"+Date.now(),{cache:"no-store"});const v=(await r.text()).trim();
+    if(!v||v===VERSION)return;
+    /* höchstens ein Neuladen pro Version (sonst Schleife, solange GitHub noch die alte Seite ausliefert) */
+    let schon=null;try{schon=sessionStorage.getItem("if5-neu")}catch(e){}
+    if(schon===v)return;try{sessionStorage.setItem("if5-neu",v)}catch(e){}
+    await hochladen();location.replace(location.pathname+"?v="+v+location.hash)}catch(e){}}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)versionPruefen();else if(sitzung){clearTimeout(pushTimer);hochladen()}});
 versionPruefen();
 if("serviceWorker"in navigator&&/github\.io$/.test(location.hostname))navigator.serviceWorker.register("sw.js").catch(()=>{});
