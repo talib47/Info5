@@ -202,7 +202,7 @@ label.btn{cursor:pointer}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="9400553c00";
+const VERSION="a7420c8abb";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -899,8 +899,8 @@ station({
     codeBild("herz","Geheimcode 1",10),
     codeBild("smiley","Geheimcode 2",10),
     codeBild("haus","Geheimcode 3",10),
-    frage("Frage","Im Geheimcode heißt die 1 …",["⬛ schwarz","⬜ weiß"],
-      "Der Computer kennt nur <b>0</b> und <b>1</b>. Daraus macht er Bilder, Musik und Spiele.",5),
+    frage("Frage","Im Computer gibt es nur Strom aus 💡❌ oder Strom an 💡✅. Welche Zahlen passen dazu?",["0 und 1","5 und 9"],
+      "Strom aus ist <b>0</b>, Strom an ist <b>1</b>. Darum spricht der Computer nur mit 0 und 1 – auch bei Bildern, Musik und Spielen.",5),
     frage("Frage","Welcher Code passt zu dieser Reihe?",["11111111","00000000"],
       "Jede <b>1</b> ist ein schwarzes Kästchen. Du kannst jetzt lesen wie ein Computer! 🤖",5,
       `<div class="bildchen">⬛⬛⬛⬛⬛⬛⬛⬛</div>`),
