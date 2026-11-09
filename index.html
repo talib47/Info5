@@ -244,6 +244,8 @@ label.btn{cursor:pointer}
 .lampe.l2[data-st="1"] .birne{background:#1c3f8a;box-shadow:0 0 14px #2f6fde80}.lampe.l2[data-st="2"] .birne{background:#3b7bff;box-shadow:0 0 26px #3b7bff}
 .lampe:active{transform:scale(.97)}
 .tipp{font-size:1.0625rem;margin:0 0 10px}
+.bewertung{text-align:center;background:rgba(255,255,255,.14);border-radius:16px;padding:10px 16px;min-width:9rem}
+.bewertung .note{margin:2px 0}
 /* Bausteine der Stationen */
 .paar{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;align-items:start;margin-top:8px}
 .px{display:grid;gap:2px;background:var(--line);border:2px solid var(--line);border-radius:10px;overflow:hidden;width:100%;max-width:340px;aspect-ratio:1;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -278,7 +280,7 @@ label.btn{cursor:pointer}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="7bbfbcef68";
+const VERSION="3a537c1872";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -696,7 +698,7 @@ function seiteErgebnis(st,prog){
     <p class="eyebrow">Ergebniskarte · ${st.ico} ${esc(st.titel)}</p>
     <div class="row" style="justify-content:space-between;align-items:flex-start">
       <div><h1 style="margin:0">${ich()}</h1><p style="margin:2px 0 0">${VS?"Vorschau":"Klasse "+esc(sitzung.klasse)}</p></div>
-      <div style="text-align:right"><div class="note zeichen">${zeichenAus(pz)}</div><span class="small">${ZEICHEN_TEXT[zeichenAus(pz)]}</span></div>
+      <div class="bewertung"><span class="small">Deine Note für heute</span><div class="note zeichen">${zeichenAus(pz)}</div><span class="small">${ZEICHEN_TEXT[zeichenAus(pz)]}</span></div>
     </div>
     <dl><dt>Punkte</dt><dd>${summe(prog)} von ${maxPunkte(st)} (${pz} %)</dd>
     <dt>Gearbeitet</dt><dd>${zeit(prog.aktiv)}</dd>

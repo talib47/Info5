@@ -231,3 +231,5 @@ label.btn{cursor:pointer}
 .lampe.l2[data-st="1"] .birne{background:#1c3f8a;box-shadow:0 0 14px #2f6fde80}.lampe.l2[data-st="2"] .birne{background:#3b7bff;box-shadow:0 0 26px #3b7bff}
 .lampe:active{transform:scale(.97)}
 .tipp{font-size:1.0625rem;margin:0 0 10px}
+.bewertung{text-align:center;background:rgba(255,255,255,.14);border-radius:16px;padding:10px 16px;min-width:9rem}
+.bewertung .note{margin:2px 0}

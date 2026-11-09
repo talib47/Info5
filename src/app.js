@@ -280,7 +280,7 @@ function seiteErgebnis(st,prog){
     <p class="eyebrow">Ergebniskarte · ${st.ico} ${esc(st.titel)}</p>
     <div class="row" style="justify-content:space-between;align-items:flex-start">
       <div><h1 style="margin:0">${ich()}</h1><p style="margin:2px 0 0">${VS?"Vorschau":"Klasse "+esc(sitzung.klasse)}</p></div>
-      <div style="text-align:right"><div class="note zeichen">${zeichenAus(pz)}</div><span class="small">${ZEICHEN_TEXT[zeichenAus(pz)]}</span></div>
+      <div class="bewertung"><span class="small">Deine Note für heute</span><div class="note zeichen">${zeichenAus(pz)}</div><span class="small">${ZEICHEN_TEXT[zeichenAus(pz)]}</span></div>
     </div>
     <dl><dt>Punkte</dt><dd>${summe(prog)} von ${maxPunkte(st)} (${pz} %)</dd>
     <dt>Gearbeitet</dt><dd>${zeit(prog.aktiv)}</dd>
