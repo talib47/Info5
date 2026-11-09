@@ -245,9 +245,12 @@ function seiteStation(st){
         $(".pts").textContent=`⭐ ${summe(prog)} Punkte`;
         $(".steps").children[i].className="ok"}
       ctx.geloest=true},
-    pruefer:null,   // Teil setzt hier eine Prüf-Funktion (true = richtig); „Weiter“ ruft sie auf
+    pruefer:null,
+    loesung:null,   // Teil setzt hier eine Funktion, die die Lösung zeigt (nur Lehrer-Vorschau)   // Teil setzt hier eine Prüf-Funktion (true = richtig); „Weiter“ ruft sie auf
   };
   sch.zeige($("#body"),ctx);
+  if(VS&&ctx.loesung){$("#body").insertAdjacentHTML("beforebegin",`<button class="btn ghost noprint" id="loesung" style="margin:0 0 12px">🔑 Lösung zeigen</button>`);
+    $("#loesung").onclick=()=>{ctx.loesung();$("#loesung").remove()}}
   document.querySelectorAll("[data-sp]").forEach(x=>x.onclick=()=>{prog.schritt=+x.dataset.sp;speichern();seiteStation(st);scrollTo(0,0)});
   $("#zur").onclick=()=>{if(i===0){location.hash=home()}else{prog.schritt=i-1;speichern();seiteStation(st);scrollTo(0,0)}};
   const vor=()=>{if(i===st.schritte.length-1){prog.fertig=Date.now();speichern(true);seiteErgebnis(st,prog)}
@@ -433,6 +436,7 @@ function frage(titel,text,antworten,aha,punkte=5,bild=""){return{titel,punkte,ze
   const zeigeAha=()=>{el.querySelector("#aha").innerHTML=`<div class="aha"><b>💡 Aha!</b> ${aha}</div>`;
     el.querySelectorAll(".antwort").forEach(b=>{b.disabled=true;if(b.dataset.k==="0")b.classList.add("richtig")})};
   ctx.pruefer=()=>{toast("Tippe zuerst auf eine Antwort.");return false};
+  ctx.loesung=()=>{const b=el.querySelector('.antwort[data-k="0"]');b.classList.add("richtig");el.querySelector("#aha").innerHTML=`<div class="aha"><b>💡 Aha!</b> ${aha}</div>`};
   if(ctx.geloest)return zeigeAha();
   el.querySelectorAll(".antwort").forEach(b=>b.onclick=()=>{
     if(b.dataset.k==="0"){zeigeAha();ctx.geschafft(punkte)}

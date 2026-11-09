@@ -42,6 +42,7 @@ function abmalen(name,titel,punkte){return{titel,punkte,zeige(el,ctx){
   const r=pixelRaster({w:8,h:8,werte:ctx.daten.bild,palette:SW,malbar:true,onAenderung:v=>{ctx.daten.bild=v.slice();ctx.speichern()}});
   el.querySelector("#b").append(r.el);
   ctx.pruefer=()=>pruefen(ctx,r,soll,punkte,el.querySelector("#m"));
+  ctx.loesung=()=>r.setzeAlle(soll);
   el.querySelector("#l").onclick=()=>{if(confirm("Wirklich alles löschen?"))r.setzeAlle(Array(64).fill(0))};
   if(ctx.geloest){const m=el.querySelector("#m");m.className="msg ok";m.textContent="Schon gelöst. Weiter geht's!"}
 }}}
@@ -66,6 +67,7 @@ function codeBild(name,titel,punkte,farbig){return{titel,punkte,zeige(el,ctx){
   r.el.addEventListener("pointermove",e=>{const t=document.elementFromPoint(e.clientX,e.clientY);if(t&&t.dataset?.k!=null&&t.parentNode===r.el)leuchte(Math.floor(t.dataset.k/8))});
   r.el.addEventListener("pointerleave",()=>leuchte(-1));
   ctx.pruefer=()=>pruefen(ctx,r,soll,punkte,el.querySelector("#m"));
+  ctx.loesung=()=>r.setzeAlle(soll);
   el.querySelector("#l").onclick=()=>{if(confirm("Wirklich alles löschen?"))r.setzeAlle(Array(64).fill(0))};
   if(ctx.geloest){const m=el.querySelector("#m");m.className="msg ok";m.textContent="Schon gelöst. Weiter geht's!"}
 }}}
