@@ -64,7 +64,7 @@ function codeBild(name,titel,punkte,farbig,merke){return{titel,punkte,merke,zeig
   const ziffer=c=>farbig&&c!=="0"?`<span class="z" style="--c:${pal[+c]}">${c}</span>`:`<span>${c}</span>`;
   el.innerHTML=(farbig
     ?`<div class="regel"><b>Neue Regel:</b> Jetzt ist jede Zahl eine <b>Farbe</b>. Schau in den Schlüssel: Welche Zahl ist welche Farbe?</div>
-      <p class="eyebrow" style="margin-top:12px">🔑 Schlüssel – tippe auf eine Farbe, dann auf die Kästchen</p><div class="schluessel" id="key">${key.map(([n,c],k)=>`<button data-f="${k+1}" style="--c:${c}"><b>${k+1}</b><span class="sw"></span>${n}</button>`).join("")}<button data-f="0" class="rad" style="--c:#fff"><b>0</b><span class="sw"></span>Weiß 🧽</button></div>`
+      <p class="eyebrow" style="margin-top:12px">Schlüssel – tippe auf eine Farbe, dann auf die Kästchen</p><div class="schluessel" id="key">${key.map(([n,c],k)=>`<button data-f="${k+1}" style="--c:${c}"><b>${k+1}</b><span class="sw"></span>${n}</button>`).join("")}<button data-f="0" class="rad" style="--c:#fff"><b>0</b><span class="sw"></span>Weiß 🧽</button></div>`
     :`<p>Das ist ein Geheimcode. <b>1</b> heißt schwarz, <b>0</b> heißt weiß. Mal jede Zeile so, wie der Code es sagt. Was kommt heraus?</p>`)+
     `<div class="paar"><div><p class="eyebrow">Code</p><ol class="code">${roh.map(z=>`<li>${z.split("").map(ziffer).join("")}</li>`).join("")}</ol></div>
     <div><p class="eyebrow">Dein Bild</p><div id="b"></div></div></div>
@@ -168,17 +168,17 @@ function zauber(titel,punkte,runden,hilfe,merke){return{titel,punkte,merke,zeige
   const zeichne=()=>{const {g,dreh}=d.runde;
     const zs=z=>g.slice(z*N,z*N+N).reduce((a,b)=>a+b,0),ss=s=>{let n=0;for(let z=0;z<N;z++)n+=g[z*N+s];return n};
     el.innerHTML=`<div class="regel">🎩 <b>Der Trick:</b> In jeder Reihe und jeder Spalte sind <b>gerade viele</b> schwarze Kästchen (0, 2, 4 oder 6). Der Zauberer dreht heimlich <b>ein</b> Kästchen um. Wo ist jetzt eine Reihe <b>und</b> eine Spalte ungerade? Da ist es!</div>
-      <p class="eyebrow" style="margin-top:12px">Runde ${Math.min(d.geschafft+1,runden)} von ${runden} · ✔️ ${d.geschafft} geschafft</p>
+      <p class="eyebrow" style="margin-top:12px">Runde ${Math.min(d.geschafft+1,runden)} von ${runden} · ${d.geschafft} geschafft</p>
       <div class="zauber${hilfe?" hilfe":""}">${Array.from({length:N},(_,z)=>Array.from({length:N},(_,s)=>`<button data-i="${z*N+s}" class="${g[z*N+s]?"s":""}" ${dreh==null?"disabled":""}></button>`).join("")+(hilfe?`<span class="zahl">${zs(z)}</span>`:"")).join("")}
         ${hilfe?Array.from({length:N},(_,s)=>`<span class="zahl">${ss(s)}</span>`).join("")+"<span></span>":""}</div>
-      <div class="row" style="margin-top:14px">${d.geschafft>=runden?"":dreh==null?`<button class="btn" id="zaub">🎩 Zaubern! Ein Kästchen umdrehen</button>`:`<span class="msg" style="margin:0">👆 Tippe auf das umgedrehte Kästchen!</span>`}</div><div id="m"></div>`;
+      <div class="row" style="margin-top:14px">${d.geschafft>=runden?"":dreh==null?`<button class="btn" id="zaub">🎩 Zaubern! Ein Kästchen umdrehen</button>`:`<span class="msg" style="margin:0">Tippe auf das umgedrehte Kästchen!</span>`}</div><div id="m"></div>`;
     if(hilfe)el.querySelector(".zauber").style.gridTemplateColumns=`repeat(${N},1fr) 2.2em`;
     const z=el.querySelector("#zaub");if(z)z.onclick=()=>{const g2=d.runde.g;el.querySelector(".zauber").classList.add("wackeln");
       setTimeout(()=>{const i=Math.floor(Math.random()*N*N);g2[i]=g2[i]?0:1;d.runde.dreh=i;ctx.speichern();zeichne()},600)};
     el.querySelectorAll(".zauber button:not([disabled])").forEach(b=>b.onclick=()=>{const i=+b.dataset.i;
       if(i===d.runde.dreh){b.classList.add("gefunden");d.geschafft++;d.runde=neueRunde();ctx.speichern();
         if(d.geschafft>=runden){ctx.geschafft(punkte);setTimeout(()=>{zeichne();const m=el.querySelector("#m");m.className="msg ok";m.textContent="🎉 Super! Du hast den Trick durchschaut. Tippe auf „Weiter“."},500)}
-        else{toast("Gefunden! 🎉");setTimeout(zeichne,700)}}
+        else{toast("Gefunden!");setTimeout(zeichne,700)}}
       else{ctx.fehler();b.classList.add("daneben");toast("Nicht das – zähl die schwarzen Kästchen in jeder Reihe!")}});
   };
   zeichne();
@@ -232,7 +232,7 @@ function farbmischer(titel,punkte,merke){return{titel,punkte,merke,zeige(el,ctx)
       el.querySelectorAll(".lampe").forEach(b=>{const k=+b.dataset.k;b.dataset.st=d.s[k];b.querySelector(".stufe").textContent=`${STUFE_TEXT[d.s[k]]} (${STUFEN[d.s[k]]})`});
       el.querySelector("#code").textContent=d.s.map(x=>STUFEN[x]).join(", ")};male();
     el.querySelectorAll(".lampe").forEach(b=>b.onclick=()=>{const k=+b.dataset.k;d.s[k]=(d.s[k]+1)%3;male();ctx.speichern();
-      if(d.s.join()===ZIELE[d.runde].s.join()){const m=el.querySelector("#m");m.className="msg ok";m.textContent="✔️ Genau richtig! Tippe auf „Weiter“."}});
+      if(d.s.join()===ZIELE[d.runde].s.join()){const m=el.querySelector("#m");m.className="msg ok";m.textContent="Genau richtig! Tippe auf „Weiter“."}});
   };
   zeichne();
   ctx.pruefer=()=>{const m=el.querySelector("#m");

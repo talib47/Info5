@@ -8,7 +8,7 @@ function auswaehlen({titel,punkte=10,merke,text,karten,spalten}){return{titel,pu
   const d=ctx.daten;d.an=d.an||[];if(!d.reihe){d.reihe=mischen(karten.map((_,i)=>i));ctx.speichern()}
   const n=karten.filter(k=>k[1]).length;let falsch=new Set();
   const zeichne=()=>{
-    el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">👆 Tippe alle passenden Karten an · ${n} sind richtig · ausgewählt: ${d.an.length}</p>
+    el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Tippe alle passenden Karten an · ${n} sind richtig · ausgewählt: ${d.an.length}</p>
       <div class="wahlkarten"${spalten?` style="grid-template-columns:repeat(auto-fill,minmax(${spalten},1fr))"`:""}>${d.reihe.map(i=>`<button class="wkarte${d.an.includes(i)?" an":""}${falsch.has(i)?" falsch":""}" data-i="${i}">${karten[i][0]}</button>`).join("")}</div>${MLD}`;
     el.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{const i=+b.dataset.i,k=d.an.indexOf(i);if(k<0)d.an.push(i);else d.an.splice(k,1);falsch.clear();ctx.speichern();zeichne()});
   };
@@ -16,7 +16,7 @@ function auswaehlen({titel,punkte=10,merke,text,karten,spalten}){return{titel,pu
   ctx.pruefer=()=>{const zuviel=d.an.filter(i=>!karten[i][1]),fehlt=karten.map((k,i)=>k[1]&&!d.an.includes(i)?i:-1).filter(i=>i>=0);
     const w=karten.filter(k=>k[1]&&k[2]);
     const r=bewerte(ctx,el,{leer:!d.an.length,leerText:"Tippe zuerst die passenden Karten an.",fehler:zuviel.length+fehlt.length,stand:d.an.slice().sort().join(),punkte,
-      okText:`Richtig! 🎉${w.length?`<ul class="warum">${w.map(k=>`<li>${k[0]} – ${k[2]}</li>`).join("")}</ul>`:""}`,markiere:()=>{falsch=new Set(zuviel);zeichne()}});
+      okText:`Richtig!${w.length?`<ul class="warum">${w.map(k=>`<li>${k[0]} – ${k[2]}</li>`).join("")}</ul>`:""}`,markiere:()=>{falsch=new Set(zuviel);zeichne()}});
     if(!r&&!zuviel.length&&fehlt.length)meldung(el,false,`Gut so weit! Es fehlen noch <b>${fehlt.length}</b>.`);
     return r};
   ctx.loesung=()=>{d.an=karten.map((k,i)=>k[1]?i:-1).filter(i=>i>=0);zeichne()};
@@ -27,7 +27,7 @@ function auswaehlen({titel,punkte=10,merke,text,karten,spalten}){return{titel,pu
    🤖 Robo-Labyrinth. Karte: # Wand, . Weg, S Start, Z Ziel ⭐, M Münze 🪙 (alle einsammeln)
    Programm-Text für Vorgabe/Lösung: "R R D 3x(R D) U"  (R rechts, L links, U hoch, D runter)
    ===================================================================== */
-const RB={U:["⬆️",0,-1],D:["⬇️",0,1],L:["⬅️",-1,0],R:["➡️",1,0]};
+const RB={U:["↑",0,-1],D:["↓",0,1],L:["←",-1,0],R:["→",1,0]};
 function roboParse(t){const out=[];const re=/(\d+)x\(([^)]*)\)|([UDLR])/g;let m;
   while((m=re.exec(t||""))){if(m[3])out.push({c:m[3]});else out.push({w:+m[1],k:m[2].trim().split(/\s+/).filter(Boolean).map(c=>({c}))})}return out}
 const roboFlach=p=>p.flatMap(t=>t.w?Array.from({length:t.w},()=>t.k.map(x=>x.c)).flat():[t.c]);
@@ -58,8 +58,8 @@ function robo({titel,punkte=10,merke,text,karte,max,schleifen,vorgabe,loesung}){
         <p class="eyebrow">Dein Programm · ${n} Befehle${max?` · höchstens ${max}`:""}${muenzen.length?` · sammle alle 🪙`:""}</p>
         <div class="rprog">${chips()||`<span class="muted">Noch leer – tippe unten auf die Pfeile.</span>`}</div>
         <div class="rknoepfe">${Object.entries(RB).map(([k,[i]])=>`<button class="btn ghost rk" data-add="${k}" ${laeuft?"disabled":""}>${i}</button>`).join("")}
-          ${schleifen?`<button class="btn ghost rk breit" id="rloop" ${laeuft||offen!=null?"disabled":""}>🔁 Wiederhole</button>`:""}</div>
-        <div class="row"><button class="btn" id="rstart" ${laeuft?"disabled":""}>▶️ Start</button><button class="btn ghost" id="rleer" ${laeuft?"disabled":""}>🗑️ Alles löschen</button></div>
+          ${schleifen?`<button class="btn ghost rk breit" id="rloop" ${laeuft||offen!=null?"disabled":""}>Wiederhole …</button>`:""}</div>
+        <div class="row"><button class="btn" id="rstart" ${laeuft?"disabled":""}>Start</button><button class="btn ghost" id="rleer" ${laeuft?"disabled":""}>Alles löschen</button></div>
         <p class="muted small">Tippe auf einen Befehl im Programm, um ihn zu löschen.</p>
       </div></div>${MLD}`;
     const neu=()=>{crash=null;pos=[sx,sy];spur=[];gesammelt=new Set();d.ok=false;ctx.speichern();zeichne()};
@@ -89,7 +89,7 @@ function robo({titel,punkte=10,merke,text,karte,max,schleifen,vorgabe,loesung}){
       ctx.beimVerlassen(()=>{clearInterval(laeuft)});zeichne()};
   };
   zeichne();
-  ctx.pruefer=()=>{if(d.ok){ctx.geschafft(punkte);return true}meldung(el,false,"Bring den Roboter zuerst mit ▶️ Start zum ⭐.");return false};
+  ctx.pruefer=()=>{if(d.ok){ctx.geschafft(punkte);return true}meldung(el,false,"Bring den Roboter zuerst mit Start zum ⭐.");return false};
   ctx.loesung=()=>{d.prog=roboParse(loesung);offen=null;d.offen=null;const r=simuliere();pos=[r.x,r.y];spur=r.sp;gesammelt=r.ge;d.ok=r.ok&&(!max||roboZahl(d.prog)<=max);if(!d.ok)console.warn("ROBO-LOESUNG FALSCH",titel);ctx.speichern();zeichne()};
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -143,7 +143,7 @@ function caesarRad({titel,punkte=10,merke,text,wort,schluessel,modus="ent",antwo
   };
   zeichne();
   ctx.pruefer=()=>{const v=(el.querySelector(".eing input").value||"").toUpperCase().replace(/\s+/g,"");
-    return bewerte(ctx,el,{leer:!v,leerText:"Tippe zuerst deine Lösung ins Feld.",fehler:v===antwort.replace(/\s+/g,"")?0:1,stand:v,punkte,okText:"Richtig entschlüsselt! 🕵️"})};
+    return bewerte(ctx,el,{leer:!v,leerText:"Tippe zuerst deine Lösung ins Feld.",fehler:v===antwort.replace(/\s+/g,"")?0:1,stand:v,punkte,okText:"Richtig entschlüsselt!"})};
   ctx.loesung=()=>{d.v=antwort;if(modus==="knacken")d.k=schluessel;zeichne()};
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -160,7 +160,7 @@ function automat({titel,punkte=15,merke,text,zustaende,start,knoepfe,ueber,ziele
     el.innerHTML=kopfText(text)+`<div class="automat">
       <div class="zustaende">${Object.entries(zustaende).map(([id,[n,ico]])=>`<div class="zst${d.z===id?" jetzt":""}"><span>${ico}</span><b>${n}</b></div>`).join("")}</div>
       <div class="anzeige${blitz?" blitz":""}">${zustaende[d.z][2]||""}</div>
-      <div class="aknoepfe">${knoepfe.map(([id,t])=>`<button class="btn ghost" data-kn="${id}">${t}</button>`).join("")}<button class="btn ghost" id="areset">↺ Neu starten</button></div>
+      <div class="aknoepfe">${knoepfe.map(([id,t])=>`<button class="btn ghost" data-kn="${id}">${t}</button>`).join("")}<button class="btn ghost" id="areset">Neu starten</button></div>
       ${diagramm?`<details class="diagramm"><summary>📋 So arbeitet der Automat (Zustandsdiagramm)</summary><ul>${Object.entries(ueber).map(([k,neu])=>{const [z,kn]=k.split("|");return`<li><b>${zustaende[z][1]} ${zustaende[z][0]}</b> → bei <b>${(kn==="*"?"jedem anderen Knopf":knoepfe.find(x=>x[0]===kn)[1])}</b> → <b>${zustaende[neu][1]} ${zustaende[neu][0]}</b></li>`}).join("")}</ul><p class="muted small">Alles, was hier nicht steht, ändert nichts.</p></details>`:""}
       <p class="eyebrow" style="margin-top:14px">Deine Aufträge</p>
       <ul class="ziele">${ziele.map(([t],i)=>`<li class="${erfuellt[i]?"ok":""}">${erfuellt[i]?"✅":"⬜"} ${t}</li>`).join("")}</ul></div>${MLD}`;
@@ -183,7 +183,7 @@ function ampelBauen({titel,punkte=15,merke,text,phasen,namen}){return{titel,punk
   const FARB=["#ff3b30","#ffcc00","#34c759"];
   const zeichne=()=>{
     el.innerHTML=kopfText(text)+`<div class="ampeln">${d.a.map((p,i)=>`<div class="ampelbox${falsch.has(i)?" falsch":""}${an===i?" spielt":""}"><p class="eyebrow">${i+1}. ${namen[i]}</p><div class="ampel">${p.map((v,j)=>`<button class="lampe-a${v?" an":""}" data-p="${i}" data-l="${j}" style="--lc:${FARB[j]}"></button>`).join("")}</div></div>`).join("")}</div>
-      <div class="row" style="margin-top:12px"><button class="btn ghost" id="abspiel">▶️ Ampel abspielen</button></div>${MLD}`;
+      <div class="row" style="margin-top:12px"><button class="btn ghost" id="abspiel">Ampel abspielen</button></div>${MLD}`;
     el.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{const i=+b.dataset.p,j=+b.dataset.l;d.a[i][j]=d.a[i][j]?0:1;falsch.delete(i);ctx.speichern();zeichne()});
     el.querySelector("#abspiel").onclick=()=>{clearInterval(spiel);let k=0;an=0;zeichne();spiel=setInterval(()=>{k++;if(k>=d.a.length*2){clearInterval(spiel);an=-1}else an=k%d.a.length;zeichne()},900)};
   };
@@ -209,11 +209,11 @@ function baumFolgen({titel,punkte=15,merke,text,baum,dinge}){return{titel,punkte
   const d=ctx.daten;d.i=d.i||0;d.pfad=d.pfad||"";
   const knotenBei=p=>[...p].reduce((k,c)=>c==="j"?k.ja:k.nein,baum);
   const zeichne=()=>{
-    if(d.i>=dinge.length){el.innerHTML=kopfText(text)+`<div class="msg ok">✔️ Alles einsortiert! Tippe auf „Weiter“.</div><div class="baum">${baumHTML(baum,"x")}</div>`;return}
+    if(d.i>=dinge.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alles einsortiert! Tippe auf „Weiter“.</div><div class="baum">${baumHTML(baum,"x")}</div>`;return}
     const ding=dinge[d.i],k=knotenBei(d.pfad);
     el.innerHTML=kopfText(text)+`<div class="szene"><span class="sz-bild">${ding.ico}</span><div class="sz-text"><p class="eyebrow">Ding ${d.i+1} von ${dinge.length}</p><b style="font-size:1.25rem">${ding.name}</b></div></div>
       ${k.blatt?`<div class="row"><button class="btn" id="naechst">${d.i+1<dinge.length?"Nächstes Ding ▶":"Fertig ✔"}</button></div>`
-        :`<p class="frage">${k.t}</p><div class="antworten"><button class="antwort" data-a="j">👍 Ja</button><button class="antwort" data-a="n">👎 Nein</button></div>`}
+        :`<p class="frage">${k.t}</p><div class="antworten"><button class="antwort" data-a="j">Ja</button><button class="antwort" data-a="n">Nein</button></div>`}
       <div class="baum">${baumHTML(baum,d.pfad)}</div>${MLD}`;
     if(k.blatt){meldung(el,!ding.hinweis,`${ding.ico} ${ding.name} landet bei <b>${k.ico||""} ${k.blatt}</b>.${ding.hinweis?" "+ding.hinweis:" ✔️"}`);
       el.querySelector("#naechst").onclick=()=>{d.i++;d.pfad="";ctx.speichern();zeichne();if(d.i>=dinge.length)ctx.geschafft(punkte)};return}
@@ -240,7 +240,7 @@ function baumBauen({titel,punkte=20,merke,text,fragen,dinge}){return{titel,punkt
           ${b?`<div class="bkinder"><div><span class="bj">ja</span>${blatt(b[0][0])}</div><div><span class="bj nein">nein</span>${blatt(b[0][1])}</div></div>`:""}</div></div>
         <div><span class="bj nein">nein</span><div class="bzweig"><button class="bk frage${wahl==="n"?" jetzt":""}" data-feld="n">${feldF("n")}</button>
           ${b?`<div class="bkinder"><div><span class="bj">ja</span>${blatt(b[1][0])}</div><div><span class="bj nein">nein</span>${blatt(b[1][1])}</div></div>`:""}</div></div></div></div></div>
-      <p class="eyebrow">👆 Tippe oben ein Fragefeld an, dann hier eine Frage</p>
+      <p class="eyebrow">Tippe oben ein Fragefeld an, dann hier eine Frage</p>
       <div class="karten">${fragen.map((f,i)=>`<button class="karte" data-fr="${i}">${f.t}</button>`).join("")}</div>${MLD}`;
     el.querySelectorAll("[data-feld]").forEach(x=>x.onclick=()=>{wahl=x.dataset.feld;zeichne()});
     el.querySelectorAll("[data-fr]").forEach(x=>x.onclick=()=>{d[wahl]=+x.dataset.fr;wahl=wahl==="w"?"j":wahl==="j"?"n":"w";ctx.speichern();zeichne()});
@@ -276,7 +276,7 @@ function kiRaten(werte){
 function kiZeichnen({titel,punkte=15,merke,text,ziel=3}){return{titel,punkte,merke,zeige(el,ctx){
   const d=ctx.daten;d.erkannt=d.erkannt||[];
   el.innerHTML=kopfText(text)+`<div class="paar" style="margin-top:12px"><div><p class="eyebrow">Mal hier</p><div id="kz"></div>
-      <div class="row" style="margin-top:10px"><button class="btn ghost" id="kzl">🧽 Löschen</button></div></div>
+      <div class="row" style="margin-top:10px"><button class="btn ghost" id="kzl">Löschen</button></div></div>
     <div><p class="eyebrow">🤖 Die KI denkt …</p><div class="kidenk" id="kd"></div>
       <p class="eyebrow" style="margin-top:12px">Erkannt (${ziel} verschiedene schaffen)</p><div class="kierk" id="ke"></div></div></div>${MLD}`;
   const r=pixelRaster({w:8,h:8,werte:d.bild,palette:["#FFFFFF","#1B1B1F"],malbar:true,onAenderung:v=>{d.bild=v.slice();ctx.speichern();denke(v)}});
@@ -300,7 +300,7 @@ const OFT=["123456","1234567","12345678","123456789","passwort","password","hall
 function knackzeit(pw){if(!pw)return[0,"–"];if(OFT.includes(pw.toLowerCase()))return[0,"sofort! (steht in der Hacker-Liste)"];
   let n=0;if(/[a-zäöüß]/.test(pw))n+=30;if(/[A-ZÄÖÜ]/.test(pw))n+=29;if(/\d/.test(pw))n+=10;if(/[^a-zA-ZäöüÄÖÜß0-9]/.test(pw))n+=33;
   const sek=Math.pow(n,pw.length)/2e10;
-  const t=sek<1?"unter 1 Sekunde":sek<60?Math.round(sek)+" Sekunden":sek<3600?Math.round(sek/60)+" Minuten":sek<86400?Math.round(sek/3600)+" Stunden":sek<3.15e7?Math.round(sek/86400)+" Tage":sek<3.15e10?Math.round(sek/3.15e7).toLocaleString("de-DE")+" Jahre":"über 1000 Jahre 🛡️";
+  const t=sek<1?"unter 1 Sekunde":sek<60?Math.round(sek)+" Sekunden":sek<3600?Math.round(sek/60)+" Minuten":sek<86400?Math.round(sek/3600)+" Stunden":sek<3.15e7?Math.round(sek/86400)+" Tage":sek<3.15e10?Math.round(sek/3.15e7).toLocaleString("de-DE")+" Jahre":"über 1000 Jahre";
   return[sek,t]}
 const PW_REGELN=[["Mindestens 10 Zeichen",p=>p.length>=10],["Großbuchstaben (A–Z)",p=>/[A-ZÄÖÜ]/.test(p)],["Kleinbuchstaben (a–z)",p=>/[a-zäöüß]/.test(p)],["Zahlen (0–9)",p=>/\d/.test(p)],["Sonderzeichen (! ? # …)",p=>/[^a-zA-ZäöüÄÖÜß0-9]/.test(p)],["Kein bekanntes Passwort",p=>p&&!OFT.includes(p.toLowerCase())]];
 function passwortTester({titel,punkte=15,merke,text,regeln=6}){return{titel,punkte,merke,zeige(el,ctx){
@@ -336,7 +336,7 @@ function zahlRaten({titel,punkte=15,merke,text,bis=100,max=7}){return{titel,punk
         <span class="zende l">1</span><span class="zende r">${bis}</span></div>
       <p class="muted small">Grün = da kann die Zahl noch sein: <b>${d.lo} bis ${d.hi}</b></p>
       ${gef?`<div class="msg ${d.tipps.length<=max?"ok":"no"}">${d.tipps.length<=max?`🎉 Gefunden in <b>${d.tipps.length}</b> Versuchen! Super Strategie.`:`Gefunden! Aber mit ${d.tipps.length} Versuchen. Schaffst du es in höchstens <b>${max}</b>? Tipp: Rate immer genau die <b>Mitte</b> vom grünen Bereich.`}</div>
-        <div class="row" style="margin-top:12px"><button class="btn ghost" id="nochmal">🔄 Neue Zahl</button></div>`
+        <div class="row" style="margin-top:12px"><button class="btn ghost" id="nochmal">Neue Zahl</button></div>`
       :`<div class="row raten-ein"><input type="text" inputmode="numeric" autocomplete="off" placeholder="Deine Zahl" maxlength="3"><button class="btn" id="raten">Raten</button></div>`}
     </div>${MLD}`;
     if(gef){el.querySelector("#nochmal").onclick=()=>{neu();zeichne()};return}
@@ -366,7 +366,7 @@ function waage({titel,punkte=15,merke,text,n=5,ziel}){return{titel,punkte,merke,
     const kipp=d.letzt?(d.w[a]>d.w[b]?"links":"rechts"):"";
     el.innerHTML=kopfText(text)+`<div class="waage-box">
       <div class="waage ${kipp}"><div class="balken-w"><div class="schale">${d.letzt?KISTEN[a]:""}</div><div class="schale">${d.letzt?KISTEN[b]:""}</div></div><div class="fuss">▲</div></div>
-      <p class="eyebrow">👆 Tippe zwei Kisten an, um sie zu wiegen · gewogen: ${d.log.length}-mal${ziel?` · Profis schaffen es mit ${ziel}`:""}</p>
+      <p class="eyebrow">Tippe zwei Kisten an, um sie zu wiegen · gewogen: ${d.log.length}-mal${ziel?` · Profis schaffen es mit ${ziel}`:""}</p>
       <div class="kisten">${d.w.map((_,i)=>`<button class="kiste${wahl.includes(i)?" an":""}${d.gew.includes(i)?" weg":""}" data-k="${i}">${KISTEN[i]}</button>`).join("")}</div>
       ${d.log.length?`<p class="eyebrow" style="margin-top:12px">Das weißt du schon</p><div class="wlog">${d.log.map(([x,y])=>`<span>${KISTEN[x]} ${d.w[x]>d.w[y]?"ist schwerer als":"ist leichter als"} ${KISTEN[y]}</span>`).join("")}</div>`:""}
       <p class="eyebrow" style="margin-top:14px">Deine Reihenfolge: leicht → schwer <span class="muted">(tippe unten die Kisten der Reihe nach an)</span></p>
@@ -395,8 +395,8 @@ function tauschSortieren({titel,punkte=15,merke,text,zahlen:start}){return{titel
   const zeichne=()=>{const fertig=fehlst(d.z)===0;
     el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Getauscht: ${d.t}-mal${fertig?"":" · Ziel: von klein nach groß"}</p>
       <div class="tausch">${d.z.map((v,i)=>`${i?`<button class="tbtn" data-t="${i-1}" ${fertig?"disabled":""} title="Tauschen">⇄</button>`:""}<span class="tkarte${fertig?" ok":""}">${v}</span>`).join("")}</div>
-      ${fertig?`<div class="msg ok">✔️ Sortiert mit ${d.t} Tauschen${d.t===best?" – kürzer geht es nicht! 🏆":""}. Tippe auf „Weiter“.</div>`:""}
-      <div class="row" style="margin-top:12px"><button class="btn ghost" id="treset">↺ Von vorn</button></div>${MLD}`;
+      ${fertig?`<div class="msg ok">Sortiert mit ${d.t} Tauschen${d.t===best?" – kürzer geht es nicht! 🏆":""}. Tippe auf „Weiter“.</div>`:""}
+      <div class="row" style="margin-top:12px"><button class="btn ghost" id="treset">Von vorn</button></div>${MLD}`;
     el.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{const i=+b.dataset.t;[d.z[i],d.z[i+1]]=[d.z[i+1],d.z[i]];d.t++;ctx.speichern();zeichne();
       if(fehlst(d.z)===0)ctx.geschafft(punkte)});
     el.querySelector("#treset").onclick=()=>{d.z=start.slice();d.t=0;ctx.speichern();zeichne()};
@@ -419,10 +419,10 @@ function kiTrainer({titel,punkte=20,merke,text,klassen,merkmale,beispiele,tests}
   const chips=f=>merkmale.map(([n,ico],i)=>f[i]?`<span class="mm" title="${n}">${ico}</span>`:"").join("");
   const zeichne=()=>{
     el.innerHTML=kopfText(text)+`<p class="muted small" style="margin-top:10px">Merkmale: ${merkmale.map(([n,ico])=>`${ico} ${n}`).join(" · ")}</p>
-      <p class="eyebrow" style="margin-top:10px">📚 Trainings-Beispiele · tippe an, um die Beschriftung zu ändern</p>
+      <p class="eyebrow" style="margin-top:10px">Trainings-Beispiele · tippe an, um die Beschriftung zu ändern</p>
       <div class="kibsp">${beispiele.map((b,i)=>{const k=kl(d.lab[i]);return`<button class="kib k-${d.lab[i]}" data-b="${i}"><span class="kico2">${b.ico}</span><b>${b.name}</b><span class="mms">${chips(b.f)}</span><span class="chip">${k[2]} ${k[1]}</span></button>`}).join("")}</div>
-      <div class="row" style="margin-top:12px"><button class="btn" id="kitest">🤖 KI lernen lassen und testen</button></div>
-      ${d.test?`<p class="eyebrow" style="margin-top:14px">🧪 Test mit neuen Dingen, die die KI noch nie gesehen hat</p>
+      <div class="row" style="margin-top:12px"><button class="btn" id="kitest">KI lernen lassen und testen</button></div>
+      ${d.test?`<p class="eyebrow" style="margin-top:14px">Test mit neuen Dingen, die die KI noch nie gesehen hat</p>
         <div class="kitests">${tests.map(t=>{const r=rate(t),ok=r.lab===t.ist,k=kl(r.lab),b=beispiele[r.i];
           return`<div class="kit ${ok?"ok":"no"}"><span class="kico2">${t.ico}</span><div><b>${t.name}</b> <span class="mms">${chips(t.f)}</span><br><span class="small">KI sagt: <b>${k[2]} ${k[1]}</b> ${ok?"✅":"❌"}<br><span class="muted">weil es so ähnlich ist wie ${b.ico} ${b.name}</span></span></div></div>`}).join("")}</div>`:""}${MLD}`;
     el.querySelectorAll("[data-b]").forEach(x=>x.onclick=()=>{const i=+x.dataset.b,k=klassen.findIndex(c=>c[0]===d.lab[i]);d.lab[i]=klassen[(k+1)%klassen.length][0];d.test=false;ctx.speichern();zeichne()});
@@ -432,14 +432,14 @@ function kiTrainer({titel,punkte=20,merke,text,klassen,merkmale,beispiele,tests}
         meldung(el,false,`Die KI liegt ${falsch}-mal falsch. Schau dir die Trainings-Beispiele genau an: Ist eins falsch beschriftet? Dann lernt die KI etwas Falsches!`)}};
   };
   zeichne();
-  ctx.pruefer=()=>{if(d.ok){ctx.geschafft(punkte);return true}meldung(el,false,d.test?"Die KI macht noch Fehler. Verbessere die Beispiele und teste noch mal.":"Tippe zuerst auf „🤖 KI lernen lassen und testen“.");return false};
+  ctx.pruefer=()=>{if(d.ok){ctx.geschafft(punkte);return true}meldung(el,false,d.test?"Die KI macht noch Fehler. Verbessere die Beispiele und teste noch mal.":"Tippe zuerst auf „KI lernen lassen und testen“.");return false};
   ctx.loesung=()=>{d.lab=beispiele.map(b=>b.ist);d.test=true;d.ok=true;zeichne()};
 }}}
 
 /* ---------- 🔓 PIN-Knacker: Wie schnell probiert ein Computer alle Zahlen durch? (Die PIN wird nicht gespeichert) ---------- */
 function pinKnacker({titel,punkte=5,merke,text}){return{titel,punkte,merke,zeige(el,ctx){
   const d=ctx.daten;let lauf=null;
-  el.innerHTML=kopfText(text)+`<div class="row raten-ein" style="margin-top:12px"><input type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="4 Ziffern, z. B. 2580"><button class="btn" id="hack">🤖 Hacker starten</button></div>
+  el.innerHTML=kopfText(text)+`<div class="row raten-ein" style="margin-top:12px"><input type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="4 Ziffern, z. B. 2580"><button class="btn" id="hack">Hacker starten</button></div>
     <div class="hacker"><div class="hzahl">0000</div><div class="small" id="hinfo">Der Computer probiert einfach alle Zahlen durch: 0000, 0001, 0002 …</div></div>${MLD}`;
   const inp=el.querySelector("input"),z=el.querySelector(".hzahl");
   inp.oninput=()=>{inp.value=inp.value.replace(/\D/g,"").slice(0,4)};
@@ -448,7 +448,7 @@ function pinKnacker({titel,punkte=5,merke,text}){return{titel,punkte,merke,zeige
     lauf=setInterval(()=>{i=Math.min(ziel,i+schritt);z.textContent=String(i).padStart(4,"0");
       if(i>=ziel){clearInterval(lauf);z.classList.add("geknackt");
         el.querySelector("#hinfo").innerHTML=`Geknackt nach <b>${(ziel+1).toLocaleString("de-DE")}</b> Versuchen! Ein echter Computer braucht dafür weniger als <b>1 Tausendstel Sekunde</b>.`;
-        d.ok=true;ctx.speichern();meldung(el,true,"😱 Eine 4-stellige PIN hat nur 10.000 Möglichkeiten. Ein Passwort mit 12 Zeichen hat mehr Möglichkeiten, als es Sandkörner auf der Erde gibt!");ctx.geschafft(punkte)}},30)};
+        d.ok=true;ctx.speichern();meldung(el,true,"Eine 4-stellige PIN hat nur 10.000 Möglichkeiten. Ein Passwort mit 12 Zeichen hat mehr Möglichkeiten, als es Sandkörner auf der Erde gibt!");ctx.geschafft(punkte)}},30)};
   ctx.beimVerlassen(()=>clearInterval(lauf));
   ctx.pruefer=()=>{if(d.ok){ctx.geschafft(punkte);return true}meldung(el,false,"Probier den Hacker-Computer zuerst einmal aus.");return false};
   ctx.loesung=()=>{inp.value="2580";el.querySelector("#hack").click()};

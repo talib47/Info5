@@ -41,6 +41,7 @@ const STATIONEN=[];
 function station(s){STATIONEN.push(s)}
 
 /* Kapitel des Lernpfads (Reihenfolge = Reihenfolge im Schuljahr) */
+const KAPITEL_NAME={fit:"Fit am Computer",netz:"Sicher im Netz",daten:"Daten und Codes",algo:"Algorithmen",ki:"Automaten und KI",ich:"Ich und meine Daten"};
 const KAPITEL={fit:"🖥️ Fit am Computer",netz:"🛡️ Sicher im Netz",daten:"🔢 Daten & Codes",algo:"🤖 Algorithmen",ki:"🧠 Automaten & KI",ich:"👣 Ich & meine Daten"};
 /* Höchstens eine NEUE Station pro Tag (sonst laufen schnelle Kinder der Klasse weit davon) */
 const EINE_PRO_TAG=true;
@@ -50,7 +51,7 @@ const RAENGE=[[0,"🌱","Neuling"],[150,"🖱️","Klick-Kenner"],[400,"💾","D
 /* Bewertung wie im Notenbuch: + / o / − aus den Prozent der Punkte (Grenzen hier anpassen) */
 const PLUS_AB=75,O_AB=40;
 const zeichenAus=p=>p>=PLUS_AB?"+":p>=O_AB?"o":"−";
-const ZEICHEN_TEXT={"+":"Super gemacht!","o":"Gut, da geht noch mehr.","−":"Das war noch zu wenig."};
+const ZEICHEN_TEXT={"+":"Stark gearbeitet","o":"Ordentlich, da geht mehr","−":"Das war zu wenig"};
 const zeichenKlasse=z=>z==="+"?"good":z==="o"?"":"bad";
 const zeit=ms=>{const m=Math.round((ms||0)/60000);return m<1?"unter 1 Min.":m+" Min."};
 const maxPunkte=st=>st.schritte.reduce((a,s)=>a+(s.punkte||0),0);
@@ -141,9 +142,36 @@ function render(){
 }
 window.addEventListener("hashchange",render);
 
-const LOGO=`<svg viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lg5" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5B50E8"/><stop offset="1" stop-color="#3426A8"/></linearGradient></defs><rect width="40" height="40" rx="11" fill="url(#lg5)"/><rect x="9" y="9" width="6" height="6" rx="1.3" fill="#fff"/><rect x="17" y="9" width="6" height="6" rx="1.3" fill="#FACC15"/><rect x="25" y="9" width="6" height="6" rx="1.3" fill="#fff"/><rect x="9" y="17" width="6" height="6" rx="1.3" fill="#FB7185"/><rect x="17" y="17" width="6" height="6" rx="1.3" fill="#fff"/><rect x="25" y="17" width="6" height="6" rx="1.3" fill="#34D399"/><rect x="9" y="25" width="6" height="6" rx="1.3" fill="#fff"/><rect x="17" y="25" width="6" height="6" rx="1.3" fill="#38BDF8"/><rect x="25" y="25" width="6" height="6" rx="1.3" fill="#fff"/></svg>`;
-const ich=()=>{if(VS)return"👀 Lehrkraft";const t=tierInfo(sitzung.tier);return`${t.emoji} ${esc(t.name)}`};
-const kopf=()=>`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5</span></div>${VS?`<div class="row"><span class="who">👀 Lehrer-Vorschau</span><a class="link" href="#lehrer">Zur Lehrer-Ansicht</a></div>`:sitzung?`<div class="row"><span class="who">${ich()} · ${esc(sitzung.klasse)}</span><button class="link" id="raus">Abmelden</button></div>`:""}</div>`;
+/* Pixelzeichen: 7×7-Kästchen je Station (statt Emojis), gezeichnet in der Textfarbe */
+const PIX={
+  logo:["0111110","0100000","0111100","0000010","0000010","0100010","0011100"],
+  maus:["1000000","1100000","1110000","1111000","1111100","1101000","0000100"],
+  computer:["1111111","1000001","1000001","1000001","1111111","0011100","0111110"],
+  ordner:["1110000","1111111","1000001","1000001","1000001","1000001","1111111"],
+  tippen:["0000000","1010101","0000000","1010101","0000000","1011101","0000000"],
+  passwort:["0011100","0100010","0100010","1111111","1110111","1110111","1111111"],
+  fake:["0011100","0011100","0011100","0011100","0000000","0011100","0011100"],
+  chat:["1111111","1000001","1000001","1000001","1111111","0011000","0010000"],
+  pixel:["1010101","0101010","1010101","0101010","1010101","0101010","1010101"],
+  binaer:["1110010","1010110","1010010","1010010","1010010","1010010","1110111"],
+  geheim:["0111000","1101100","1101100","0111000","0011000","0011100","0011000"],
+  algorithmus:["1100000","1100000","1111000","0011000","0011110","0000110","0000111"],
+  robo:["0010100","1111111","1011101","1111111","1100011","1111111","0100010"],
+  schleifen:["0111110","1000001","1000001","1000111","1000010","1000000","0111110"],
+  suchen:["0111000","1000100","1000100","1000100","0111100","0000110","0000011"],
+  automat:["1111111","1011101","1011101","1111111","1100011","1111111","1111111"],
+  ki:["0001000","0011100","0001000","0111110","0100010","1110111","1110111"],
+  spuren:["0110000","0110000","0000110","0000110","0110000","0110000","0000110"],
+  atelier:["0110110","1111111","1111111","1111111","0111110","0011100","0001000"],
+  raetsel:["0111110","1100011","0000110","0001100","0001100","0000000","0001100"],
+  zahlen:["0100100","1111111","0100100","0100100","1111111","0100100","0000000"],
+};
+PIX.robobonus=PIX.robo;PIX.tipprennen=PIX.tippen;PIX.kimalen=PIX.ki;
+const pix=(id,px=28,kl="")=>{const m=PIX[id]||PIX.pixel;
+  return`<svg class="pix ${kl}" width="${px}" height="${px}" viewBox="0 0 7 7" aria-hidden="true" shape-rendering="crispEdges">${m.map((r,y)=>[...r].map((c,x)=>c==="1"?`<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="currentColor"/>`:"").join("")).join("")}</svg>`};
+const LOGO=pix("logo",26,"blau");
+const ich=()=>{if(VS)return"Lehrkraft";const t=tierInfo(sitzung.tier);return`${t.emoji} ${esc(t.name)}`};
+const kopf=()=>`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5</span></div>${VS?`<div class="row"><span class="who">Vorschau für Lehrkräfte</span><a class="link" href="#lehrer">Zur Lehrer-Ansicht</a></div>`:sitzung?`<div class="row"><span class="who">${ich()}, ${esc(sitzung.klasse)}</span><button class="link" id="raus">Abmelden</button></div>`:""}</div>`;
 function kopfAktiv(){const b=$("#raus");if(b)b.onclick=async()=>{
   if(!confirm("Abmelden? Dein Stand ist gespeichert."))return;
   clearTimeout(pushTimer);await hochladen();try{await db.abmelden(sitzung.token)}catch(e){}
@@ -163,12 +191,12 @@ async function seiteKlasse(direkt=true){
 
 /* 2. Tier wählen (oder neu anlegen) */
 async function seiteTier(klasse){
-  $("#app").innerHTML=kopf()+`<button class="link" id="zur">‹ Andere Klasse</button>
+  $("#app").innerHTML=kopf()+`<button class="link" id="zur">Andere Klasse</button>
   <div class="plate"><p class="eyebrow">Klasse ${esc(klasse)}</p><h1>Welches Tier bist du?</h1></div><div id="liste"><p class="muted">Einen Moment …</p></div>`;
   $("#zur").onclick=()=>seiteKlasse(false);
   let r;try{r=await db.tiere(klasse)}catch(e){$("#liste").innerHTML=`<div class="msg no">Keine Verbindung. Versuch es gleich noch mal.</div><button class="btn ghost" id="neu" style="margin-top:12px">Noch mal</button>`;$("#neu").onclick=()=>seiteTier(klasse);return}
   if(!r.offen){const n=naechsteStunde(klasse);
-    $("#liste").innerHTML=`<div class="block"><h2>Gerade geschlossen 🔒</h2><p>Du kannst dich nur in deiner Informatik-Stunde anmelden.${n?` Nächste Stunde: <b>${esc(n)}</b>.`:""}</p><button class="btn" id="neu">Noch mal schauen</button></div>`;$("#neu").onclick=()=>seiteTier(klasse);return}
+    $("#liste").innerHTML=`<div class="block"><h2>Gerade geschlossen</h2><p>Du kannst dich nur in deiner Informatik-Stunde anmelden.${n?` Nächste Stunde: <b>${esc(n)}</b>.`:""}</p><button class="btn" id="neu">Noch mal schauen</button></div>`;$("#neu").onclick=()=>seiteTier(klasse);return}
   /* Auf diesem PC war zuletzt dieses Tier angemeldet: groß vorschlagen (die meisten sitzen am selben Platz) */
   const zl=lsGet("if5-zuletzt"),zt=zl&&zl.klasse===klasse&&r.liste.find(x=>x.tier===zl.tier&&!x.besetzt);
   $("#liste").innerHTML=(zt?`<div class="block vorschlag"><span class="e">${tierInfo(zt.tier).emoji}</span><div><p class="eyebrow">Letztes Mal an diesem Platz</p><h2 style="margin:0">Bist du ${artikel(zt.tier)} ${esc(zt.tier)}?</h2></div><button class="btn" id="dasbinich">Ja, das bin ich</button></div><p class="muted" style="margin:6px 2px 10px">Nein? Dann tippe auf dein Tier:</p>`:"")+
@@ -193,9 +221,9 @@ async function seiteTier(klasse){
 
 /* Neu: eigenes Tier aussuchen (in der Klasse noch frei) */
 function seiteNeuTier(klasse,vergeben){
-  $("#app").innerHTML=kopf()+`<button class="link" id="zur">‹ Zurück</button>
+  $("#app").innerHTML=kopf()+`<button class="link" id="zur">Zurück</button>
   <div class="plate"><p class="eyebrow">Neu · Klasse ${esc(klasse)}</p><h1>Such dir dein Tier aus</h1><p>Das ist ab jetzt dein Name hier. Graue Tiere sind schon vergeben.</p></div>
-  <div class="msg no" style="margin:0 0 14px">⚠️ Nur wenn du <b>zum ersten Mal</b> hier bist! Hast du schon ein Tier? Dann tippe oben auf „‹ Zurück“.</div>
+  <div class="msg no" style="margin:0 0 14px">Nur wenn du <b>zum ersten Mal</b> hier bist! Hast du schon ein Tier? Dann tippe oben auf „Zurück“.</div>
   <div class="tiere klein">${TIERE.map(([e,n])=>`<button class="tier${vergeben.has(n)?" zu":""}" data-w="${esc(n)}" ${vergeben.has(n)?"disabled":""}><span class="e">${e}</span><span>${esc(n)}</span></button>`).join("")}</div><div id="m"></div>`;
   $("#zur").onclick=()=>seiteTier(klasse);
   document.querySelectorAll("[data-w]:not([disabled])").forEach(b=>b.onclick=()=>{const t=tierInfo(b.dataset.w);
@@ -218,37 +246,36 @@ function anmeldeErgebnis(klasse,tier,r,nochmal){
 
 function seiteStart(){
   const s=meineStaende(),pfad=PFAD(),fertig=pfad.filter(x=>s[x.id]?.fertig).length;
-  const n=sterne(),[,rIco,rName]=rang(n),nr=naechsterRang(n);
+  const n=sterne(),[,,rName]=rang(n),nr=naechsterRang(n);
   const akt=pfad.find(x=>!s[x.id]?.fertig);
-  const stAkt=akt?status(akt):null;
-  const hero=!akt?`<div class="block hero fertig"><span class="hico">🏆</span><div><p class="eyebrow">Alles geschafft</p><h2>Du hast alle ${pfad.length} Stationen geschafft!</h2><p class="muted" style="margin:0">Wahnsinn. Ab auf den Spielplatz!</p></div></div>`
-    :stAkt==="morgen"?`<div class="block hero"><span class="hico">✅</span><div><p class="eyebrow">Heute geschafft</p><h2>Super! Deine Station für heute ist fertig.</h2><p class="muted" style="margin:0">Nächste Stunde geht es weiter mit ${akt.ico} <b>${esc(akt.titel)}</b>. Jetzt darfst du auf den 🎮 Spielplatz.</p></div></div>`
-    :`<button class="block hero los" data-id="${akt.id}"><span class="hico">${akt.ico}</span><div><p class="eyebrow">${s[akt.id]?"Weitermachen":"Deine Station heute"} · Station ${pfad.indexOf(akt)+1}</p><h2>${esc(akt.titel)}</h2><p class="muted" style="margin:0">${esc(akt.kurz)}</p></div><span class="btn">${s[akt.id]?"Weiter ▶":"Los geht's ▶"}</span></button>`;
-  const spOffen=spielplatzOffen();
-  const spiele=`<div class="block spielplatz${spOffen?"":" zu"}"><h2>🎮 Spielplatz</h2>
-    <p class="muted">${spOffen?"Du hast heute deine Station geschafft – hier darfst du frei spielen!":"🔒 Öffnet sich, sobald du heute deine Station geschafft hast."}</p>
-    <div class="spiele">${SPIELE().map(x=>`<button class="spiel" data-sp="${x.id}" ${spOffen?"":"disabled"}><span>${x.ico}</span><b>${esc(x.titel)}</b><small>${esc(x.kurz)}</small></button>`).join("")}</div></div>`;
+  const stAkt=akt?status(akt):null,spOffen=spielplatzOffen();
+  const spielListe=`<div class="spiele">${SPIELE().map(x=>`<button class="spiel" data-sp="${x.id}">${pix(x.id,24)}<b>${esc(x.titel)}</b></button>`).join("")}</div>`;
+  /* Oben steht genau eine Sache: die Station von heute – oder, wenn sie geschafft ist, der Spielplatz als Belohnung */
+  const heute=VS?"":!akt?`<div class="heute-karte">${pix("pixel",56,"blau")}<div><p class="eyebrow">Alles geschafft</p><h2>Du hast alle ${pfad.length} Stationen geschafft.</h2><p class="muted">Starke Leistung. Der Spielplatz gehört dir.</p></div></div>`
+    :stAkt==="morgen"?`<div class="heute-karte">${pix(akt.id,56)}<div><p class="eyebrow">Für heute fertig</p><h2>Deine Station ist geschafft.</h2><p class="muted">Bis zur nächsten Stunde darfst du spielen. Dann geht es weiter mit „${esc(akt.titel)}“</p></div></div>`
+    :`<button class="heute-karte" data-id="${akt.id}">${pix(akt.id,56,"blau")}<div><p class="eyebrow">${s[akt.id]?"Hier machst du weiter":"Deine Station heute"}</p><h2>${esc(akt.titel)}</h2><p class="muted">${esc(akt.kurz)}</p></div><span class="btn">${s[akt.id]?"Weitermachen":"Anfangen"}</span></button>`;
+  const spielplatz=VS?`<h2 style="margin:28px 0 6px">Spielplatz</h2><p class="muted">Bonus-Spiele ohne Note. Kinder sehen sie erst, wenn die Station von heute geschafft ist.</p><div class="spielplatz">${spielListe}</div>`
+    :spOffen?`<div class="spielplatz"><h2>Spielplatz</h2><p class="muted">Deine Belohnung für heute. Hier gibt es keine Note.</p>${spielListe}</div>`:"";
   let kap="";
   const liste=pfad.map((x,i)=>{const p=s[x.id],stt=status(x);
-    const kopf=x.kapitel!==kap?(kap=x.kapitel,`<li class="kap">${KAPITEL[x.kapitel]||""}</li>`):"";
+    const kopf=x.kapitel!==kap?(kap=x.kapitel,`<li class="kap">${KAPITEL_NAME[x.kapitel]||""}</li>`):"";
     const z=p?.fertig?zeichenAus(prozent(x,p)):null;
-    const rechts=stt==="fertig"?`<span class="abz" title="Note ${z}">${ABZEICHEN[z]} <span class="chip ${zeichenKlasse(z)} gross-z">${z}</span></span>`
-      :stt==="offen"?`<span class="chip jetzt">${p?"angefangen":"jetzt"}</span>`:stt==="morgen"?`<span class="chip">nächste Stunde</span>`:`<span class="schloss">🔒</span>`;
-    return`${kopf}<li><button class="pfad ${stt}" data-id="${x.id}"><span class="nr">${i+1}</span><span class="pico">${x.ico}</span><span class="ptitel"><b>${esc(x.titel)}</b><small>${esc(x.kurz)}</small></span>${rechts}</button></li>`}).join("");
+    const rechts=stt==="fertig"?`<span class="stempel-k" title="Note ${z}">${z}</span>`
+      :stt==="offen"?`<span class="stand">${p?"angefangen":"heute dran"}</span>`:stt==="morgen"?`<span class="stand">nächste Stunde</span>`:"";
+    return`${kopf}<li><button class="pfad ${stt}" data-id="${x.id}"><span class="nr">${i+1}</span>${pix(x.id,28)}<span class="ptitel"><b>${esc(x.titel)}</b><small>${esc(x.kurz)}</small></span>${rechts}</button></li>`}).join("");
   $("#app").innerHTML=kopf()+`
-  ${VS?`<div class="plate"><p class="eyebrow">👀 Lehrer-Vorschau</p><h1>Alle Stationen ansehen</h1><p>So sehen die Kinder ihren Lernpfad. In der Vorschau ist alles offen, du kannst jeden Teil frei anklicken. Nichts wird gespeichert.</p><button class="btn" id="vreset">Vorschau zurücksetzen</button></div>`
-    :`<div class="plate start"><p class="eyebrow">Hallo ${ich()}</p><h1>${rIco} ${rName}</h1>
-      <div class="sterne"><span>⭐ ${n} Sterne</span><span>🗺️ ${fertig} von ${pfad.length} Stationen</span>${nr?`<span>Nächster Rang: ${nr[1]} ${nr[2]} ab ${nr[0]} ⭐</span>`:""}</div>
-      <div class="balken"><i style="width:${Math.round(fertig/pfad.length*100)}%"></i></div></div>`}
-  ${VS?"":hero}
-  ${spiele}
-  <h2 style="margin:22px 0 10px">🗺️ Dein Lernpfad</h2>
+  ${VS?`<div class="plate"><h1>Alle Stationen ansehen</h1><p>So sehen die Kinder ihren Lernpfad. In der Vorschau ist alles offen, und du kannst jeden Teil frei anklicken. Nichts wird gespeichert.</p><button class="btn ghost" id="vreset">Vorschau zurücksetzen</button></div>`
+    :`<div class="gruss"><span>Hallo <b>${ich()}</b></span><span><b>${n}</b> Punkte, <b>${fertig}</b> von ${pfad.length} Stationen, Rang <b>${rName}</b></span></div>`}
+  ${heute}
+  ${VS?"":spielplatz}
+  <h2 style="margin:8px 0 0">${VS?"Lernpfad":"Dein Lernpfad"}</h2>
   <ol class="lernpfad">${liste}</ol>
+  ${VS?spielplatz:spOffen||!akt?"":`<p class="spielplatz zu-hinweis">Wenn du deine Station von heute geschafft hast, öffnet sich hier der Spielplatz.</p>`}
   <p class="muted small" style="margin-top:22px">Version ${VERSION}</p>`;
   kopfAktiv();
   document.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{const x=STATIONEN.find(y=>y.id===b.dataset.id),stt=status(x);
-    if(stt==="zu")return toast("🔒 Erst die Station davor schaffen!");
-    if(stt==="morgen")return toast("Diese Station kommt nächste Stunde dran. 🎮 Geh doch auf den Spielplatz!");
+    if(stt==="zu")return toast("Schaff zuerst die Station davor.");
+    if(stt==="morgen")return toast("Diese Station kommt in der nächsten Stunde dran.");
     location.hash=basis()+"s/"+x.id});
   document.querySelectorAll("[data-sp]").forEach(b=>b.onclick=()=>location.hash=basis()+"s/"+b.dataset.sp);
   if($("#vreset"))$("#vreset").onclick=()=>{vStaende={};laufend=null;seiteStart();toast("Vorschau zurückgesetzt")};
@@ -268,17 +295,16 @@ function seiteStation(st){
   if(prog.fertig)return seiteErgebnis(st,prog);
   const i=Math.min(prog.schritt,st.schritte.length-1),sch=st.schritte[i];
   const geloest=i in prog.punkte;
-  $("#app").innerHTML=kopf()+`
-  ${VS?`<div class="msg ok noprint" style="margin:0 0 12px">👀 Vorschau: Du kannst jeden Teil anklicken und ohne Lösen weitergehen. Nichts wird gespeichert.</div>`:""}
+  $("#app").innerHTML=`
+  <div class="leiste noprint"><div class="wo">${pix(st.id,22)}<span>${esc(st.titel)}</span></div><span>Teil ${i+1} von ${st.schritte.length}</span>${st.spiel?`<span class="pts">Spielplatz, ohne Note</span>`:`<span class="pts">${summe(prog)} Punkte</span>`}</div>
   <div class="steps noprint springen">${st.schritte.map((_,k)=>{const darf=VS||k in prog.punkte||k<=(prog.weitester||0);
     return`<i class="${k in prog.punkte?"ok":k===i?"now":""}${darf?"":" zu"}"${darf?` data-sp="${k}" title="Zu Teil ${k+1}"`:""}></i>`}).join("")}</div>
-  <div class="stephead"><p class="eyebrow">${st.ico} ${esc(st.titel)} · Teil ${i+1} von ${st.schritte.length}</p>${st.spiel?`<span class="pts">🎮 Spielplatz</span>`:`<span class="pts">⭐ ${summe(prog)} Punkte</span>`}</div>
-  <h2>${esc(sch.titel)}</h2>
-  ${sch.merke?`<div class="aha merke"><b>💡 Merke:</b> ${sch.merke}</div>`:""}
+  <h1>${esc(sch.titel)}</h1>
+  ${sch.merke?`<div class="aha merke"><b>Merke</b> ${sch.merke}</div>`:""}
   <div id="body"></div>
   <div class="nav noprint">
-    <button class="btn ghost pfeil" id="zur">${i===0?"🏠 Übersicht":"◀ Zurück"}</button>
-    <button class="btn pfeil" id="weiter">${i===st.schritte.length-1?"Fertig 🏁":"Weiter ▶"}</button>
+    <button class="btn ghost pfeil" id="zur">${i===0?"Zum Lernpfad":"Zurück"}</button>
+    <button class="btn pfeil" id="weiter">${i===st.schritte.length-1?"Fertig":"Weiter"}</button>
   </div>`;
   prog.weitester=Math.max(prog.weitester||0,i);
   kopfAktiv();
@@ -290,8 +316,8 @@ function seiteStation(st){
     /* Ein falscher Versuch kostet 2 Punkte, aber höchstens die Hälfte der Punkte dieses Teils */
     fehler(){prog.fehler=prog.fehler||{};prog.fehler[i]=(prog.fehler[i]||0)+1;speichern()},
     geschafft(p){if(!(i in prog.punkte)){const f=(prog.fehler||{})[i]||0;p=Math.max(Math.ceil(p/2),p-2*f);prog.punkte[i]=p;speichern(true);
-        if(p>0)toast(`Geschafft! +${p} Punkte`);
-        $(".pts").textContent=`⭐ ${summe(prog)} Punkte`;
+        if(p>0)toast(`Geschafft, +${p} Punkte`);
+        $(".pts").textContent=`${summe(prog)} Punkte`;
         $(".steps").children[i].className="ok"}
       ctx.geloest=true},
     pruefer:null,   // Teil setzt hier eine Prüf-Funktion (true = richtig); „Weiter“ ruft sie auf
@@ -300,12 +326,12 @@ function seiteStation(st){
   };
   window._ctx=ctx;   // für automatische Tests
   sch.zeige($("#body"),ctx);
-  if(VS&&ctx.loesung){$("#body").insertAdjacentHTML("beforebegin",`<button class="btn ghost noprint" id="loesung" style="margin:0 0 12px">🔑 Lösung zeigen</button>`);
+  if(VS&&ctx.loesung){$("#body").insertAdjacentHTML("beforebegin",`<button class="btn ghost noprint" id="loesung" style="margin:0 0 14px;min-height:40px;padding:6px 14px">Lösung zeigen (nur Vorschau)</button>`);
     $("#loesung").onclick=()=>{ctx.loesung();$("#loesung").remove()}}
   document.querySelectorAll("[data-sp]").forEach(x=>x.onclick=()=>{prog.schritt=+x.dataset.sp;speichern();seiteStation(st);scrollTo(0,0)});
   $("#zur").onclick=()=>{if(i===0){location.hash=home()}else{prog.schritt=i-1;speichern();seiteStation(st);scrollTo(0,0)}};
   const vor=()=>{if(i===st.schritte.length-1){
-      if(st.spiel){delete staende[st.id];staendeLokal();laufend=null;toast("Super gespielt! 🎉");location.hash=home();return}
+      if(st.spiel){delete staende[st.id];staendeLokal();laufend=null;toast("Gut gespielt.");location.hash=home();return}
       prog.fertig=Date.now();speichern(true);seiteErgebnis(st,prog)}
     else{prog.schritt=i+1;speichern();seiteStation(st)}
     scrollTo(0,0)};
@@ -326,22 +352,20 @@ function konfetti(){
 }
 function seiteErgebnis(st,prog){
   aufraeumen();
-  if(prog.fertig&&Date.now()-prog.fertig<5000&&zeichenAus(prozent(st,prog))!=="−")konfetti();
-  const pz=prozent(st,prog);
+    const pz=prozent(st,prog);
+  const z=zeichenAus(pz);
   $("#app").innerHTML=kopf()+`
-  <div class="plate result">
-    <p class="eyebrow">Ergebniskarte · ${st.ico} ${esc(st.titel)}</p>
-    <div class="row" style="justify-content:space-between;align-items:flex-start">
-      <div><h1 style="margin:0">${ich()}</h1><p style="margin:2px 0 0">${VS?"Vorschau":"Klasse "+esc(sitzung.klasse)}</p></div>
-      <div class="bewertung"><span class="small">Deine Note für heute</span><div class="note zeichen">${zeichenAus(pz)}</div><span class="small">${ZEICHEN_TEXT[zeichenAus(pz)]}</span></div>
-    </div>
-    <dl><dt>Punkte</dt><dd>${summe(prog)} von ${maxPunkte(st)} (${pz} %)</dd>
-    <dt>Gearbeitet</dt><dd>${zeit(prog.aktiv)}</dd>
-    <dt>Fertig am</dt><dd>${new Date(prog.fertig).toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</dd></dl>
+  <p class="eyebrow">Ergebnis, ${esc(st.titel)}</p>
+  <div class="ergebnis result">
+    <div><h1 style="margin:0 0 4px">${ich()}</h1><p class="muted" style="margin:0">${VS?"Vorschau":"Klasse "+esc(sitzung.klasse)}</p>
+      <dl><dt>Punkte</dt><dd>${summe(prog)} von ${maxPunkte(st)} (${pz} %)</dd>
+      <dt>Gearbeitet</dt><dd>${zeit(prog.aktiv)}</dd>
+      <dt>Fertig am</dt><dd>${new Date(prog.fertig).toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</dd></dl></div>
+    <div class="stempel"><span>Note für heute</span><span class="z note zeichen">${z}</span><span>${ZEICHEN_TEXT[z]}</span></div>
   </div>
+  <p style="font-weight:700">Zeig dieses Ergebnis deiner Lehrkraft.${st.kreativ?" Die Note für Kreativität gibt die Lehrkraft.":""}</p>
   ${st.ergebnis?`<div class="block">${st.ergebnis(prog.daten)}</div>`:""}
-  <div class="block abzeichen-box"><span class="gross-abz">${ABZEICHEN[zeichenAus(pz)]}</span><div><p style="margin:0 0 4px"><b>Neues Abzeichen: ${st.ico} ${esc(st.titel)}</b></p><p class="muted" style="margin:0">Zeig diese Karte deiner Lehrkraft.${st.kreativ?" Die Note für Kreativität gibt die Lehrkraft.":""}</p></div></div>
-  <div class="nav noprint"><button class="btn ghost" id="zur">🗺️ Lernpfad</button>${spielplatzOffen()?`<button class="btn" id="spielen">🎮 Zum Spielplatz</button>`:""}</div>`;
+  <div class="nav noprint"><button class="btn ghost" id="zur">Zum Lernpfad</button>${spielplatzOffen()?`<button class="btn" id="spielen">Zum Spielplatz</button>`:""}</div>`;
   kopfAktiv();
   if(st.nachErgebnis)st.nachErgebnis(prog.daten);
   $("#zur").onclick=()=>location.hash=home();
@@ -360,7 +384,7 @@ let lDaten=null,lTimer=null,lPlanGesendet=false;
 async function seiteLehrer(){
   laufend=null;clearInterval(lTimer);
   if(!(await db.lSitzung()))return lehrerLogin();
-  $("#app").innerHTML=`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5 · Lehrkraft</span></div><div class="row">${db.online?`<button class="link" id="lraus">Abmelden</button>`:""}<a class="link" href="#v">👀 Stationen ansehen</a></div></div><div id="lb"><p class="muted">Lade …</p></div>`;
+  $("#app").innerHTML=`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5 · Lehrkraft</span></div><div class="row">${db.online?`<button class="link" id="lraus">Abmelden</button>`:""}<a class="link" href="#v">Stationen ansehen</a></div></div><div id="lb"><p class="muted">Lade …</p></div>`;
   if($("#lraus"))$("#lraus").onclick=async()=>{await db.lAbmelden();seiteLehrer()};
   if(db.online&&!lPlanGesendet){try{await db.lPlanUebertragen();lPlanGesendet=true}catch(e){toast("Stundenplan konnte nicht übertragen werden")}}
   await lehrerLaden();
@@ -423,9 +447,9 @@ function lehrerZeigen(){
     <button class="btn ghost" id="druck" ${kinder.length?"":"disabled"}>Kärtchen drucken</button>
     <button class="btn ghost" id="sichern">Namensliste sichern</button><label class="btn ghost">Namensliste laden<input type="file" id="laden" accept=".json" hidden></label>
   </div>
-  <details class="block plan"><summary><b>📚 Lernpfad & Lehrplan</b> <span class="muted small">– alle ${PFAD().length} Stationen mit Bezug zum Kernlehrplan NRW</span></summary>
+  <details class="block plan"><summary><b>Lernpfad & Lehrplan</b> <span class="muted small">– alle ${PFAD().length} Stationen mit Bezug zum Kernlehrplan NRW</span></summary>
     <ol>${PFAD().map(st=>`<li><b>${st.ico} ${esc(st.titel)}</b> <span class="chip">${KAPITEL[st.kapitel]||""}</span><br><span class="small">${esc(st.kurz)}</span>${st.klp?`<br><span class="muted small">KLP: ${esc(st.klp)}</span>`:""}</li>`).join("")}</ol>
-    <p class="muted small">Ablauf: Jede Station ist eine Doppelstunde (60 Min.). Die Kinder gehen den Lernpfad der Reihe nach, höchstens eine neue Station pro Tag. Wer früher fertig ist, darf auf den 🎮 Spielplatz (Bonus-Spiele, ohne Note).</p></details>
+    <p class="muted small">Ablauf: Jede Station ist eine Doppelstunde (60 Min.). Die Kinder gehen den Lernpfad der Reihe nach, höchstens eine neue Station pro Tag. Wer früher fertig ist, darf auf den Spielplatz (Bonus-Spiele, ohne Note).</p></details>
   <p class="muted small" style="margin-top:14px">Die Vornamen werden nur in diesem Browser gespeichert, nie auf dem Server. Sichere die Namensliste ab und zu (z. B. auf IServ), damit sie bei einem neuen Gerät nicht fehlt.${db.online?"":" <b>Vorschau-Modus:</b> Alles liegt nur in diesem Browser."}</p>`;
 
   document.querySelectorAll("[data-kl]").forEach(b=>b.onclick=()=>{lKlasse=b.dataset.kl;lsSet("if5-lklasse",lKlasse);lehrerZeigen()});

@@ -8,11 +8,11 @@ const mischen=a=>{const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.f
 const mischenAnders=a=>{if(a.length<2)return a.slice();let b;do{b=mischen(a)}while(b.every((x,i)=>x===a[i]));return b};
 const MLD=`<div class="mld"></div>`;
 function meldung(el,ok,html){const m=el.querySelector(".mld");if(!m)return;m.className="mld msg "+(ok===null?"info":ok?"ok":"no");m.innerHTML=html;m.scrollIntoView({block:"nearest",behavior:"smooth"})}
-function schonGeloest(el){meldung(el,true,"✔️ Schon gelöst. Tippe auf „Weiter“.")}
+function schonGeloest(el){meldung(el,true,"Schon gelöst. Tippe auf „Weiter“.")}
 /* Einheitliche Bewertung: leer → Hinweis ohne Abzug; Fehler → 2 Punkte Abzug (nur einmal pro gleichem Stand); ab 2. Versuch Fehler markieren */
 function bewerte(ctx,el,{leer,leerText,fehler,stand,punkte,okText,markiere}){
   if(leer){meldung(el,false,leerText||"Mach zuerst die Aufgabe, dann tippe auf „Weiter“.");return false}
-  if(!fehler){meldung(el,true,okText||"Richtig! 🎉");ctx.geschafft(punkte);return true}
+  if(!fehler){meldung(el,true,okText||"Richtig!");ctx.geschafft(punkte);return true}
   const d=ctx.daten;
   if(stand!==d.letzterFehler){ctx.fehler();d.letzterFehler=stand;d.versuche=(d.versuche||0)+1;ctx.speichern()}
   let t=fehler===1?"Fast! Noch <b>1 Fehler</b>.":`Noch <b>${fehler} Fehler</b>.`;
@@ -31,9 +31,9 @@ function sortieren({titel,punkte=10,merke,text,toepfe,karten,warum,breit}){retur
   const zeichne=()=>{
     const frei=d.reihe.filter(i=>d.wo[i]==null);
     el.innerHTML=kopfText(text)+`
-      <p class="eyebrow" style="margin-top:12px">${frei.length?`👆 Tippe eine Karte an, dann den passenden Kasten · noch ${frei.length}`:"✔️ Alle verteilt! Tippe auf „Weiter“."}</p>
-      <div class="karten">${frei.map(karte).join("")}</div>
-      <div class="toepfe${breit?" breit":""}" style="--n:${toepfe.length}">${toepfe.map(([id,name,ico])=>`<div class="topf${wahl!=null?" bereit":""}" data-t="${id}"><div class="topf-kopf">${ico?`<span>${ico}</span>`:""}${name}</div><div class="topf-inhalt">${d.reihe.filter(i=>d.wo[i]===id).map(karte).join("")}</div></div>`).join("")}</div>${MLD}`;
+      <p class="eyebrow" style="margin-top:12px">${frei.length?`Tippe eine Karte an, dann den passenden Kasten · noch ${frei.length}`:"Alle verteilt! Tippe auf „Weiter“."}</p>
+      <div class="sortier"><div class="karten">${frei.map(karte).join("")}</div>
+      <div class="toepfe${breit?" breit":""}" style="--n:${toepfe.length}">${toepfe.map(([id,name,ico])=>`<div class="topf${wahl!=null?" bereit":""}" data-t="${id}"><div class="topf-kopf">${ico?`<span>${ico}</span>`:""}${name}</div><div class="topf-inhalt">${d.reihe.filter(i=>d.wo[i]===id).map(karte).join("")}</div></div>`).join("")}</div></div>${MLD}`;
     el.querySelectorAll(".karte").forEach(b=>{const i=+b.dataset.i;
       b.onclick=e=>{e.stopPropagation();if(d.wo[i]!=null){delete d.wo[i];falsch.delete(i);wahl=i;ctx.speichern()}else wahl=wahl===i?null:i;zeichne()};
       b.ondragstart=e=>{wahl=i;e.dataTransfer.setData("text/plain",String(i))}});
@@ -44,7 +44,7 @@ function sortieren({titel,punkte=10,merke,text,toepfe,karten,warum,breit}){retur
   zeichne();
   ctx.pruefer=()=>{const fs=karten.map((k,i)=>i).filter(i=>d.wo[i]!==karten[i][2]);
     return bewerte(ctx,el,{leer:karten.some((k,i)=>d.wo[i]==null),leerText:"Verteile zuerst alle Karten.",fehler:fs.length,stand:JSON.stringify(d.wo),punkte,
-      okText:`Richtig! Alles passt. 🎉${warum?`<div class="aha" style="margin-top:10px"><b>💡</b> ${warum}</div>`:""}`,markiere:()=>{falsch=new Set(fs);zeichne()}})};
+      okText:`Richtig! Alles passt.${warum?`<div class="aha" style="margin-top:10px"><b>💡</b> ${warum}</div>`:""}`,markiere:()=>{falsch=new Set(fs);zeichne()}})};
   ctx.loesung=()=>{karten.forEach((k,i)=>d.wo[i]=k[2]);wahl=null;falsch.clear();zeichne()};
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -57,7 +57,7 @@ function reihenfolge({titel,punkte=10,merke,text,schritte}){return{titel,punkte,
   const zeichne=()=>{
     const frei=d.reihe.filter(i=>!d.gew.includes(i));
     el.innerHTML=kopfText(text)+`
-      <div class="paar" style="margin-top:12px"><div><p class="eyebrow">👆 Tippe die Schritte der Reihe nach an</p><div class="karten spalte">${frei.map(i=>`<button class="karte" data-f="${i}">${schritte[i]}</button>`).join("")||`<p class="muted">Alle eingeordnet.</p>`}</div></div>
+      <div class="paar" style="margin-top:12px"><div><p class="eyebrow">Tippe die Schritte der Reihe nach an</p><div class="karten spalte">${frei.map(i=>`<button class="karte" data-f="${i}">${schritte[i]}</button>`).join("")||`<p class="muted">Alle eingeordnet.</p>`}</div></div>
       <div><p class="eyebrow">Deine Reihenfolge</p><ol class="reihe">${d.gew.map((i,k)=>`<li><button class="karte${falsch.has(k)?" falsch":""}" data-g="${k}" title="Zurücklegen">${schritte[i]} <span class="weg">✕</span></button></li>`).join("")}${frei.length?`<li class="leer">…</li>`:""}</ol></div></div>${MLD}`;
     el.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{d.gew.push(+b.dataset.f);falsch.clear();ctx.speichern();zeichne()});
     el.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{d.gew.splice(+b.dataset.g,1);falsch.clear();ctx.speichern();zeichne()});
@@ -65,7 +65,7 @@ function reihenfolge({titel,punkte=10,merke,text,schritte}){return{titel,punkte,
   zeichne();
   ctx.pruefer=()=>{const fs=d.gew.map((x,k)=>x===k?-1:k).filter(k=>k>=0);
     return bewerte(ctx,el,{leer:d.gew.length<schritte.length,leerText:"Ordne zuerst alle Schritte ein.",fehler:fs.length,stand:d.gew.join(),punkte,
-      okText:"Richtig! Die Reihenfolge stimmt. 🎉",markiere:()=>{falsch=new Set(fs);zeichne()}})};
+      okText:"Richtig! Die Reihenfolge stimmt.",markiere:()=>{falsch=new Set(fs);zeichne()}})};
   ctx.loesung=()=>{d.gew=schritte.map((_,i)=>i);zeichne()};
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -77,7 +77,7 @@ function paare({titel,punkte=10,merke,text,paare:liste}){return{titel,punkte,mer
   const d=ctx.daten;if(!d.reihe){d.reihe=mischenAnders(liste.map((_,i)=>i));ctx.speichern()}d.zu=d.zu||{};   // rechtsIndex → linksIndex
   let wahl=null,falsch=new Set();
   const zeichne=()=>{
-    el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">👆 Tippe links etwas an, dann rechts das Passende</p>
+    el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Tippe links etwas an, dann rechts das Passende</p>
       <div class="paare"><div>${liste.map(([l],i)=>{const vergeben=Object.values(d.zu).includes(i);return`<button class="karte links${wahl===i?" an":""}" data-l="${i}" style="--pf:${PAAR_FARBEN[i%8]}"><span class="pnr${vergeben?" voll":""}">${i+1}</span>${l}</button>`}).join("")}</div>
       <div>${d.reihe.map(r=>{const l=d.zu[r];return`<button class="karte rechts${falsch.has(r)?" falsch":""}" data-r="${r}" ${l!=null?`style="--pf:${PAAR_FARBEN[l%8]}"`:""}><span class="pnr${l!=null?" voll":""}">${l!=null?l+1:"?"}</span>${liste[r][1]}</button>`}).join("")}</div></div>${MLD}`;
     el.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>{const i=+b.dataset.l;wahl=wahl===i?null:i;zeichne()});
@@ -89,7 +89,7 @@ function paare({titel,punkte=10,merke,text,paare:liste}){return{titel,punkte,mer
   zeichne();
   ctx.pruefer=()=>{const fs=liste.map((_,r)=>r).filter(r=>d.zu[r]!==r);
     return bewerte(ctx,el,{leer:Object.keys(d.zu).length<liste.length,leerText:"Verbinde zuerst alle Paare.",fehler:fs.length,stand:JSON.stringify(d.zu),punkte,
-      okText:"Richtig! Alle Paare passen. 🎉",markiere:()=>{falsch=new Set(fs);zeichne()}})};
+      okText:"Richtig! Alle Paare passen.",markiere:()=>{falsch=new Set(fs);zeichne()}})};
   ctx.loesung=()=>{liste.forEach((_,i)=>d.zu[i]=i);zeichne()};
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -107,7 +107,7 @@ function fehlerSuche({titel,punkte=10,merke,text,kopf,teile,art="📩 Nachricht"
   zeichne();
   ctx.pruefer=()=>{const zuviel=d.an.filter(i=>!teile[i][1]),fehlt=teile.map((t,i)=>t[1]?i:-1).filter(i=>i>=0&&!d.an.includes(i));
     const r=bewerte(ctx,el,{leer:!d.an.length,leerText:"Tippe zuerst die verdächtigen Stellen an.",fehler:zuviel.length+fehlt.length,stand:d.an.slice().sort().join(),punkte,
-      okText:`Richtig! Du hast alle gefunden. 🕵️<ul class="warum">${teile.filter(t=>t[1]).map(t=>`<li><b>${t[0]}</b> – ${t[2]||""}</li>`).join("")}</ul>`,
+      okText:`Richtig! Du hast alle gefunden.<ul class="warum">${teile.filter(t=>t[1]).map(t=>`<li><b>${t[0]}</b> – ${t[2]||""}</li>`).join("")}</ul>`,
       markiere:()=>{falsch=new Set(zuviel);zeichne()}});
     if(!r&&!zuviel.length&&fehlt.length){meldung(el,false,`Gut so weit! Es fehlen noch <b>${fehlt.length}</b> verdächtige Stellen.`)}
     return r};
@@ -121,13 +121,13 @@ function entscheidung({titel,punkte=10,merke,text,szenen,frage:frage0}){return{t
   const d=ctx.daten;d.s=d.s||0;d.ok=d.ok||{};if(!d.reihen){d.reihen=szenen.map(s=>mischen(s.optionen.map((_,i)=>i)));ctx.speichern()}
   let weg=new Set();
   const zeichne=()=>{
-    if(d.s>=szenen.length){el.innerHTML=kopfText(text)+`<div class="msg ok">✔️ Alle Situationen geschafft! Tippe auf „Weiter“.</div>`;return}
+    if(d.s>=szenen.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle Situationen geschafft! Tippe auf „Weiter“.</div>`;return}
     const sz=szenen[d.s],gut=d.ok[d.s]!=null;
     el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Situation ${d.s+1} von ${szenen.length}</p>
       <div class="szene"><span class="sz-bild">${sz.bild||"💭"}</span><div class="sz-text">${sz.text}</div></div>
       <p class="frage">${sz.frage||frage0||"Was machst du?"}</p>
       <div class="antworten">${d.reihen[d.s].map(i=>{const [t,r]=sz.optionen[i];return`<button class="antwort${gut&&r?" richtig":""}${weg.has(i)?" falsch":""}" data-o="${i}" ${gut||weg.has(i)?"disabled":""}>${t}</button>`}).join("")}</div>${MLD}`;
-    if(gut){const o=sz.optionen.find(o=>o[1]);meldung(el,true,`✔️ ${o[2]||"Richtig!"} <br><b>Tippe auf „Weiter“.</b>`)}
+    if(gut){const o=sz.optionen.find(o=>o[1]);meldung(el,true,`${o[2]||"Richtig!"} <br><b>Tippe auf „Weiter“.</b>`)}
     el.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{const i=+b.dataset.o,o=sz.optionen[i];
       if(o[1]){d.ok[d.s]=i;ctx.speichern();zeichne()}
       else{weg.add(i);ctx.fehler();zeichne();meldung(el,false,`✗ ${o[2]||"Das ist keine gute Idee."} Versuch es noch mal.`)}});
@@ -149,18 +149,18 @@ function ordnerPfad({titel,punkte=10,merke,text,datei,baum,ziel}){return{titel,p
   const ordner=p=>p.reduce((o,n)=>o[n],baum);
   const zeichne=()=>{
     const hier=ordner(d.pfad),kinder=Object.keys(hier);
-    el.innerHTML=kopfText(text)+`<div class="explorer"><div class="ex-leiste"><button class="btn ghost klein-btn" id="hoch" ${d.pfad.length?"":"disabled"}>⬆️ Zurück</button>
+    el.innerHTML=kopfText(text)+`<div class="explorer"><div class="ex-leiste"><button class="btn ghost klein-btn" id="hoch" ${d.pfad.length?"":"disabled"}>Eine Ebene zurück</button>
       <div class="ex-pfad">💻 Dieser PC ${d.pfad.map(n=>`<span>›</span> 📁 ${n}`).join(" ")}</div></div>
       <div class="ex-inhalt">${kinder.map(n=>`<button class="ex-ordner" data-n="${esc(n)}"><span>📁</span>${n}</button>`).join("")||`<p class="muted" style="grid-column:1/-1">Dieser Ordner ist leer.</p>`}
       ${d.gespeichert&&d.gespeichert.join("/")===d.pfad.join("/")?`<div class="ex-datei">${datei}</div>`:""}</div>
-      <div class="ex-speichern"><span>Datei: <b>${datei}</b></span><button class="btn" id="spei">💾 Hier speichern</button></div></div>${MLD}`;
+      <div class="ex-speichern"><span>Datei: <b>${datei}</b></span><button class="btn" id="spei">Hier speichern</button></div></div>${MLD}`;
     el.querySelector("#hoch").onclick=()=>{d.pfad.pop();ctx.speichern();zeichne()};
     el.querySelectorAll("[data-n]").forEach(b=>b.ondblclick=b.onclick=()=>{d.pfad.push(b.dataset.n);ctx.speichern();zeichne()});
     el.querySelector("#spei").onclick=()=>{d.gespeichert=d.pfad.slice();ctx.speichern();zeichne();
-      meldung(el,true,`💾 Gespeichert in: Dieser PC › ${d.pfad.join(" › ")||"(ganz oben)"}. Wenn das richtig ist, tippe auf „Weiter“.`)};
+      meldung(el,true,`Gespeichert in: Dieser PC › ${d.pfad.join(" › ")||"(ganz oben)"}. Wenn das richtig ist, tippe auf „Weiter“.`)};
   };
   zeichne();
-  ctx.pruefer=()=>bewerte(ctx,el,{leer:!d.gespeichert,leerText:"Geh in den richtigen Ordner und tippe auf „💾 Hier speichern“.",fehler:d.gespeichert&&d.gespeichert.join("/")===ziel.join("/")?0:1,stand:(d.gespeichert||[]).join("/"),punkte,okText:"Richtig gespeichert! 🎉 So findest du die Datei immer wieder."});
+  ctx.pruefer=()=>bewerte(ctx,el,{leer:!d.gespeichert,leerText:"Geh in den richtigen Ordner und tippe auf „Hier speichern“.",fehler:d.gespeichert&&d.gespeichert.join("/")===ziel.join("/")?0:1,stand:(d.gespeichert||[]).join("/"),punkte,okText:"Richtig gespeichert! So findest du die Datei immer wieder."});
   ctx.loesung=()=>{d.pfad=ziel.slice();d.gespeichert=ziel.slice();zeichne()};
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -173,7 +173,7 @@ function eingabe({titel,punkte=10,merke,text,html="",antwort,zahl,platz="Deine A
   el.innerHTML=kopfText(text)+html+`<div class="eing"><input type="text" ${zahl?'inputmode="numeric"':""} autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${platz}" ${laenge?`maxlength="${laenge}"`:""} value="${esc(d.v||"")}"></div>${MLD}`;
   const inp=el.querySelector(".eing input");inp.oninput=()=>{d.v=inp.value;ctx.speichern()};
   inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();document.getElementById("weiter")?.click()}};
-  ctx.pruefer=()=>bewerte(ctx,el,{leer:!inp.value.trim(),leerText:"Tippe zuerst deine Antwort ins Feld.",fehler:gut.includes(norm(inp.value))?0:1,stand:norm(inp.value),punkte,okText:"Richtig! 🎉"});
+  ctx.pruefer=()=>bewerte(ctx,el,{leer:!inp.value.trim(),leerText:"Tippe zuerst deine Antwort ins Feld.",fehler:gut.includes(norm(inp.value))?0:1,stand:norm(inp.value),punkte,okText:"Richtig!"});
   ctx.loesung=()=>{inp.value=Array.isArray(antwort)?antwort[0]:antwort;d.v=inp.value};
   if(ctx.geloest)schonGeloest(el);
 }}}
@@ -191,7 +191,7 @@ function tippen({titel,punkte=15,merke,text,zeilen,zeigeTastatur=true,rennen}){r
   const d=ctx.daten;d.z=d.z||0;d.p=d.p||0;d.f=d.f||0;
   const fertig=()=>d.z>=zeilen.length;
   const zeichne=(blitz)=>{
-    if(fertig()){el.innerHTML=kopfText(text)+`<div class="msg ok">✔️ Alles abgetippt! Fehler: ${d.f}${d.zeit?` · Zeit: ${Math.round(d.zeit/1000)} Sek.`:""}. Tippe auf „Weiter“.</div>`;return}
+    if(fertig()){el.innerHTML=kopfText(text)+`<div class="msg ok">Alles abgetippt! Fehler: ${d.f}${d.zeit?` · Zeit: ${Math.round(d.zeit/1000)} Sek.`:""}. Tippe auf „Weiter“.</div>`;return}
     const z=zeilen[d.z],c=z[d.p];
     el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Zeile ${d.z+1} von ${zeilen.length} · Fehler: ${d.f}${c&&FINGER[c.toLowerCase()]!=null?` · nimm den <b style="text-transform:none">${FINGER_NAME[FINGER[c.toLowerCase()]]}</b>`:""}</p>
       <div class="tippzeile${blitz?" blitz":""}">${[...z].map((x,i)=>`<span class="${i<d.p?"ok":i===d.p?"jetzt":""}">${x===" "?"␣":esc(x)}</span>`).join("")}</div>
@@ -221,7 +221,7 @@ function tastenMissionen({titel,punkte=15,merke,text,start="",missionen}){return
   const zeichne=()=>{
     const fertig=d.m>=missionen.length,ms=missionen[d.m];
     el.innerHTML=kopfText(text)+`<div class="missionen">${missionen.map((x,i)=>`<div class="mission${i<d.m?" ok":i===d.m?" jetzt":""}"><span class="mnr">${i<d.m?"✔️":i+1}</span><span>${x.text}</span><span class="kappen">${x.tasten.map(t=>`<kbd>${t}</kbd>`).join("<i>+</i>")}</span></div>`).join("")}</div>
-      ${fertig?`<div class="msg ok">✔️ Alle Missionen geschafft! Tippe auf „Weiter“.</div>`:`<p class="eyebrow" style="margin-top:12px">Mission ${d.m+1}: ${ms.text}</p>`}
+      ${fertig?`<div class="msg ok">Alle Missionen geschafft! Tippe auf „Weiter“.</div>`:`<p class="eyebrow" style="margin-top:12px">Mission ${d.m+1}: ${ms.text}</p>`}
       <textarea class="uebfeld" spellcheck="false" placeholder="Hier ist dein Übungsfeld">${esc(d.feld??start)}</textarea>${MLD}`;
     const f=el.querySelector(".uebfeld");
     f.oninput=()=>{d.feld=f.value;ctx.speichern()};
@@ -229,7 +229,7 @@ function tastenMissionen({titel,punkte=15,merke,text,start="",missionen}){return
       if((e.ctrlKey||e.metaKey)&&["s","p","f","d","h","w","n","t"].includes(e.key.toLowerCase()))e.preventDefault();
       const ms=missionen[d.m];if(!ms)return;
       if(ms.test(e,f)){setTimeout(()=>{d.feld=f.value;d.m++;ctx.speichern();zeichne();const g=el.querySelector(".uebfeld");g.focus();
-        if(d.m>=missionen.length)ctx.geschafft(punkte);else toast("✔️ Mission geschafft!")},ms.verzoegert?150:30)}};
+        if(d.m>=missionen.length)ctx.geschafft(punkte);else toast("Mission geschafft!")},ms.verzoegert?150:30)}};
     if(!fertig)setTimeout(()=>f.focus(),50);
   };
   zeichne();
@@ -257,7 +257,7 @@ function touchParcours({titel,punkte=10,merke,text,aufgaben}){return{titel,punkt
   const d=ctx.daten;d.n=d.n||0;let tipp=0,timer=null;
   ctx.beimVerlassen(()=>clearTimeout(timer));
   const zeichne=()=>{clearTimeout(timer);
-    if(d.n>=aufgaben.length){el.innerHTML=kopfText(text)+`<div class="msg ok">✔️ Parcours geschafft! Tippe auf „Weiter“.</div>`;return}
+    if(d.n>=aufgaben.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Parcours geschafft! Tippe auf „Weiter“.</div>`;return}
     const a=aufgaben[d.n],m=FINGER_AUF[a],x=10+Math.random()*62,y=14+Math.random()*52;
     const pos=a==="wischen"?"left:50%;top:50%":a==="zoom"?"left:46%;top:42%":`left:${x}%;top:${y}%`;
     el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Aufgabe ${d.n+1} von ${aufgaben.length}</p><p class="frage">${m.t}</p>
@@ -274,7 +274,7 @@ function touchParcours({titel,punkte=10,merke,text,aufgaben}){return{titel,punkt
       z.onpointerdown=e=>{e.preventDefault();x0=e.clientX;y0=e.clientY;lauf=true;z.classList.add("drueckt");
         timer=setTimeout(()=>{lauf=false;z.classList.remove("drueckt");
           const r=z.getBoundingClientRect(),ra=ar.getBoundingClientRect(),mn=document.createElement("div");mn.className="lmenu";
-          mn.innerHTML="<span>📋 Kopieren</span><span>📤 Teilen</span><span>🗑️ Löschen</span>";
+          mn.innerHTML="<span>📋 Kopieren</span><span>📤 Teilen</span><span>Löschen</span>";
           mn.style.left=Math.min(r.left-ra.left,ra.width-170)+"px";mn.style.top=Math.min(r.bottom-ra.top+6,ra.height-130)+"px";ar.append(mn);setTimeout(gut,1100)},650)};
       z.onpointermove=e=>{if(lauf&&Math.hypot(e.clientX-x0,e.clientY-y0)>14){lauf=false;clearTimeout(timer);z.classList.remove("drueckt");hinweis("Nicht schieben – lass den Finger <b>ganz ruhig</b> liegen.")}};
       z.onpointerup=z.onpointercancel=()=>{if(!lauf)return;lauf=false;clearTimeout(timer);z.classList.remove("drueckt");hinweis("Zu kurz! Lass den Finger <b>länger</b> liegen, bis das Menü aufgeht.")}}
@@ -308,7 +308,7 @@ const MAUS={klick:{ico:"⭐",t:"<b>Klick</b> einmal auf den Stern ⭐ (linke Mau
 function mausParcours({titel,punkte=10,merke,text,aufgaben}){return{titel,punkte,merke,zeige(el,ctx){
   const d=ctx.daten;d.n=d.n||0;let tipp=0;
   const zeichne=()=>{
-    if(d.n>=aufgaben.length){el.innerHTML=kopfText(text)+`<div class="msg ok">✔️ Parcours geschafft! Tippe auf „Weiter“.</div>`;return}
+    if(d.n>=aufgaben.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Parcours geschafft! Tippe auf „Weiter“.</div>`;return}
     const a=aufgaben[d.n],m=MAUS[a],x=8+Math.random()*70,y=12+Math.random()*58;
     el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Aufgabe ${d.n+1} von ${aufgaben.length}</p><p class="frage">${m.t}</p>
       <div class="arena">${a==="ziehen"?`<span class="ziel" style="left:${x>50?8:70}%;top:40%">🧺</span>`:""}<span class="mz" style="left:${x}%;top:${y}%">${m.ico}</span></div>${MLD}`;
