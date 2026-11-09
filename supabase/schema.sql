@@ -33,8 +33,8 @@ create table if not exists staende(
   primary key(kind_id,station)
 );
 
--- Stundenplan: tag 1=Mo … 5=Fr, von = Beginn (deutsche Zeit), min = Dauer; puffer Minuten vorher/nachher offen
-create table if not exists stundenplan(klasse text not null, tag int not null, von time not null, min int not null, puffer int not null default 10);
+-- Stundenplan: tag 1=Mo … 5=Fr, von = Beginn (deutsche Zeit), min = Dauer; offen ab puffer Minuten vorher bis Stundenende
+create table if not exists stundenplan(klasse text not null, tag int not null, von time not null, min int not null, puffer int not null default 5);
 create table if not exists ferien(von date not null, bis date not null);
 -- Hand-Steuerung: offen_bis = von Hand geöffnet bis; zu_bis = von Hand geschlossen bis
 create table if not exists freigaben(klasse text primary key, offen_bis timestamptz, zu_bis timestamptz);
@@ -65,8 +65,11 @@ language sql stable security definer set search_path=public as $$
     when exists(select 1 from f where offen_bis>now()) then true
     when exists(select 1 from ferien, j where j.t::date between ferien.von and ferien.bis) then false
     else exists(select 1 from stundenplan s, j where s.klasse=p_klasse and s.tag=extract(isodow from j.t)
-           and j.t::time between s.von - make_interval(mins=>s.puffer) and s.von + make_interval(mins=>s.min+s.puffer))
+           and j.t::time >= s.von - make_interval(mins=>s.puffer) and j.t::time < s.von + make_interval(mins=>s.min))
   end $$;
+
+create or replace function offene_klassen(p_klassen text[]) returns text[]
+language sql stable security definer set search_path=public as $$ select coalesce(array_agg(k),'{}') from unnest(p_klassen) k where klasse_offen(k) $$;
 
 -- „besetzt“ = an einem anderen Gerät in den letzten 75 Minuten aktiv
 create or replace function kind_tiere(p_klasse text) returns json
@@ -118,8 +121,8 @@ end $$;
 create or replace function kind_abmelden(p_token uuid) returns void
 language sql security definer set search_path=public as $$ update kinder set token=null, geraet=null where token=p_token $$;
 
-revoke all on function klasse_offen(text), kind_tiere(text), kind_neu(text,text,text), kind_anmelden(text,text,text), kind_speichern(uuid,text,jsonb), kind_abmelden(uuid) from public;
-grant execute on function klasse_offen(text), kind_tiere(text), kind_neu(text,text,text), kind_anmelden(text,text,text), kind_speichern(uuid,text,jsonb), kind_abmelden(uuid) to anon, authenticated;
+revoke all on function klasse_offen(text), offene_klassen(text[]), kind_tiere(text), kind_neu(text,text,text), kind_anmelden(text,text,text), kind_speichern(uuid,text,jsonb), kind_abmelden(uuid) from public;
+grant execute on function klasse_offen(text), offene_klassen(text[]), kind_tiere(text), kind_neu(text,text,text), kind_anmelden(text,text,text), kind_speichern(uuid,text,jsonb), kind_abmelden(uuid) to anon, authenticated;
 
 -- Zum Schluss mit der eigenen E-Mail:
 -- insert into lehrkraefte(user_id) select id from auth.users where email='DEINE@EMAIL.de';

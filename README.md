@@ -5,7 +5,7 @@ Stunden-Seite für Informatik in Jahrgang 5 (Erich-Kästner-Gesamtschule Homberg
 ## Anmeldung der Kinder (ohne Tippen, ohne Namen)
 
 1. Kind tippt **Klasse** → **sein Tier** → fertig. Beim ersten Mal: „Ich bin neu hier“ und ein freies Tier aussuchen.
-2. Anmelden geht nur **während der eigenen Stunde**: Stundenplan und Ferien stehen oben in `src/app.js` (`STUNDENPLAN`, `FERIEN`, `PUFFER`). Deutsche Zeit, Sommer-/Winterzeit automatisch. Die Lehrkraft kann unter `#lehrer` jederzeit von Hand öffnen oder schließen.
+2. Anmelden geht nur **während der eigenen Stunde**: Stundenplan und Ferien stehen oben in `src/app.js` (`STUNDENPLAN`, `FERIEN`, `PUFFER` = Minuten vor Beginn). Deutsche Zeit, Sommer-/Winterzeit automatisch. Die Lehrkraft kann unter `#lehrer` jederzeit von Hand öffnen oder schließen.
 3. Ist ein Tier an einem anderen PC angemeldet, ist es grau („besetzt“). Lösen: Lehrer-Ansicht → „abmelden“, oder nach 75 Minuten automatisch.
 4. Am Ende der Station zeigt das Kind die **Ergebniskarte**.
 

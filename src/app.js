@@ -19,13 +19,16 @@ const KLASSEN=["5B","5D","5E"];
 const FREIGABE_MIN=90;
 
 /* Stundenplan Informatik (deutsche Zeit). tag: 1=Mo … 5=Fr. Jedes Schuljahr anpassen.
-   Die Klasse ist PUFFER Minuten vor Beginn bis PUFFER Minuten nach Ende offen. */
-const PUFFER=10;
+   Anmelden geht PUFFER Minuten vor Beginn bis zum Ende der Stunde. Speichern geht auch danach noch.
+   (Kein Puffer nach dem Ende, sonst überschneiden sich Stunden, die direkt aufeinander folgen.) */
+const PUFFER=5;
 const STUNDENPLAN=[
-  {klasse:"5E",tag:1,von:"08:00",min:60},   // Gruppe 1
-  {klasse:"5E",tag:5,von:"10:20",min:60},   // Gruppe 2
-  // {klasse:"5B",tag:?,von:"??:??",min:60},
-  // {klasse:"5D",tag:?,von:"??:??",min:60},
+  {klasse:"5B",tag:1,von:"09:05",min:60},   // 5B-1 Mo
+  {klasse:"5B",tag:3,von:"11:25",min:60},   // 5B-2 Mi
+  {klasse:"5D",tag:4,von:"13:40",min:60},   // 5D-1 Do
+  {klasse:"5D",tag:3,von:"10:20",min:60},   // 5D-2 Mi
+  {klasse:"5E",tag:1,von:"08:00",min:60},   // 5E-1 Mo
+  {klasse:"5E",tag:5,von:"10:20",min:60},   // 5E-2 Fr
 ];
 /* Ferien NRW 2026/27 (erster und letzter Ferientag). Bewegliche Ferientage der Schule hier ergänzen. */
 const FERIEN=[["2026-12-23","2027-01-06"],["2027-03-22","2027-04-03"],["2027-05-18","2027-05-18"],["2027-07-19","2027-08-31"]];
@@ -104,7 +107,10 @@ function kopfAktiv(){const b=$("#raus");if(b)b.onclick=async()=>{
 const vorschauHinweis=()=>db.online?"":`<p class="muted small" style="margin-top:18px">Vorschau: Alles wird nur in diesem Browser gespeichert.</p>`;
 
 /* 1. Klasse wählen */
-function seiteKlasse(){
+/* Ist genau eine Klasse gerade offen (der Normalfall nach Stundenplan), geht es direkt zu ihren Tieren. */
+async function seiteKlasse(direkt=true){
+  if(direkt){let offen=[];try{offen=await db.offeneKlassen()}catch(e){}
+    if(offen.length===1)return seiteTier(offen[0])}
   $("#app").innerHTML=kopf()+`
   <div class="plate"><p class="eyebrow">Willkommen</p><h1>In welche Klasse gehst du?</h1></div>
   <div class="wahl">${KLASSEN.map(k=>`<button class="gross" data-k="${k}">${k}</button>`).join("")}</div>${vorschauHinweis()}`;
@@ -115,7 +121,7 @@ function seiteKlasse(){
 async function seiteTier(klasse){
   $("#app").innerHTML=kopf()+`<button class="link" id="zur">‹ Andere Klasse</button>
   <div class="plate"><p class="eyebrow">Klasse ${esc(klasse)}</p><h1>Welches Tier bist du?</h1></div><div id="liste"><p class="muted">Einen Moment …</p></div>`;
-  $("#zur").onclick=seiteKlasse;
+  $("#zur").onclick=()=>seiteKlasse(false);
   let r;try{r=await db.tiere(klasse)}catch(e){$("#liste").innerHTML=`<div class="msg no">Keine Verbindung. Versuch es gleich noch mal.</div><button class="btn ghost" id="neu" style="margin-top:12px">Noch mal</button>`;$("#neu").onclick=()=>seiteTier(klasse);return}
   if(!r.offen){const n=naechsteStunde(klasse);
     $("#liste").innerHTML=`<div class="block"><h2>Gerade geschlossen 🔒</h2><p>Du kannst dich nur in deiner Informatik-Stunde anmelden.${n?` Nächste Stunde: <b>${esc(n)}</b>.`:""}</p><button class="btn" id="neu">Noch mal schauen</button></div>`;$("#neu").onclick=()=>seiteTier(klasse);return}
@@ -230,6 +236,7 @@ function seiteErgebnis(st,prog){
    Lehrer-Ansicht (#lehrer). Vornamen bleiben NUR in diesem Browser.
    ===================================================================== */
 let namen=lsGet("if5-namen")||{};      // {kindId: "Vorname"}
+let listen=lsGet("if5-listen")||{};    // {klasse: ["Vorname", …]} – Klassenlisten, nur in diesem Browser
 let lKlasse=lsGet("if5-lklasse")||KLASSEN[0];
 let lDaten=null,lTimer=null,lPlanGesendet=false;
 
@@ -271,7 +278,7 @@ function lehrerZeigen(){
     const zellen=STATIONEN.map(st=>{const p=s[st.id];if(!p)return`<td class="muted">–</td>`;const pz=prozent(st,p);
       return`<td><b>${p.fertig?noteAus(pz):"…"}</b> <span class="muted small">${pz} %${p.fertig?"":" · Teil "+((p.schritt||0)+1)}</span></td>`}).join("");
     return`<tr><td class="t"><span class="e">${t.emoji}</span>${esc(t.name)}</td>
-      <td><input type="text" class="vn" data-id="${k.id}" value="${esc(namen[k.id]||"")}" placeholder="Vorname"></td><td>${status}</td>${zellen}
+      <td><input type="text" class="vn" data-id="${k.id}" value="${esc(namen[k.id]||"")}" placeholder="Wer ist das?" list="dl-${esc(kl)}"></td><td>${status}</td>${zellen}
       <td><button class="link" data-a="mehr" data-id="${k.id}" aria-label="Mehr">⋯</button></td></tr>`};
   $("#lb").innerHTML=`
   <div class="tabs noprint">${KLASSEN.map(k=>`<button class="${k===kl?"an":""}" data-kl="${k}">${k} <span class="muted small">${d.kinder.filter(x=>x.klasse===k).length}</span></button>`).join("")}</div>
@@ -282,6 +289,8 @@ function lehrerZeigen(){
   <div class="block" style="overflow-x:auto">
     ${kinder.length?`<table class="liste"><thead><tr><th>Tier</th><th>Vorname <span class="muted small">(nur hier)</span></th><th>Status</th>${STATIONEN.map(st=>`<th>${st.ico} ${esc(st.titel)}</th>`).join("")}<th></th></tr></thead><tbody>${kinder.map(zeile).join("")}</tbody></table>`
       :`<p style="margin:0">Noch keine Kinder in ${kl}. In der ersten Stunde suchen sich die Kinder selbst ein Tier aus.</p>`}
+    <datalist id="dl-${esc(kl)}">${(listen[kl]||[]).filter(n=>!kinder.some(k=>namen[k.id]===n)).map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
+    ${(listen[kl]||[]).length?`<p class="muted small" style="margin:10px 0 0">${kinder.filter(k=>namen[k.id]).length} von ${listen[kl].length} Kindern zugeordnet.${(()=>{const fehlt=listen[kl].filter(n=>!kinder.some(k=>namen[k.id]===n));return fehlt.length&&fehlt.length<=8?" Noch ohne Tier: "+fehlt.map(esc).join(", "):""})()}</p>`:""}
   </div>
   <div class="row noprint">
     <button class="btn ghost" id="druck" ${kinder.length?"":"disabled"}>Kärtchen drucken</button>
@@ -292,15 +301,15 @@ function lehrerZeigen(){
   document.querySelectorAll("[data-kl]").forEach(b=>b.onclick=()=>{lKlasse=b.dataset.kl;lsSet("if5-lklasse",lKlasse);lehrerZeigen()});
   $("#frei").onclick=()=>lAktion(()=>db.lFreigabe(kl,offen?{zu_bis:Date.now()+FREIGABE_MIN*60000}:{offen_bis:Date.now()+FREIGABE_MIN*60000}));
   if($("#plan"))$("#plan").onclick=()=>lAktion(()=>db.lFreigabe(kl,{}));
-  document.querySelectorAll(".vn").forEach(i=>i.oninput=()=>{const v=i.value.trim();if(v)namen[i.dataset.id]=v;else delete namen[i.dataset.id];lsSet("if5-namen",namen)});
+  document.querySelectorAll(".vn").forEach(i=>{i.oninput=()=>{const v=i.value.trim();if(v)namen[i.dataset.id]=v;else delete namen[i.dataset.id];lsSet("if5-namen",namen)};i.onchange=()=>lehrerZeigen()});
   document.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{const id=b.dataset.id,a=b.dataset.a;
     if(a==="freigeben")return lAktion(()=>db.lAbmeldenKind(id));
     if(a==="mehr")return lMehr(d.kinder.find(k=>k.id===id))});
   $("#druck").onclick=()=>lDruck(kinder);
-  $("#sichern").onclick=()=>{const b=new Blob([JSON.stringify({art:"if5-namen",gesichert:new Date().toISOString(),namen},null,1)],{type:"application/json"});
+  $("#sichern").onclick=()=>{const b=new Blob([JSON.stringify({art:"if5-namen",gesichert:new Date().toISOString(),namen,listen},null,1)],{type:"application/json"});
     const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`Informatik5-Namensliste-${new Date().toLocaleDateString("sv")}.json`;a.click();URL.revokeObjectURL(a.href)};
   $("#laden").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const j=JSON.parse(await f.text());if(j.art!=="if5-namen")throw 0;
-    namen={...namen,...j.namen};lsSet("if5-namen",namen);toast("Namensliste geladen");lehrerZeigen()}catch(err){toast("Das ist keine Namensliste")}};
+    namen={...namen,...(j.namen||{})};lsSet("if5-namen",namen);if(j.listen){listen={...listen,...j.listen};lsSet("if5-listen",listen)}toast("Namensliste geladen");lehrerZeigen()}catch(err){toast("Das ist keine Namensliste")}};
 }
 
 async function lAktion(f){try{await f();await lehrerLaden()}catch(e){toast("Hat nicht geklappt: "+(e.message||e))}}

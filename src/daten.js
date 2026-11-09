@@ -32,13 +32,13 @@ const hm=s=>{const [h,m]=s.split(":").map(Number);return h*60+m};
 function planOffen(klasse,ms=Date.now()){
   const b=berlin(ms);
   if(FERIEN.some(([v,z])=>b.datum>=v&&b.datum<=z))return false;
-  return STUNDENPLAN.some(s=>s.klasse===klasse&&s.tag===b.tag&&b.min>=hm(s.von)-PUFFER&&b.min<=hm(s.von)+s.min+PUFFER);
+  return STUNDENPLAN.some(s=>s.klasse===klasse&&s.tag===b.tag&&b.min>=hm(s.von)-PUFFER&&b.min<hm(s.von)+s.min);
 }
 /* Nächste geplante Stunde (für die Anzeige) */
 function naechsteStunde(klasse){
   for(let d=0;d<21;d++){const ms=Date.now()+d*864e5,b=berlin(ms);
     if(FERIEN.some(([v,z])=>b.datum>=v&&b.datum<=z))continue;
-    const s=STUNDENPLAN.filter(x=>x.klasse===klasse&&x.tag===b.tag&&(d>0||hm(x.von)+x.min+PUFFER>b.min)).sort((a,c)=>hm(a.von)-hm(c.von))[0];
+    const s=STUNDENPLAN.filter(x=>x.klasse===klasse&&x.tag===b.tag&&(d>0||hm(x.von)+x.min>b.min)).sort((a,c)=>hm(a.von)-hm(c.von))[0];
     if(s)return`${d===0?"heute":d===1?"morgen":new Date(ms).toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit"})} um ${s.von} Uhr`}
   return null;
 }
@@ -58,6 +58,10 @@ const db={
   online:CLOUD,
 
   /* --- Kinder --- */
+  async offeneKlassen(){
+    if(CLOUD){const {data,error}=await sb.rpc("offene_klassen",{p_klassen:KLASSEN});if(error)throw error;return data||[]}
+    const d=vdb.lesen();return KLASSEN.filter(k=>offenAus(k,d.freigaben[k]));
+  },
   async tiere(klasse){
     if(CLOUD){const {data,error}=await sb.rpc("kind_tiere",{p_klasse:klasse});if(error)throw error;return data}
     const d=vdb.lesen();
