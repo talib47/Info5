@@ -109,12 +109,14 @@ function codieren(name,titel,punkte,merke){return{titel,punkte,merke,zeige(el,ct
 }}}
 
 /* ---------- Kurzschrift: lange Codes kürzer schreiben (immer: erst weiß, dann schwarz, dann weiß …) ---------- */
-const laeufe=z=>{const r=[];let f="0",n=0;for(const c of z){if(c===f)n++;else{r.push(n);f=c;n=1}}r.push(n);return r};
-const kurzText=z=>laeufe(z).map((n,k)=>`<span class="lauf ${k%2?"s":"w"}"><b>${n}</b>${k%2?"⬛":"⬜"}</span>`).join("");
+/* Läufe einer Zeile: [{c:"0"|"1", n}] – gleiche Farben hintereinander zusammengefasst */
+const laeufe=z=>{const r=[];for(const c of z){if(r.length&&r[r.length-1].c===c)r[r.length-1].n++;else r.push({c,n:1})}return r};
+const SQ_W=`<i class="sq"></i>`,SQ_S=`<i class="sq s"></i>`;
+const kurzText=z=>laeufe(z).map(l=>`<span class="lauf"><b>${l.n}</b>${l.c==="1"?SQ_S:SQ_W}</span>`).join("");
 
 function kurzLesen(name,titel,punkte,merke){return{titel,punkte,merke,zeige(el,ctx){
   const roh=BILDER[name],soll=zahlen(roh);
-  el.innerHTML=`<div class="regel"><b>Kurzschrift:</b> Statt <code>00011000</code> schreibt der Computer kurz: <b>3 weiß, 2 schwarz, 3 weiß</b>. Das spart Platz! Lies jede Zeile und mal das Bild.</div>
+  el.innerHTML=`<div class="regel"><b>Kurzschrift:</b> Statt ${SQ_W.repeat(3)+SQ_S.repeat(2)+SQ_W.repeat(3)} schreibt der Computer kurz: <b>3${SQ_W} 2${SQ_S} 3${SQ_W}</b>. Das spart Platz! Lies jede Zeile und mal das Bild.</div>
     <div class="paar" style="margin-top:12px"><div><p class="eyebrow">Kurzschrift</p><ol class="kurz">${roh.map(z=>`<li>${kurzText(z)}</li>`).join("")}</ol></div>
     <div><p class="eyebrow">Dein Bild</p><div id="b"></div></div></div>
     <div class="row noprint" style="margin-top:14px"><button class="btn ghost" id="l">Alles löschen</button><span class="muted small">Fertig? Tippe unten auf „Weiter“ – dann wird geprüft.</span></div><div id="m"></div>`;
@@ -131,25 +133,23 @@ function kurzLesen(name,titel,punkte,merke){return{titel,punkte,merke,zeige(el,c
 
 function kurzSchreiben(name,titel,punkte,merke){return{titel,punkte,merke,zeige(el,ctx){
   const roh=BILDER[name],soll=roh.map(laeufe);
-  const ein=ctx.daten.ein||(ctx.daten.ein=soll.map(l=>l.map(()=>0)));
+  const ein=ctx.daten.ein||(ctx.daten.ein=soll.map(l=>l.map(()=>"")));
   const lang=roh.length*8,kurz=soll.flat().length;
-  el.innerHTML=`<div class="regel"><b>Jetzt du!</b> Schreib das Bild in Kurzschrift. Zähle in jeder Zeile: Wie viele weiße ⬜, dann wie viele schwarze ⬛? Mit <b>+</b> und <b>−</b> stellst du die Zahl ein.</div>
-    <div class="paar" style="margin-top:12px"><div><p class="eyebrow">Bild</p><div id="a"></div></div>
-    <div><p class="eyebrow">Deine Kurzschrift</p><div class="kurz-ein">${soll.map((l,z)=>`<div class="kz">${l.map((_,k)=>`<span class="stepper ${k%2?"s":"w"}"><button data-z="${z}" data-k="${k}" data-d="-1" aria-label="weniger">−</button><b id="w${z}_${k}">${ein[z][k]}</b><button data-z="${z}" data-k="${k}" data-d="1" aria-label="mehr">+</button><i>${k%2?"⬛":"⬜"}</i></span>`).join("")}</div>`).join("")}</div></div></div>
+  el.innerHTML=`<div class="regel"><b>Jetzt du!</b> Jede Zeile ist in Kästen aufgeteilt. <b>Zähl die Kästchen in jedem Kasten</b> und schreib die Zahl darunter.</div>
+    <div class="kurz-tabelle">${soll.map((l,z)=>`<div class="kzeile">${l.map((x,k)=>`<div class="gruppe"><div class="kaest">${`<i class="${x.c==="1"?"s":""}"></i>`.repeat(x.n)}</div><input inputmode="numeric" maxlength="1" placeholder="?" data-z="${z}" data-k="${k}" value="${esc(ein[z][k])}" aria-label="Anzahl"></div>`).join("")}</div>`).join("")}</div>
     <p class="muted" style="margin-top:12px">📦 Normal braucht das Bild <b>${lang} Zahlen</b>. In Kurzschrift nur <b>${kurz} Zahlen</b>!</p><div id="m"></div>`;
-  el.querySelector("#a").append(pixelRaster({w:8,h:roh.length,werte:zahlen(roh),palette:SW}).el);
-  el.querySelectorAll(".stepper button").forEach(b=>b.onclick=()=>{const z=+b.dataset.z,k=+b.dataset.k;
-    ein[z][k]=Math.max(0,Math.min(8,ein[z][k]+ +b.dataset.d));el.querySelector(`#w${z}_${k}`).textContent=ein[z][k];
-    el.querySelector(`#w${z}_${k}`).parentNode.classList.remove("falsch");ctx.speichern()});
+  const felder=[...el.querySelectorAll(".kurz-tabelle input")];
+  felder.forEach((f,i)=>f.oninput=()=>{f.value=f.value.replace(/\D/g,"").slice(-1);ein[+f.dataset.z][+f.dataset.k]=f.value;f.classList.remove("falsch");ctx.speichern();
+    if(f.value&&felder[i+1])felder[i+1].focus()});
   ctx.pruefer=()=>{const m=el.querySelector("#m");
-    if(ein.flat().every(x=>x===0)){m.className="msg no";m.textContent="Stell zuerst die Zahlen ein, dann tippe auf „Weiter“.";return false}
-    const falsch=[];soll.forEach((l,z)=>l.forEach((n,k)=>{if(ein[z][k]!==n)falsch.push(`${z}_${k}`)}));
+    if(ein.flat().every(x=>x==="")){m.className="msg no";m.textContent="Schreib zuerst die Zahlen in die Felder, dann tippe auf „Weiter“.";return false}
+    const falsch=[];soll.forEach((l,z)=>l.forEach((x,k)=>{if(+ein[z][k]!==x.n||ein[z][k]==="")falsch.push(`${z}_${k}`)}));
     if(!falsch.length){m.className="msg ok";m.textContent="Richtig! Du hast die Daten kleiner gemacht.";ctx.geschafft(punkte);return true}
     const stand=JSON.stringify(ein);if(stand!==ctx.daten.letzterFehler){ctx.fehler();ctx.daten.letzterFehler=stand;ctx.daten.versuche=(ctx.daten.versuche||0)+1;ctx.speichern()}
     m.className="msg no";m.textContent=falsch.length===1?"Fast! Noch 1 Zahl stimmt nicht.":`Noch ${falsch.length} Zahlen stimmen nicht.`;
-    if((ctx.daten.versuche||0)>=3){falsch.forEach(id=>el.querySelector(`#w${id}`).parentNode.classList.add("falsch"));m.textContent+=" Sie sind jetzt rot."}
+    if((ctx.daten.versuche||0)>=2){felder.forEach(f=>f.classList.toggle("falsch",falsch.includes(`${f.dataset.z}_${f.dataset.k}`)));m.textContent+=" Sie sind jetzt rot."}
     return false};
-  ctx.loesung=()=>soll.forEach((l,z)=>l.forEach((n,k)=>{ein[z][k]=n;el.querySelector(`#w${z}_${k}`).textContent=n}));
+  ctx.loesung=()=>felder.forEach(f=>{const n=soll[+f.dataset.z][+f.dataset.k].n;f.value=n;ein[+f.dataset.z][+f.dataset.k]=String(n)});
   if(ctx.geloest){const m=el.querySelector("#m");m.className="msg ok";m.textContent="Schon gelöst. Weiter geht's!"}
 }}}
 
