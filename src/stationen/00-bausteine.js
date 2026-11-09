@@ -240,6 +240,69 @@ const strg=b=>e=>(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()===b;
 
 /* ---------- Maus-Parcours: Klick, Doppelklick, Rechtsklick, Ziehen ----------
    mausParcours({titel,punkte,merke,text,aufgaben:["klick","doppel","rechts","ziehen",…]}) */
+/* ---------- Gerät erkennen: Touch (iPad/iPhone/Android ohne Maus) oder Computer ----------
+   Zum Ausprobieren am PC: Adresse mit ?touch öffnen. */
+const TOUCH=/[?&]touch\b/.test(location.search)||(matchMedia("(pointer: coarse)").matches&&!matchMedia("(any-pointer: fine)").matches);
+/* geraet(pcTeil, touchTeil): Auf Touch-Geräten wird automatisch die Touch-Variante gezeigt (gleiche Punkte!) */
+const geraet=(pc,touch)=>new Proxy({},{get:(_,k)=>(TOUCH?touch:pc)[k],has:(_,k)=>k in (TOUCH?touch:pc)});
+
+/* ---------- Touch-Parcours: Tippen, Doppeltippen, lange drücken, ziehen, wischen, zoomen ---------- */
+const FINGER_AUF={tipp:{ico:"⭐",t:"<b>Tippe</b> einmal kurz auf den Stern ⭐"},
+  doppel:{ico:"📦",t:"<b>Doppeltippen</b>: Tippe zweimal ganz schnell auf die Kiste 📦"},
+  lang:{ico:"🎁",t:"<b>Lange drücken</b>: Leg den Finger auf das Geschenk 🎁 und lass ihn liegen, bis ein Menü aufgeht"},
+  ziehen:{ico:"🍎",t:"<b>Zieh</b> den Apfel 🍎 mit dem Finger in den Korb 🧺"},
+  wischen:{ico:"🏞️",t:"<b>Wische</b> das Foto mit dem Finger zur Seite – wie in der Foto-Galerie"},
+  zoom:{ico:"🐞",t:"<b>Zoomen</b>: Leg zwei Finger auf den Käfer 🐞 und zieh sie auseinander, bis er ganz groß ist"}};
+function touchParcours({titel,punkte=10,merke,text,aufgaben}){return{titel,punkte,merke,zeige(el,ctx){
+  const d=ctx.daten;d.n=d.n||0;let tipp=0,timer=null;
+  ctx.beimVerlassen(()=>clearTimeout(timer));
+  const zeichne=()=>{clearTimeout(timer);
+    if(d.n>=aufgaben.length){el.innerHTML=kopfText(text)+`<div class="msg ok">✔️ Parcours geschafft! Tippe auf „Weiter“.</div>`;return}
+    const a=aufgaben[d.n],m=FINGER_AUF[a],x=10+Math.random()*62,y=14+Math.random()*52;
+    const pos=a==="wischen"?"left:50%;top:50%":a==="zoom"?"left:46%;top:42%":`left:${x}%;top:${y}%`;
+    el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Aufgabe ${d.n+1} von ${aufgaben.length}</p><p class="frage">${m.t}</p>
+      <div class="arena touch">${a==="ziehen"?`<span class="ziel" style="left:${x>50?8:70}%;top:40%">🧺</span>`:""}<span class="mz${a==="wischen"?" foto":""}${a==="zoom"?" klein":""}" style="${pos}">${m.ico}</span></div>${MLD}`;
+    const z=el.querySelector(".mz"),ar=el.querySelector(".arena");
+    ar.addEventListener("gesturestart",e=>e.preventDefault());ar.oncontextmenu=e=>e.preventDefault();
+    let fertig=false;
+    const gut=()=>{if(fertig)return;fertig=true;clearTimeout(timer);z.classList.add("treffer");d.n++;ctx.speichern();setTimeout(()=>{zeichne();if(d.n>=aufgaben.length)ctx.geschafft(punkte)},380)};
+    const hinweis=t=>{if(Date.now()-tipp>1400){tipp=Date.now();meldung(el,null,t)}};
+    if(a==="tipp")z.onpointerup=gut;
+    if(a==="doppel"){let letzt=0;z.onpointerup=()=>{const jetzt=Date.now();if(jetzt-letzt<450)return gut();letzt=jetzt;
+      timer=setTimeout(()=>{if(!fertig&&letzt===jetzt)hinweis("Das war einmal tippen. Tippe <b>zweimal ganz schnell</b> hintereinander!")},500)}}
+    if(a==="lang"){let x0,y0,lauf=false;
+      z.onpointerdown=e=>{e.preventDefault();x0=e.clientX;y0=e.clientY;lauf=true;z.classList.add("drueckt");
+        timer=setTimeout(()=>{lauf=false;z.classList.remove("drueckt");
+          const r=z.getBoundingClientRect(),ra=ar.getBoundingClientRect(),mn=document.createElement("div");mn.className="lmenu";
+          mn.innerHTML="<span>📋 Kopieren</span><span>📤 Teilen</span><span>🗑️ Löschen</span>";
+          mn.style.left=Math.min(r.left-ra.left,ra.width-170)+"px";mn.style.top=Math.min(r.bottom-ra.top+6,ra.height-130)+"px";ar.append(mn);setTimeout(gut,1100)},650)};
+      z.onpointermove=e=>{if(lauf&&Math.hypot(e.clientX-x0,e.clientY-y0)>14){lauf=false;clearTimeout(timer);z.classList.remove("drueckt");hinweis("Nicht schieben – lass den Finger <b>ganz ruhig</b> liegen.")}};
+      z.onpointerup=z.onpointercancel=()=>{if(!lauf)return;lauf=false;clearTimeout(timer);z.classList.remove("drueckt");hinweis("Zu kurz! Lass den Finger <b>länger</b> liegen, bis das Menü aufgeht.")}}
+    if(a==="ziehen"){const korb=el.querySelector(".ziel");let ziehe=false;
+      z.onpointerdown=e=>{ziehe=true;z.setPointerCapture(e.pointerId);e.preventDefault()};
+      z.onpointermove=e=>{if(!ziehe)return;const r=ar.getBoundingClientRect();z.style.left=((e.clientX-r.left)/r.width*100-4)+"%";z.style.top=((e.clientY-r.top)/r.height*100-8)+"%"};
+      z.onpointerup=()=>{if(!ziehe)return;ziehe=false;const a1=z.getBoundingClientRect(),b1=korb.getBoundingClientRect();
+        const cx=a1.left+a1.width/2,cy=a1.top+a1.height/2;
+        if(cx>b1.left-14&&cx<b1.right+14&&cy>b1.top-14&&cy<b1.bottom+14)gut();else hinweis("Fast! Lass den Apfel genau <b>über dem Korb</b> los.")}}
+    if(a==="wischen"){let x0=null,y0;
+      z.onpointerdown=e=>{e.preventDefault();z.setPointerCapture(e.pointerId);x0=e.clientX;y0=e.clientY;z.style.transition="none"};
+      z.onpointermove=e=>{if(x0==null)return;const dx=e.clientX-x0;z.style.transform=`translate(calc(-50% + ${dx}px),-50%) rotate(${dx/18}deg)`};
+      z.onpointerup=z.onpointercancel=e=>{if(x0==null)return;const dx=e.clientX-x0,dy=e.clientY-y0;x0=null;z.style.transition="";
+        if(Math.abs(dx)>80&&Math.abs(dx)>Math.abs(dy)){z.style.transform=`translate(calc(-50% + ${dx>0?600:-600}px),-50%) rotate(${dx>0?30:-30}deg)`;setTimeout(gut,250)}
+        else{z.style.transform="";hinweis("Wisch <b>weiter zur Seite</b> – mit Schwung nach links oder rechts!")}}}
+    if(a==="zoom"){const finger=new Map();let d0=0;
+      const abstand=()=>{const [p,q]=[...finger.values()];return Math.hypot(p.x-q.x,p.y-q.y)};
+      ar.onpointerdown=e=>{e.preventDefault();finger.set(e.pointerId,{x:e.clientX,y:e.clientY});if(finger.size===2)d0=abstand()};
+      ar.onpointermove=e=>{if(!finger.has(e.pointerId))return;finger.set(e.pointerId,{x:e.clientX,y:e.clientY});
+        if(finger.size===2&&d0>0){const f=Math.max(1,Math.min(3.2,abstand()/d0));z.style.transform=`translate(-50%,-50%) scale(${f})`;if(f>=2.2)gut()}};
+      ar.onpointerup=ar.onpointercancel=e=>{const zwei=finger.size===2;finger.delete(e.pointerId);
+        if(!fertig&&finger.size===0){z.style.transform="";if(!zwei)hinweis("Du brauchst <b>zwei Finger</b>: Daumen und Zeigefinger auf den Käfer und dann auseinanderziehen.")}}}
+  };
+  zeichne();
+  ctx.pruefer=()=>{if(d.n>=aufgaben.length){ctx.geschafft(punkte);return true}meldung(el,false,"Mach zuerst alle Aufgaben im Parcours.");return false};
+  ctx.loesung=()=>{d.n=aufgaben.length;zeichne()};
+}}}
+
 const MAUS={klick:{ico:"⭐",t:"<b>Klick</b> einmal auf den Stern ⭐ (linke Maustaste)"},doppel:{ico:"📦",t:"<b>Doppelklick</b> auf die Kiste 📦 (zweimal ganz schnell links klicken)"},
   rechts:{ico:"🎁",t:"<b>Rechtsklick</b> auf das Geschenk 🎁 (rechte Maustaste)"},ziehen:{ico:"🍎",t:"<b>Zieh</b> den Apfel 🍎 in den Korb 🧺 (Taste gedrückt halten und schieben)"}};
 function mausParcours({titel,punkte=10,merke,text,aufgaben}){return{titel,punkte,merke,zeige(el,ctx){
