@@ -13,8 +13,13 @@ const BILDER={
   herz:["00000000","01100110","11111111","11111111","01111110","00111100","00011000","00000000"],
   smiley:["00111100","01000010","10100101","10000001","10100101","10011001","01000010","00111100"],
   haus:["00011000","00111100","01111110","11111111","01000010","01011010","01011010","01111110"],
-  apfel:["00006300","00006000","02222220","22222222","22222222","22222222","02222220","00222200"],
-  sonne:["00444400","04444440","04444440","00444400","00000000","55555555","55555555","55555555"],
+  apfel:["00003200","00003000","01111110","11111111","11111111","11111111","01111110","00111100"],
+  sonne:["00111100","01111110","01111110","00111100","00000000","22222222","22222222","22222222"],
+};
+/* Farbcodes: In jedem Bild gilt ein eigener Schlüssel (1, 2, 3 …). 0 ist immer weiß. */
+const SCHLUESSEL={
+  apfel:[["Rot","#E5383B"],["Grün","#2DA44E"],["Braun","#8B5A2B"]],
+  sonne:[["Gelb","#F5C518"],["Blau","#2F6FDE"]],
 };
 
 /* Wird beim Tippen auf „Weiter“ aufgerufen. true = richtig. Ab dem 3. Fehlversuch werden falsche Kästchen rot umrandet. */
@@ -48,18 +53,22 @@ function abmalen(name,titel,punkte){return{titel,punkte,zeige(el,ctx){
 }}}
 
 function codeBild(name,titel,punkte,farbig){return{titel,punkte,zeige(el,ctx){
-  const roh=BILDER[name],soll=zahlen(roh),pal=farbig?PAL:SW;
-  const genutzt=[...new Set(soll)].sort((a,b)=>a-b);
+  const roh=BILDER[name],soll=zahlen(roh);
+  const key=farbig?SCHLUESSEL[name]:null;
+  const pal=farbig?["#FFFFFF",...key.map(x=>x[1])]:SW;
+  const ziffer=c=>farbig&&c!=="0"?`<span class="z" style="--c:${pal[+c]}">${c}</span>`:`<span>${c}</span>`;
   el.innerHTML=(farbig
-    ?`<p>Jede Zahl ist eine Farbe. Wähl unten eine Farbe aus und mal Zeile für Zeile. Die <b>0</b> bleibt weiß. Verklickt? Nimm den Radierer 🧽.</p>`
+    ?`<div class="regel"><b>Neue Regel:</b> Jetzt ist jede Zahl eine <b>Farbe</b>. Schau in den Schlüssel: Welche Zahl ist welche Farbe?</div>
+      <p class="eyebrow" style="margin-top:12px">🔑 Schlüssel – tippe auf eine Farbe, dann auf die Kästchen</p><div class="schluessel" id="key">${key.map(([n,c],k)=>`<button data-f="${k+1}" style="--c:${c}"><b>${k+1}</b><span class="sw"></span>${n}</button>`).join("")}<button data-f="0" class="rad" style="--c:#fff"><b>0</b><span class="sw"></span>Weiß 🧽</button></div>`
     :`<p>Das ist ein Geheimcode. <b>1</b> heißt schwarz, <b>0</b> heißt weiß. Mal jede Zeile so, wie der Code es sagt. Was kommt heraus?</p>`)+
-    `<div class="paar"><div><p class="eyebrow">Code</p><ol class="code">${roh.map(z=>`<li>${z.split("").map(c=>`<span>${c}</span>`).join("")}</li>`).join("")}</ol></div>
+    `<div class="paar"><div><p class="eyebrow">Code</p><ol class="code">${roh.map(z=>`<li>${z.split("").map(ziffer).join("")}</li>`).join("")}</ol></div>
     <div><p class="eyebrow">Dein Bild</p><div id="b"></div></div></div>
-    ${farbig?`<div class="legende">${genutzt.map(k=>`<span><i style="background:${PAL[k]}"></i>${k} = ${NAMEN[k]}</span>`).join("")}</div><div id="pal"></div>`:""}
     <div class="row noprint" style="margin-top:14px"><button class="btn ghost" id="l">Alles löschen</button><span class="muted small">Fertig? Tippe unten auf „Weiter“ – dann wird geprüft.</span></div><div id="m"></div>`;
-  let leiste=null;
-  if(farbig){leiste=farbLeiste(PAL.slice(0,Math.max(...genutzt)+1),NAMEN,genutzt.find(k=>k>0));el.querySelector("#pal").append(leiste.el)}
-  const r=pixelRaster({w:8,h:8,werte:ctx.daten.bild,palette:pal,malbar:true,farbe:leiste?leiste.farbe:()=>1,onAenderung:v=>{ctx.daten.bild=v.slice();ctx.speichern()}});
+  let wahl=1;
+  if(farbig){const knoepfe=el.querySelectorAll("#key button");
+    const setze=f=>{wahl=f;knoepfe.forEach(b=>b.classList.toggle("an",+b.dataset.f===f))};
+    knoepfe.forEach(b=>b.onclick=()=>setze(+b.dataset.f));setze(1)}
+  const r=pixelRaster({w:8,h:8,werte:ctx.daten.bild,palette:pal,malbar:true,farbe:()=>wahl,onAenderung:v=>{ctx.daten.bild=v.slice();ctx.speichern()}});
   el.querySelector("#b").append(r.el);
   const zeilen=el.querySelectorAll(".code li");
   const leuchte=z=>zeilen.forEach((li,k)=>li.classList.toggle("an",k===z));
@@ -103,14 +112,14 @@ station({
     codeBild("apfel","Farbcode 1",15,true),
     codeBild("sonne","Farbcode 2",15,true),
     frage("Frage","Für den Computer ist jede Farbe eine …",["🔢 Zahl","🖍️ Wachsmalstift"],
-      "Richtig! Rot ist für den Computer zum Beispiel die Zahl 2. <b>Jede Farbe ist eine Zahl.</b>",5),
+      "Richtig! Beim Apfel war Rot die Zahl 1. <b>Jede Farbe ist für den Computer eine Zahl.</b>",5),
     {titel:"Dein eigenes Bild",punkte:20,zeige(el,ctx){
       el.innerHTML=`<p>Jetzt bist du dran! Mal ein eigenes Bild auf 16 mal 16 Kästchen. Gib ihm einen Namen. Die schönsten und kreativsten Bilder bekommen die beste Note.</p>
         <label class="f" for="t">Name deines Bildes</label><input type="text" id="t" maxlength="40" placeholder="z. B. Mein Haustier">
         <div id="pal" style="margin-top:14px"></div><div class="frei" id="b"></div>
         <div class="row noprint" style="margin-top:14px"><button class="btn ghost" id="l">Alles löschen</button><span class="muted small" id="z"></span></div><div id="m"></div>`;
       const t=el.querySelector("#t");t.value=ctx.daten.titel||"";t.oninput=()=>{ctx.daten.titel=t.value;ctx.speichern()};
-      const leiste=farbLeiste(PAL,NAMEN,1);el.querySelector("#pal").append(leiste.el);
+      const leiste=farbLeiste(PAL,NAMEN,1,false,false);el.querySelector("#pal").append(leiste.el);
       const zaehle=v=>{const n=v.filter(x=>x>0).length;el.querySelector("#z").textContent=n<MIN_PIXEL?`${n} von mindestens ${MIN_PIXEL} Kästchen bemalt`:`${n} Kästchen bemalt`};
       const r=pixelRaster({w:16,h:16,werte:ctx.daten.bild,palette:PAL,malbar:true,farbe:leiste.farbe,onAenderung:v=>{ctx.daten.bild=v.slice();ctx.speichern();zaehle(v)}});
       el.querySelector("#b").append(r.el);zaehle(r.werte);

@@ -444,11 +444,11 @@ function frage(titel,text,antworten,aha,punkte=5,bild=""){return{titel,punkte,ze
 }}}
 
 /* Farbauswahl für Pixel-Raster */
-function farbLeiste(palette,nm,start=1,ohneWeiss=false){
+function farbLeiste(palette,nm,start=1,ohneWeiss=false,mitZahlen=true){
   const el=document.createElement("div");el.className="pal";let wahl=start;
   palette.forEach((f,k)=>{if(ohneWeiss&&k===0)return;const b=document.createElement("button");b.type="button";b.style.setProperty("--c",f);
     const rad=k===0;b.setAttribute("aria-label",rad?"Radierer":nm[k]);b.title=rad?"Radierer (macht weiß)":nm[k];
-    b.innerHTML=rad?`<span class="rad">🧽</span>`:`<span>${k}</span>`;b.className=(k===wahl?"an":"")+(rad?" radierer":"");
+    b.innerHTML=rad?`<span class="rad">🧽</span>`:mitZahlen?`<span>${k}</span>`:"";b.className=(k===wahl?"an":"")+(rad?" radierer":"");
     b.onclick=()=>{wahl=k;el.querySelectorAll("button").forEach(x=>x.classList.remove("an"));b.classList.add("an")};el.append(b)});
   return{el,farbe:()=>wahl};
 }
