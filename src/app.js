@@ -139,6 +139,15 @@ setInterval(()=>{const n=Date.now(),d=Math.min(n-tick,15000);tick=n;
   if(laufend&&!laufend.st.spiel&&!document.hidden&&!laufend.prog.fertig){laufend.prog.aktiv=(laufend.prog.aktiv||0)+d;speichern()}},10000);
 
 /* ---------- Seiten ---------- */
+/* Safari auf iPad/iPhone vergrößert bei schnellem Doppeltippen auf Text oder Bilder trotzdem manchmal.
+   Darum: zweites Tippen kurz nach dem ersten nicht als Zoom-Geste durchlassen – außer auf Knöpfen und Eingabefeldern,
+   damit dort schnelles Tippen (z. B. zweimal +) weiter zählt. */
+let letzteBeruehrung=0;
+document.addEventListener("touchend",e=>{const t=Date.now();
+  if(t-letzteBeruehrung<400&&e.touches.length===0&&!e.target.closest("button,a,input,textarea,select,label,summary"))e.preventDefault();
+  letzteBeruehrung=t},{passive:false});
+document.addEventListener("dblclick",e=>{if(!e.target.closest("input,textarea"))e.preventDefault()},{passive:false});
+
 function render(){
   aufraeumen();
   document.body.dataset.seite=location.hash.startsWith("#lehrer")?"lehrer":"kind";

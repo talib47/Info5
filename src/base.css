@@ -729,3 +729,6 @@ body[data-seite="lehrer"] #app{max-width:76rem}
 .heute-t td,.heute-t th{padding:7px 10px}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .kib .chip{color:var(--ink)}}
 body[data-offline="1"][data-seite="kind"]::before{content:"Keine Verbindung. Dein Stand ist auf diesem Computer gesichert und wird gesendet, sobald das Internet wieder da ist. Arbeite einfach weiter.";display:block;background:var(--marker);color:var(--marker-ink);font-weight:700;padding:8px 16px;text-align:center}
+/* iPad/iPhone: Doppeltippen soll nie die Seite vergrößern (Zwei-Finger-Zoom bleibt für Sehschwache erlaubt) */
+html,body,#app,#app *{touch-action:manipulation}
+#app .arena,#app .arena *,#app .px,#app .px *{touch-action:none}
