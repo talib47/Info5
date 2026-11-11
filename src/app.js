@@ -79,10 +79,7 @@ function status(st){
   const vor=s[pfad[i-1].id];
   if(!vor?.fertig)return"zu";
   if(p)return"offen";
-  /* Pro Tag eine neue Station – eine zweite nur, wenn die erste heute ein + hat (Sorgfalt wird belohnt, nicht Tempo) */
-  if(EINE_PRO_TAG&&tagVon(vor.fertig)===heuteTag()){
-    const heute=heuteFertig().length,plus=zeichenAus(prozent(pfad[i-1],vor))==="+";
-    if(heute>=2||!plus)return"morgen"}
+  if(EINE_PRO_TAG&&tagVon(vor.fertig)===heuteTag())return"morgen";
   return"offen";
 }
 /* Der Spielplatz ist die Belohnung für gute Arbeit: Er öffnet nur, wenn die Station von heute ein + hat (Schnell-Durchklicken lohnt sich nicht). */
