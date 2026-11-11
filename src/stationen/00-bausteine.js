@@ -235,9 +235,16 @@ function tastenMissionen({titel,punkte=15,merke,text,start="",missionen}){return
     f.onkeydown=e=>{
       if((e.ctrlKey||e.metaKey)&&["s","p","f","d","h","w","n","t"].includes(e.key.toLowerCase()))e.preventDefault();
       const ms=missionen[d.m];if(!ms)return;
-      if(ms.test(e,f)){setTimeout(()=>{d.feld=f.value;d.m++;ctx.speichern();zeichne();const g=el.querySelector(".uebfeld");g.focus();
-        if(d.m>=missionen.length)ctx.geschafft(punkte);else toast("Richtig. Nächste Aufgabe.")},ms.verzoegert?150:30)}};
-    if(!fertig)setTimeout(()=>f.focus(),50);
+      if(ms.test(e,f)){setTimeout(()=>{d.feld=f.value;d.m++;ctx.speichern();zeichne();const g=el.querySelector(".uebfeld");g.focus();g.selectionStart=g.selectionEnd=g.value.length;
+        if(d.m>=missionen.length)ctx.geschafft(punkte);else toast("Richtig. Nächste Aufgabe.")},ms.verzoegert?150:30);return}
+      /* Falsche Taste: sofort sagen, was passiert ist – sonst tippen Kinder nur weiter und hängen fest */
+      if(e.ctrlKey||e.metaKey||e.key.length!==1)return;
+      const zwei=ms.tasten.length>1,shift=ms.tasten.some(t=>t.startsWith("Umschalt"));
+      if(shift&&e.getModifierState&&e.getModifierState("CapsLock"))
+        meldung(el,null,`Die <b>Feststelltaste ⇪</b> ist an. Das ist die falsche Taste. Drück sie einmal, dann ist sie aus. <b>Umschalt ⇧</b> ist die Taste direkt darunter.`);
+      else meldung(el,null,`Da kam „<b>${esc(e.key===" "?"Leerzeichen":e.key)}</b>“. Das ist noch nicht richtig. `+
+        (zwei?`Halte <b>${ms.tasten[0]}</b> fest gedrückt und drück <b>dann</b> ${ms.tasten[1]}. Erst danach loslassen.`:`Schau noch mal: ${ms.wie||""}`))};
+    if(!fertig)setTimeout(()=>{f.focus();f.selectionStart=f.selectionEnd=f.value.length},50);
   };
   zeichne();
   ctx.pruefer=()=>{if(d.m>=missionen.length){ctx.geschafft(punkte);return true}meldung(el,false,`Mach zuerst alle Aufgaben. Du bist bei Aufgabe ${d.m+1} von ${missionen.length}.`);return false};
