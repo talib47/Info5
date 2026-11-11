@@ -203,6 +203,7 @@ const vorschauHinweis=()=>db.online?"":`<p class="muted small" style="margin-top
 async function seiteKlasse(direkt=true){
   if(direkt){let offen=[];try{offen=await db.offeneKlassen()}catch(e){}
     if(offen.length===1)return seiteTier(offen[0])}
+  document.body.dataset.seite="kompakt";
   $("#app").innerHTML=kopf()+`
   <div class="plate"><p class="eyebrow">Willkommen</p><h1>In welche Klasse gehst du?</h1></div>
   <div class="wahl">${KLASSEN.map(k=>`<button class="gross" data-k="${k}">${k}</button>`).join("")}</div>${vorschauHinweis()}`;
@@ -211,11 +212,12 @@ async function seiteKlasse(direkt=true){
 
 /* 2. Tier wählen (oder neu anlegen) */
 async function seiteTier(klasse){
+  document.body.dataset.seite="kind";
   $("#app").innerHTML=kopf()+`<button class="link" id="zur">Andere Klasse</button>
   <div class="plate"><p class="eyebrow">Klasse ${esc(klasse)}</p><h1>Welches Tier bist du?</h1></div><div id="liste"><p class="muted">Einen Moment …</p></div>`;
   $("#zur").onclick=()=>seiteKlasse(false);
   let r;try{r=await db.tiere(klasse)}catch(e){$("#liste").innerHTML=`<div class="msg no">Keine Verbindung. Versuch es gleich noch mal.</div><button class="btn ghost" id="neu" style="margin-top:12px">Noch mal</button>`;$("#neu").onclick=()=>seiteTier(klasse);return}
-  if(!r.offen){const n=naechsteStunde(klasse);
+  if(!r.offen){const n=naechsteStunde(klasse);document.body.dataset.seite="kompakt";
     $("#liste").innerHTML=`<div class="block"><h2>Gerade geschlossen</h2><p>Du kannst dich nur in deiner Informatik-Stunde anmelden.${n?` Nächste Stunde: <b>${esc(n)}</b>.`:""}</p><button class="btn" id="neu">Noch mal schauen</button></div>`;$("#neu").onclick=()=>seiteTier(klasse);return}
   /* Auf diesem PC war zuletzt dieses Tier angemeldet: groß vorschlagen (die meisten sitzen am selben Platz) */
   const zl=lsGet("if5-zuletzt"),zt=zl&&zl.klasse===klasse&&r.liste.find(x=>x.tier===zl.tier&&!x.besetzt);
