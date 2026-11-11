@@ -72,7 +72,10 @@ function status(st){
   const vor=s[pfad[i-1].id];
   if(!vor?.fertig)return"zu";
   if(p)return"offen";
-  if(EINE_PRO_TAG&&tagVon(vor.fertig)===heuteTag())return"morgen";
+  /* Pro Tag eine neue Station – eine zweite nur, wenn die erste heute ein + hat (Sorgfalt wird belohnt, nicht Tempo) */
+  if(EINE_PRO_TAG&&tagVon(vor.fertig)===heuteTag()){
+    const heute=heuteFertig().length,plus=zeichenAus(prozent(pfad[i-1],vor))==="+";
+    if(heute>=2||!plus)return"morgen"}
   return"offen";
 }
 /* Der Spielplatz ist die Belohnung für gute Arbeit: Er öffnet nur, wenn die Station von heute ein + hat (Schnell-Durchklicken lohnt sich nicht). */
@@ -87,7 +90,8 @@ function spielAb(){ /* Uhrzeit (Minuten) ab der der Spielplatz heute öffnet –
 const uhr=m=>`${String(Math.floor(m/60)).padStart(2,"0")}:${String(m%60).padStart(2,"0")}`;
 const spielZeit=()=>{const a=spielAb();return a===null||berlin().min>=a};
 const spielplatzOffen=()=>VS||(plusHeute()&&spielZeit());
-const kartenHinweis=()=>{const a=spielAb();return`Hol dir jetzt bei deiner Lehrkraft die <b>Lernzeit-Karte</b> zu dieser Station.${a!==null?` Der Spielplatz öffnet um <b>${uhr(a)} Uhr</b>.`:""}`};
+const kartenHinweis=()=>{const a=spielAb(),nx=PFAD().find(x=>!meineStaende()[x.id]?.fertig),weiter=nx&&status(nx)==="offen";
+  return(weiter?`Weil du ein + hast, darfst du heute noch die <b>nächste Station</b> machen. Tippe auf „Zum Lernpfad“.`:`Hol dir jetzt bei deiner Lehrkraft die <b>Lernzeit-Karte</b> zu dieser Station.`)+(a!==null?` Der Spielplatz öffnet um <b>${uhr(a)} Uhr</b>.`:"")};
 /* Aufräumen beim Verlassen eines Teils (z. B. Tastatur-Abhörer, Zeitgeber) */
 let aufraeumListe=[];
 function aufraeumen(){aufraeumListe.forEach(f=>{try{f()}catch(e){}});aufraeumListe=[]}
