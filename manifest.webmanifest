@@ -1,7 +1,7 @@
 {
   "name": "Informatik 5",
   "short_name": "Informatik 5",
-  "description": "Stationen für Informatik in Klasse 5 – ohne Anmeldung",
+  "description": "Stationen für Informatik in Klasse 5",
   "lang": "de",
   "start_url": "./",
   "scope": "./",
