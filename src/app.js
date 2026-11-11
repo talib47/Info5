@@ -433,6 +433,7 @@ async function namenHolen(){
 async function seiteLehrer(){
   laufend=null;clearInterval(lTimer);
   if(!(await db.lSitzung()))return lehrerLogin();
+  document.body.dataset.seite="lehrer";
   $("#app").innerHTML=`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5, Lehrkraft</span></div><div class="row">${db.online?`<button class="link" id="lraus">Abmelden</button>`:""}<a class="link" href="#v">Stationen ansehen</a></div></div><div id="lb"><p class="muted">Lade …</p></div>`;
   if($("#lraus"))$("#lraus").onclick=async()=>{await db.lAbmelden();seiteLehrer()};
   if(db.online&&!lPlanGesendet){try{await db.lPlanUebertragen();lPlanGesendet=true}catch(e){toast("Stundenplan konnte nicht übertragen werden")}}
@@ -442,11 +443,12 @@ async function seiteLehrer(){
 }
 
 function lehrerLogin(){
-  $("#app").innerHTML=`<div class="top"><div class="brand">${LOGO}<span>Informatik 5, Lehrkraft</span></div></div>
-  <form class="block" id="f" style="max-width:26rem"><h2>Anmelden</h2>
-  <label class="f" for="e">E-Mail</label><input type="text" id="e" autocomplete="username" inputmode="email">
+  document.body.dataset.seite="login";
+  $("#app").innerHTML=`<div class="login-kopf">${LOGO}<div><div class="login-titel">Informatik 5</div><div class="muted small">Bereich für Lehrkräfte</div></div></div>
+  <form id="f"><label class="f" for="e">E-Mail</label><input type="text" id="e" autocomplete="username" inputmode="email">
   <div style="height:12px"></div><label class="f" for="p">Passwort</label><input type="password" id="p" autocomplete="current-password" class="pw">
-  <div style="height:16px"></div><button class="btn wide">Anmelden</button><div id="m"></div></form>`;
+  <div style="height:18px"></div><button class="btn wide">Anmelden</button><div id="m"></div></form>
+  <p class="muted small login-fuss"><a class="link" href="#">Zur Schüler-Seite</a> · Version ${VERSION}</p>`;
   $("#f").onsubmit=async e=>{e.preventDefault();try{await db.lAnmelden($("#e").value.trim(),$("#p").value);seiteLehrer()}catch(err){const m=$("#m");m.className="msg no";m.textContent="Anmeldung fehlgeschlagen."}};
 }
 

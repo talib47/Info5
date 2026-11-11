@@ -748,6 +748,14 @@ body[data-offline="1"][data-seite="kind"]::before{content:"Keine Verbindung. Dei
 /* iPad/iPhone: Doppeltippen soll nie die Seite vergrößern (Zwei-Finger-Zoom bleibt für Sehschwache erlaubt) */
 html,body,#app,#app *{touch-action:manipulation}
 #app .arena,#app .arena *,#app .px,#app .px *{touch-action:none}
+
+/* Lehrer-Anmeldung: kompakte Karte, mittig */
+body[data-seite="login"] #app{max-width:24rem;min-height:0;margin-top:max(40px,16vh);padding:28px 28px 22px}
+.login-kopf{display:flex;align-items:center;gap:12px;margin:0 0 22px;padding-bottom:16px;border-bottom:1.5px solid var(--line)}
+.login-kopf svg{width:38px;height:38px;color:var(--accent);flex:none}
+.login-titel{font-family:var(--sans);font-weight:750;font-size:1.25rem;line-height:1.2}
+.login-fuss{margin:20px 0 0;text-align:center}
+@media (max-width:560px){body[data-seite="login"] #app{margin-top:0}}
 /* Bausteine der Stationen */
 .paar{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;align-items:start;margin-top:8px}
 .px{display:grid;gap:2px;background:var(--line);border:2px solid var(--line);border-radius:10px;overflow:hidden;width:100%;max-width:340px;aspect-ratio:1;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -783,7 +791,7 @@ html,body,#app,#app *{touch-action:manipulation}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="34dd26d284";
+const VERSION="538e0d5047";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -1385,6 +1393,7 @@ async function namenHolen(){
 async function seiteLehrer(){
   laufend=null;clearInterval(lTimer);
   if(!(await db.lSitzung()))return lehrerLogin();
+  document.body.dataset.seite="lehrer";
   $("#app").innerHTML=`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5, Lehrkraft</span></div><div class="row">${db.online?`<button class="link" id="lraus">Abmelden</button>`:""}<a class="link" href="#v">Stationen ansehen</a></div></div><div id="lb"><p class="muted">Lade …</p></div>`;
   if($("#lraus"))$("#lraus").onclick=async()=>{await db.lAbmelden();seiteLehrer()};
   if(db.online&&!lPlanGesendet){try{await db.lPlanUebertragen();lPlanGesendet=true}catch(e){toast("Stundenplan konnte nicht übertragen werden")}}
@@ -1394,11 +1403,12 @@ async function seiteLehrer(){
 }
 
 function lehrerLogin(){
-  $("#app").innerHTML=`<div class="top"><div class="brand">${LOGO}<span>Informatik 5, Lehrkraft</span></div></div>
-  <form class="block" id="f" style="max-width:26rem"><h2>Anmelden</h2>
-  <label class="f" for="e">E-Mail</label><input type="text" id="e" autocomplete="username" inputmode="email">
+  document.body.dataset.seite="login";
+  $("#app").innerHTML=`<div class="login-kopf">${LOGO}<div><div class="login-titel">Informatik 5</div><div class="muted small">Bereich für Lehrkräfte</div></div></div>
+  <form id="f"><label class="f" for="e">E-Mail</label><input type="text" id="e" autocomplete="username" inputmode="email">
   <div style="height:12px"></div><label class="f" for="p">Passwort</label><input type="password" id="p" autocomplete="current-password" class="pw">
-  <div style="height:16px"></div><button class="btn wide">Anmelden</button><div id="m"></div></form>`;
+  <div style="height:18px"></div><button class="btn wide">Anmelden</button><div id="m"></div></form>
+  <p class="muted small login-fuss"><a class="link" href="#">Zur Schüler-Seite</a> · Version ${VERSION}</p>`;
   $("#f").onsubmit=async e=>{e.preventDefault();try{await db.lAnmelden($("#e").value.trim(),$("#p").value);seiteLehrer()}catch(err){const m=$("#m");m.className="msg no";m.textContent="Anmeldung fehlgeschlagen."}};
 }
 
