@@ -460,13 +460,23 @@ async function seiteLehrer(){
   laufend=null;clearInterval(lTimer);
   if(!(await db.lSitzung()))return lehrerLogin();
   document.body.dataset.seite="lehrer";
-  $("#app").innerHTML=`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5, Lehrkraft</span></div><div class="row">${db.online?`<button class="link" id="lraus">Abmelden</button>`:""}<a class="link" href="#v">Stationen ansehen</a></div></div><div id="lb"><p class="muted">Lade …</p></div>`;
+  $("#app").innerHTML=`<div class="top noprint"><div class="brand">${LOGO}<span>Informatik 5, Lehrkraft</span></div><div class="row kopf-links"><a class="link" href="#v">Stationen ansehen</a>${db.online?`<button class="link" id="lraus">Abmelden</button>`:""}</div></div><div id="lb"><p class="muted">Lade …</p></div>`;
   if($("#lraus"))$("#lraus").onclick=async()=>{await db.lAbmelden();seiteLehrer()};
   if(db.online&&!lPlanGesendet){try{await db.lPlanUebertragen();lPlanGesendet=true}catch(e){toast("Stundenplan konnte nicht übertragen werden")}}
   await namenHolen();
   await lehrerLaden();
   lTimer=setInterval(()=>{if(location.hash==="#lehrer"&&!document.hidden&&!document.activeElement?.matches("input"))lehrerLaden()},20000);
 }
+
+/* Notenverteilung von heute als Kreis (nur fertige Stationen, ganze Noten 1–6) */
+const N_FARBEN=["#1B7A3E","#58A55C","#E2B93B","#E8833A","#D24B3E","#8E2A2A"];
+function notenKreis(liste){if(!liste.length)return"";
+  const n=[0,0,0,0,0,0];liste.forEach(pz=>n[parseInt(noteAus(pz))-1]++);
+  const R=15.9155,U=100;let pos=0;
+  const teile=n.map((a,i)=>{if(!a)return"";const l=a/liste.length*U,t=`<circle r="${R}" cx="21" cy="21" fill="none" stroke="${N_FARBEN[i]}" stroke-width="7" stroke-dasharray="${l} ${U-l}" stroke-dashoffset="${25-pos}"/>`;pos+=l;return t}).join("");
+  const schnitt=(liste.reduce((a,pz)=>a+parseInt(noteAus(pz)),0)/liste.length).toFixed(1).replace(".",",");
+  return`<div class="nkreis"><svg viewBox="0 0 42 42" width="96" height="96" aria-hidden="true">${teile}<text x="21" y="20" text-anchor="middle" class="nk-z">${schnitt}</text><text x="21" y="26.5" text-anchor="middle" class="nk-t">Schnitt</text></svg>
+    <ul>${n.map((a,i)=>a?`<li><i style="background:${N_FARBEN[i]}"></i><b>${a}×</b> Note ${i+1}</li>`:"").join("")}</ul></div>`}
 
 function lehrerLogin(){
   document.body.dataset.seite="login";
@@ -519,7 +529,7 @@ function lehrerZeigen(){
   const zeile=k=>{const t=tierInfo(k.tier),s=d.staende[k.id]||{};
     const status=k.besetzt?`<span class="chip good">angemeldet</span> <button class="link" data-a="freigeben" data-id="${k.id}">abmelden</button>`:`<span class="muted small">–</span>`;
     const zellen=PFAD().map(st=>{const p=s[st.id];if(!p)return`<td class="muted c">·</td>`;const pz=prozent(st,p);
-      return`<td class="c" title="${esc(st.titel)}: ${pz} %${p.fertig?"":" · Teil "+((p.schritt||0)+1)}">${p.fertig?`<span class="chip ${zeichenKlasse(zeichenAus(pz))} gross-z">${zeichenAus(pz)}</span><span class="n16">${noteAus(pz)}</span>`:`<span class="muted small">…${pz}%</span>`}</td>`}).join("");
+      return`<td class="c" title="${esc(st.titel)}: ${pz} %${p.fertig?"":" · Teil "+((p.schritt||0)+1)}">${p.fertig?`<span class="chip ${zeichenKlasse(zeichenAus(pz))} gross-z">${noteAus(pz)}</span>`:`<span class="muted small">…${pz}%</span>`}</td>`}).join("");
     return`<tr><td class="t"><span class="e">${t.emoji}</span>${esc(t.name)}</td>
       <td><input type="text" class="vn" data-id="${k.id}" value="${esc(namen[k.id]||"")}" placeholder="Wer ist das?" list="dl-${esc(kl)}"></td><td>${status}</td>${zellen}
       <td><button class="link" data-a="mehr" data-id="${k.id}" aria-label="Mehr">⋯</button></td></tr>`};
@@ -539,10 +549,10 @@ function lehrerZeigen(){
     if(!zeilen.length)return`<div class="block"><h2 style="margin-bottom:4px">Heute</h2><p class="muted" style="margin:0">Heute hat in ${kl} noch niemand gearbeitet. Sobald Kinder anfangen, siehst du hier, wer wo ist und wer Hilfe braucht.</p></div>`;
     zeilen.sort((a,b)=>(b.hinweis?1:0)-(a.hinweis?1:0)||a.name.localeCompare(b.name,"de"));
     window._noten=zeilen.map(x=>`${x.name}\t${x.st}\t${x.z} (${noteAus(x.pz)})${x.fertig?"":" nicht fertig"}`).join("\n");
-    return`<div class="block" style="overflow-x:auto"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Heute</h2><button class="btn ghost noprint" id="kopie" style="min-height:40px;padding:6px 14px">Noten kopieren</button></div>
+    return`<div class="block" style="overflow-x:auto"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Heute</h2>${notenKreis(zeilen.filter(x=>x.fertig).map(x=>x.pz))}<button class="btn ghost noprint" id="kopie" style="min-height:40px;padding:6px 14px">Noten kopieren</button></div>
       <p class="muted small" style="margin:4px 0 10px">Aktualisiert sich alle 20 Sekunden. Kinder mit Hinweis stehen oben. Wer nicht fertig wurde, bekommt das Zeichen für das, was geschafft ist.</p>
       <table class="liste heute-t"><thead><tr><th>Kind</th><th>Station</th><th>Stand</th><th class="c">Minuten</th><th class="c">Fehlversuche</th><th>Hinweis</th><th class="c">Note</th></tr></thead><tbody>
-      ${zeilen.map(x=>`<tr class="${x.hinweis?"auff":""}"><td class="t">${esc(x.name)}</td><td>${esc(x.st)}</td><td>${x.fertig?"fertig":x.teil}</td><td class="c">${x.min}</td><td class="c">${x.fGes}</td><td>${x.hinweis?`<b>${x.hinweis}</b>`:""}</td><td class="c"><span class="chip ${zeichenKlasse(x.z)} gross-z">${x.z}</span><span class="n16">${noteAus(x.pz)}</span></td></tr>`).join("")}</tbody></table></div>`})()}
+      ${zeilen.map(x=>`<tr class="${x.hinweis?"auff":""}"><td class="t">${esc(x.name)}</td><td>${esc(x.st)}</td><td>${x.fertig?"fertig":x.teil}</td><td class="c">${x.min}</td><td class="c">${x.fGes}</td><td>${x.hinweis?`<b>${x.hinweis}</b>`:""}</td><td class="c"><span class="chip ${zeichenKlasse(x.z)} gross-z" title="${x.z} · ${x.pz} %">${noteAus(x.pz)}</span></td></tr>`).join("")}</tbody></table></div>`})()}
   <div class="block" style="overflow-x:auto"><h2 style="margin-bottom:8px">Alle Stationen</h2>
     ${kinder.length?`<table class="liste"><thead><tr><th>Tier</th><th>Vorname <span class="muted small">(nur hier)</span></th><th>Status</th>${PFAD().map((st,i)=>`<th class="c" title="${esc(st.titel)}">${i+1}</th>`).join("")}<th></th></tr></thead><tbody>${kinder.map(zeile).join("")}</tbody></table>`
       :`<p style="margin:0">Noch keine Kinder in ${kl}. Trag unten die Klassenliste ein, dann bekommt jedes Kind ein Tier.</p>`}

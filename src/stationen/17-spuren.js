@@ -36,5 +36,21 @@ station({
         <p class="muted small">Tipp: Jeden Buchstaben um den Schlüssel im Alphabet <b>zurück</b> schieben.</p></div>`,
       antwort:"DIPLOM",platz:"Lösungswort",
       merke:"Wer diese Mission knackt, hat den ganzen Lernpfad geschafft – und ist ein echtes <b>Informatik-Ass</b>. 🎓"}),
+    /* ---- Ergänzt im Nov. 2026 (mehr Übung, damit die Station eine Stunde füllt; neue Teile immer hinten anhängen) ---- */
+    sortieren({titel:"Verrät das, wer du bist?",punkte:10,text:"Manche Daten verraten, <b>wer</b> du bist. Man nennt sie <b>persönliche Daten</b>. Sortiere!",
+      toepfe:[["p","Persönlich – verrät mich","🪪"],["n","Nicht persönlich","🙂"]],
+      karten:[["Dein voller Name","","p"],["Deine Adresse","","p"],["Ein Foto von deinem Gesicht","","p"],["Deine Handynummer","","p"],["Deine Lieblingsfarbe","","n"],["Das Wetter heute","","n"],["Dein Lieblingsessen","","n"]]}),
+    fehlerSuche({titel:"Der Ferien-Post",punkte:15,art:"📸 Post in einer App",
+      text:"Dieser Post verrät zu viel. Finde die 4 gefährlichen Stellen.",
+      teile:[["Endlich Ferien! ☀️"],["Wir fliegen morgen für 2 Wochen weg.",true,"Jetzt weiß jeder: Eure Wohnung ist 2 Wochen leer."],["Foto: ich vor unserem Haus mit Hausnummer",true,"Mit der Hausnummer kann man dich finden."],["#Ferien #Sommer"],["Standort: Lindenstraße, Duisburg",true,"Der Standort verrät, wo du wohnst."],["Schreibt mir: 0176 …",true,"Deine Nummer gehört nicht in einen öffentlichen Post."]],
+      merke:"Urlaubsfotos lieber <b>nach</b> den Ferien posten – und ohne Adresse."}),
+    entscheidung({titel:"Wer darf das sehen?",punkte:15,
+      szenen:[
+        {bild:"👤",text:"Du richtest ein neues Profil ein. Es fragt: „Öffentlich“ oder „Privat“?",optionen:[["Privat",true,"Richtig. Dann sehen nur deine Freunde deine Posts."],["Öffentlich – dann bekomme ich mehr Likes",false,"Dann sieht jeder Fremde alles."]]},
+        {bild:"➕",text:"Ein Fremder will dir folgen.",optionen:[["Ablehnen",true,"Genau. Fremde müssen nicht sehen, was du postest."],["Annehmen, mehr Follower sind cool",false,"Fremde Follower sehen dann alles von dir."]]},
+        {bild:"📸",text:"Du willst ein Klassenfoto in deinen Status stellen.",optionen:[["Nur, wenn alle auf dem Foto einverstanden sind",true,"Super. Jeder hat das Recht am eigenen Bild."],["Einfach posten",false,"Das dürfen nicht alle wollen."]]},
+      ]}),
+    reihenfolge({titel:"Eine App sicher einrichten",punkte:10,text:"Du bekommst eine neue App. Bring die Schritte in eine gute Reihenfolge.",
+      schritte:["Die App zusammen mit den Eltern herunterladen","Einen Spitznamen statt des echten Namens wählen","Ein starkes Passwort ausdenken","Das Profil auf „privat“ stellen","Berechtigungen prüfen und Unnötiges ablehnen"]}),
   ],
 });

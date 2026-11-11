@@ -31,5 +31,18 @@ station({
     auswaehlen({titel:"Suchen und Sortieren überall",punkte:10,text:"Wo sucht oder sortiert ein Computer für dich? Tippe alles an.",
       karten:[["🔎 Suchmaschine im Internet",true],["📇 Kontakte im Handy nach ABC",true],["🏆 Bestenliste im Spiel",true],["🛒 Online-Shop „nach Preis sortieren“",true],["🎵 Musik-App sucht ein Lied",true],["🔦 Taschenlampe",false],["🧸 Kuscheltier",false]],
       merke:"Suchen und Sortieren gehören zu den wichtigsten Aufgaben von Computern – jeden Tag milliardenfach."}),
+    /* ---- Ergänzt im Nov. 2026 (mehr Übung, damit die Station eine Stunde füllt; neue Teile immer hinten anhängen) ---- */
+    zahlRaten({titel:"Zahlen-Detektiv bis 50",punkte:10,bis:50,max:6,
+      text:"Eine Zahl von 1 bis 50. Mit dem Mitte-Trick schaffst du es in höchstens <b>6 Versuchen</b>."}),
+    tauschSortieren({titel:"Noch einmal tauschen",punkte:15,zahlen:[6,4,5,1,3,2],
+      text:"Sortiere von klein nach groß. Nur Nachbarn tauschen!"}),
+    reihenfolge({titel:"Fußballer nach dem ABC",punkte:10,text:"Bring die Namen in die ABC-Reihenfolge.",
+      schritte:["Haaland","Kane","Messi","Musiala","Ronaldo","Wirtz"]}),
+    entscheidung({titel:"Clever suchen 2",punkte:10,frage:"Wie gehst du am schnellsten vor?",
+      szenen:[
+        {bild:"📇",text:"Du suchst im Handy den Kontakt <b>Yusuf</b>. Die Kontakte sind nach ABC sortiert.",optionen:[["Gleich zum Y springen",true,"Genau. Weil die Liste sortiert ist, musst du nicht alles durchgehen."],["Bei A anfangen und alle durchlesen",false,"Das dauert viel zu lange."]]},
+        {bild:"🧱",text:"Du suchst ein bestimmtes Lego-Teil in einer Kiste, in der alles durcheinander liegt.",optionen:[["Ein Teil nach dem anderen anschauen",true,"Richtig. Unsortiert geht es nicht schneller."],["In der Mitte der Kiste anfangen",false,"In einer unsortierten Kiste hilft die Mitte nicht."]]},
+        {bild:"🏆",text:"Du willst wissen, wer in der Bestenliste auf Platz 1 ist.",optionen:[["Ganz oben schauen",true,"Genau. Die Liste ist nach Punkten sortiert."],["Alle Namen vergleichen",false,"Nicht nötig, sie ist schon sortiert."]]},
+      ]}),
   ],
 });

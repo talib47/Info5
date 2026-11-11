@@ -759,3 +759,24 @@ body[data-seite="kompakt"] .wahl{margin-bottom:4px}
 /* Schulnote 1–6 neben dem Zeichen */
 .stempel .note16{font:800 1.25rem/1 var(--sans);margin:-4px 0 4px}
 .n16{display:inline-block;margin-left:6px;font-weight:750;font-size:.9375rem;white-space:nowrap}
+
+/* Lehrer-Kopf: beide Links auf einer Linie */
+.kopf-links{gap:18px}
+.kopf-links .link{display:inline-flex;align-items:center;min-height:40px;padding:0;margin:0;font:600 1rem/1.2 var(--sans)}
+/* Notenkreis */
+.nkreis{display:flex;align-items:center;gap:14px;margin:6px 0 4px auto}
+.nkreis ul{list-style:none;margin:0;padding:0;display:grid;gap:3px;font-size:.9375rem}
+.nkreis li{display:flex;align-items:center;gap:7px}
+.nkreis li i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.nk-z{font:800 9px var(--sans);fill:var(--ink)}
+.nk-t{font:600 4px var(--sans);fill:var(--muted)}
+
+/* Tasten-Aufgaben: geschafft deutlich zeigen, neue Aufgabe kurz aufleuchten lassen */
+.tastaufgabe.geschafft{border-color:var(--good);background:var(--good-soft);text-align:center;padding:22px 18px}
+.tastaufgabe.geschafft .was{color:var(--good);font-size:1.75rem;margin:0 0 4px}
+.tastaufgabe.geschafft .wie{margin:0 auto;color:var(--good)}
+.tastaufgabe .haken{margin:0;font:800 2.75rem/1 var(--sans);color:var(--good);animation:haken .35s ease-out}
+@keyframes haken{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+.tastaufgabe.neu{animation:neu 1.2s ease-out}
+@keyframes neu{0%{box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 45%,transparent);border-color:var(--accent)}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion:reduce){.tastaufgabe .haken,.tastaufgabe.neu{animation:none}}

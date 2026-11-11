@@ -50,5 +50,23 @@ station({
     reihenfolge({titel:"Richtig starten und beenden",punkte:10,text:"So gehst du mit dem Schul-PC um. Bring die Schritte in die richtige Reihenfolge.",
       schritte:["PC einschalten","Warten, bis Windows fertig geladen ist","Programm öffnen und arbeiten","Arbeit speichern","Programm schließen","PC herunterfahren"],
       merke:"Nie einfach den Stecker ziehen – immer <b>herunterfahren</b>. Sonst können Daten kaputtgehen."}),
+    /* ---- Ergänzt im Nov. 2026 (mehr Übung, damit die Station eine Stunde füllt; neue Teile immer hinten anhängen) ---- */
+    auswaehlen({titel:"Rein und raus zugleich",punkte:10,text:"Manche Geräte können <b>beides</b>: Daten hineinbringen und herausgeben. Welche? Tippe sie an.",
+      karten:[["👆 Touchscreen",true,"spürt den Finger und zeigt Bilder"],["🎧 Headset mit Mikrofon",true],["🎮 Controller, der vibriert",true],["🥽 VR-Brille mit Bewegungs-Sensor",true],["🖱️ Maus",false],["🖨️ Drucker",false],["⌨️ Tastatur",false],["🔊 Lautsprecher",false]],
+      merke:"Geräte wie der <b>Touchscreen</b> sind Eingabe- und Ausgabegerät in einem."}),
+    paare({titel:"Welches Programm nimmst du?",punkte:10,text:"Für jede Aufgabe gibt es die passende Software. Verbinde.",
+      paare:[["📝 Word","einen Text schreiben"],["🌐 Firefox","im Internet surfen"],["🧮 Taschenrechner","schnell etwas ausrechnen"],["🐱 Scratch","ein Spiel programmieren"],["📁 Explorer","Dateien und Ordner finden"],["🎨 Paint","ein Bild malen"]]}),
+    sortieren({titel:"EVA beim Zocken",punkte:15,text:"Auch eine Spielkonsole arbeitet nach dem EVA-Prinzip. Sortiere!",
+      toepfe:[["e","Eingabe","⬇️"],["v","Verarbeitung","⚙️"],["a","Ausgabe","⬆️"]],
+      karten:[["Du drückst A auf dem Controller","🎮","e"],["Du sprichst ins Headset","🎧","e"],["Die Konsole berechnet, wie hoch die Figur springt","⚙️","v"],["Die Konsole prüft, ob du das Level geschafft hast","⚙️","v"],["Die Figur springt auf dem Fernseher","📺","a"],["Der Controller vibriert","📳","a"]]}),
+    entscheidung({titel:"Welches Teil hilft?",punkte:15,text:"Ein Computer hat ein Problem. Welches Teil müsste man verbessern?",
+      szenen:[
+        {bild:"🐌",text:"Wenn viele Programme gleichzeitig offen sind, wird der PC ganz langsam.",optionen:[["Mehr Arbeitsspeicher (RAM)",true,"Richtig. Im Arbeitsspeicher liegt alles, was gerade läuft."],["Ein größerer Bildschirm",false,"Der Bildschirm zeigt nur an. Schneller wird nichts."],["Eine neue Maus",false,"Die Maus ist nur ein Eingabegerät."]]},
+        {bild:"📸",text:"Auf dem Laptop ist kein Platz mehr für neue Fotos.",optionen:[["Eine größere Festplatte",true,"Genau. Auf der Festplatte werden Dateien dauerhaft gespeichert."],["Ein stärkeres Netzteil",false,"Das Netzteil liefert nur Strom."],["Mehr Lautsprecher",false,"Die machen nur Töne."]]},
+        {bild:"🎮",text:"Ein Spiel ruckelt, weil die Bilder zu langsam berechnet werden.",optionen:[["Eine bessere Grafikkarte",true,"Richtig. Die Grafikkarte berechnet die Bilder."],["Eine neue Tastatur",false,"Die Tastatur hat damit nichts zu tun."],["Ein USB-Stick",false,"Der speichert nur Dateien."]]},
+        {bild:"📶",text:"Der Computer findet kein WLAN.",optionen:[["Den WLAN-Chip prüfen",true,"Genau. Er verbindet den PC mit dem Internet."],["Den Drucker ausschalten",false,"Der Drucker ist nicht schuld."],["Die Festplatte leeren",false,"Das hilft beim Internet nicht."]]},
+      ]}),
+    eingabe({titel:"Das Gehirn des Computers",punkte:10,text:"Wie heißt das Teil, das im Computer alles ausrechnet? Schreib die Abkürzung mit <b>3 Buchstaben</b>.",
+      antwort:["CPU"],platz:"Abkürzung",merke:"<b>CPU</b> heißt Central Processing Unit. Auf Deutsch: <b>Prozessor</b>."}),
   ],
 });

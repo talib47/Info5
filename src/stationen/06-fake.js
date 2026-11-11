@@ -39,5 +39,21 @@ station({
     reihenfolge({titel:"Der Fakten-Check",punkte:10,text:"Du liest eine krasse Nachricht. Wie prüfst du, ob sie stimmt?",
       schritte:["Stopp – nicht sofort weiterschicken","Prüfen: Wer hat das geschrieben?","Nachschauen, ob bekannte Seiten (z. B. logo! oder die Tagesschau) auch darüber berichten","Wenn du unsicher bist: Erwachsene fragen","Nur weiterschicken, was wirklich stimmt"],
       merke:"Erst denken, dann teilen. So stoppst du Falschmeldungen."}),
+    /* ---- Ergänzt im Nov. 2026 (mehr Übung, damit die Station eine Stunde füllt; neue Teile immer hinten anhängen) ---- */
+    fehlerSuche({titel:"Das Robux-Angebot",punkte:15,art:"🎮 Nachricht in einem Spiel",
+      text:"Diese Nachricht kommt in einem Spiel. Finde die 5 verdächtigen Stellen!",
+      teile:[["Hey! 👋"],["Ich bin Mitarbeiter von Roblox.",true,"Echte Mitarbeiter schreiben dir nicht privat im Spiel."],["Du bekommst 10.000 Robux gratis!",true,"Gratis-Robux gibt es nicht. Das ist der Köder."],["Gib dafür nur deinen Benutzernamen und dein Passwort ein:",true,"Niemand Echtes fragt nach deinem Passwort."],["robux-gratis-geschenk.xyz",true,"Eine seltsame Adresse – nicht roblox.com."],["Das Angebot gilt nur heute!",true,"Zeitdruck ist ein typischer Trick."]],
+      merke:"Gratis-Robux, Gratis-V-Bucks, Gratis-Skins: <b>Immer Betrug.</b>"}),
+    sortieren({titel:"Echt oder Fake? Teil 2",punkte:10,text:"Welche Nachrichten sind wahrscheinlich echt, welche Fake?",
+      toepfe:[["e","Wahrscheinlich echt","✅"],["f","Fake – Vorsicht!","🚩"]],
+      karten:[["SMS: Dein Paket kommt nicht. Klick hier: bit.ly/p4k3t","📦","f"],["IServ: Morgen fällt die 3. Stunde aus","🏫","e"],["TikTok-Nachricht: Dein Konto wird gesperrt! Gib dein Passwort ein","📱","f"],["Dein Trainer im Vereins-Chat: Training fällt heute aus","⚽","e"],["Du wurdest für ein neues iPhone ausgewählt!","🎁","f"],["Oma ruft an und fragt, wie es dir geht","👵","e"]]}),
+    paare({titel:"Fake-Wörter",punkte:10,text:"Verbinde die Wörter mit ihrer Bedeutung.",
+      paare:[["🎣 Phishing","mit falschen Nachrichten nach Passwörtern angeln"],["📨 Kettenbrief","Nachricht, die man an viele weiterschicken soll"],["📰 Fake News","eine falsche Meldung"],["🗑️ Spam","lästige Werbe-Nachrichten"],["📸 Screenshot","ein Bild vom Bildschirm als Beweis"]]}),
+    entscheidung({titel:"Was tust du? Teil 2",punkte:15,
+      szenen:[
+        {bild:"☎️",text:"Ein Anrufer sagt: „Hier ist der Computer-Support. Dein PC hat Viren. Installier schnell dieses Programm!“",optionen:[["Auflegen und den Eltern erzählen",true,"Richtig. Echte Firmen rufen nicht einfach so an."],["Das Programm installieren",false,"Dann haben Betrüger Zugriff auf euren PC."]]},
+        {bild:"📱",text:"Deine Mama bekommt eine Nachricht: „Hallo Mama, das ist meine neue Nummer. Kannst du mir Geld schicken?“ Du hast aber keine neue Nummer.",optionen:[["Mama sagen: Das bin ich nicht – das ist Betrug!",true,"Super. Dieser Trick heißt Enkeltrick per WhatsApp."],["Nichts sagen",false,"Dann schickt Mama vielleicht Geld an Betrüger."]]},
+        {bild:"▶️",text:"In einem Video heißt es: „Gratis-Skins! Link in der Beschreibung!“",optionen:[["Nicht klicken",true,"Genau. Hinter solchen Links steckt oft Betrug."],["Schnell klicken, bevor es weg ist",false,"Zeitdruck ist ein Trick!"]]},
+      ]}),
   ],
 });

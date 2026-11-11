@@ -45,6 +45,22 @@ station({
         {bild:"🗑️",text:"Du hast aus Versehen eine wichtige Datei gelöscht.",optionen:[["Im Papierkorb nachschauen und wiederherstellen",true,"Genau! Gelöschte Dateien liegen erst mal im Papierkorb."],["Weinen – sie ist für immer weg",false,"Keine Panik! Schau erst in den Papierkorb."],["Noch mehr Dateien löschen",false,"Bloß nicht!"]]},
         {bild:"🏠",text:"Du hast am Schul-PC gearbeitet und brauchst die Datei zu Hause.",optionen:[["Die Datei in IServ hochladen oder auf einen USB-Stick speichern",true,"Super! So nimmst du die Datei mit."],["Den Bildschirm abfotografieren",false,"Dann hast du nur ein Foto, keine Datei zum Weiterarbeiten."],["Hoffen, dass sie zu Hause auch da ist",false,"Dateien wandern nicht von allein von PC zu PC."]]},
       ],merke:"Gelöschte Dateien landen zuerst im <b>Papierkorb</b>. Erst wenn du ihn leerst, sind sie wirklich weg."}),
+    /* ---- Ergänzt im Nov. 2026 (mehr Übung, damit die Station eine Stunde füllt; neue Teile immer hinten anhängen) ---- */
+    ordnerPfad({titel:"Das Ferienfoto",punkte:10,datei:"🏖️ strand-italien.jpg",baum:SCHULE,ziel:["Bilder","Ferien"],
+      text:"Wohin gehört dein Foto vom Strand? Klick dich zum passenden Ordner und speichere."}),
+    ordnerPfad({titel:"Die Englisch-Vokabeln",punkte:10,datei:"📝 vocabulary-unit-4.docx",baum:SCHULE,ziel:["Dokumente","Schule","Englisch"],
+      text:"Deine Englisch-Vokabeln sollen in den richtigen Ordner. Such ihn!"}),
+    sortieren({titel:"Was steckt in der Datei? Teil 2",punkte:10,text:"Neue Dateien, gleiche Regel: Die Endung verrät den Inhalt. Sortiere!",
+      toepfe:[["b","Bilder","🖼️"],["m","Musik","🎵"],["d","Dokumente","📄"],["v","Videos","🎬"]],
+      karten:[["panini-karte.jpg","","b"],["sprachnachricht.mp3","","m"],["zeugnis-scan.pdf","","d"],["fallrueckzieher.mp4","","v"],["minecraft-haus.png","","b"],["vortrag-planeten.pptx","","d"],["klingelton.mp3","","m"],["tiktok-tanz.mp4","","v"]]}),
+    eingabe({titel:"Noch ein Pfad",punkte:10,
+      text:"Lies den Pfad von links nach rechts.",
+      html:`<div class="block" style="margin-top:12px;font:700 1.125rem ui-monospace,Menlo,Consolas,monospace">💻 Dieser PC › 📁 Dokumente › 📁 Schule › 📁 Mathe › 📄 brueche.pdf</div>
+        <p class="frage">In welchem Ordner liegt der Ordner <b>Mathe</b>?</p>`,
+      antwort:["Schule","📁 Schule"],platz:"Name des Ordners"}),
+    reihenfolge({titel:"Eine Datei umbenennen",punkte:10,text:"Deine Datei heißt „Neues Dokument (3)“. So gibst du ihr einen guten Namen. Welche Reihenfolge stimmt?",
+      schritte:["Rechtsklick auf die Datei","„Umbenennen“ auswählen","Den alten Namen löschen","Den neuen Namen eintippen","Enter drücken"],
+      merke:"Profi-Trick: Datei anklicken und <b>F2</b> drücken. Dann kannst du sofort umbenennen."}),
   ],
 });
 }

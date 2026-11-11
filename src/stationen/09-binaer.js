@@ -45,6 +45,20 @@ station({
     binaerTresor({titel:"Profi-Tresor",punkte:20,zahlen:[13,27,19],hilfe:false,
       text:"Der Profi-Tresor zeigt keine Summe mehr an. Rechne im Kopf! Der Tresor geht trotzdem auf, wenn es stimmt.",
       merke:"Super. Du kannst jetzt Binär – die Sprache aller Computer."}),
+    /* ---- Ergänzt im Nov. 2026 (mehr Übung, damit die Station eine Stunde füllt; neue Teile immer hinten anhängen) ---- */
+    binaerTresor({titel:"Noch mehr Tresore",punkte:15,zahlen:[11,14,22,29],
+      text:"Vier neue Tresore. Fang mit der größten Karte an, die noch passt!"}),
+    eingabe({titel:"Binär lesen 3",punkte:10,zahl:true,
+      text:"Welche Zahl ist das? Zähle die Werte der Einsen zusammen.",
+      html:`<table class="bittab" style="margin-top:12px"><thead><tr><th>16</th><th>8</th><th>4</th><th>2</th><th>1</th></tr></thead><tbody><tr>${[..."10011"].map(b=>`<td class="${b==="1"?"eins":""}">${b}</td>`).join("")}</tr></tbody></table>`,
+      antwort:"19",platz:"Zahl"}),
+    eingabe({titel:"Buchstaben-Code 2",punkte:15,
+      text:"Noch ein Geheimwort aus dem Fußball. Rechne jede Zeile in eine Zahl um und such den Buchstaben.",
+      html:`${ABC_TAB}${bitTabelle(["10100","01111","10010"])}`,antwort:"TOR",platz:"Geheimwort"}),
+    eingabe({titel:"Selbst verschlüsseln 2",punkte:15,
+      text:"Schreib das Wort <b>JA</b> im Binärcode. Für jeden Buchstaben 5 Stellen, dazwischen ein Leerzeichen.",
+      html:ABC_TAB,antwort:["01010 00001","0101000001"],platz:"z. B. 00001 00010",
+      merke:"<b>J</b> = 10 = 8 + 2 = 01010 · <b>A</b> = 1 = 00001"}),
   ],
 });
 }

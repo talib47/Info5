@@ -40,5 +40,21 @@ station({
     auswaehlen({titel:"Unsere Chat-Regeln",punkte:10,text:"Eure Klasse macht Regeln für den Klassenchat. Welche Regeln sind <b>gut</b>? Tippe sie an.",
       karten:[["Wir schreiben freundlich.",true],["Keine Fotos von anderen ohne Erlaubnis.",true],["Nach 21 Uhr ist Chat-Pause.",true],["Wer nervt, wird rausgeworfen.",false],["Streit klären wir in echt, nicht im Chat.",true],["Jeder darf alles posten.",false],["Wir lachen niemanden aus.",true]],
       merke:"Gute Regeln schützen <b>alle</b> – auch dich."}),
+    /* ---- Ergänzt im Nov. 2026 (mehr Übung, damit die Station eine Stunde füllt; neue Teile immer hinten anhängen) ---- */
+    fehlerSuche({titel:"Der Gruppenchat",punkte:15,art:"💬 Gruppenchat der Klasse",
+      text:"In diesem Chat laufen manche Nachrichten schief. Finde die 4 Nachrichten, die <b>nicht okay</b> sind.",
+      teile:[["Lina: Wer hat die Mathe-Aufgaben?"],["Ben: Ich schick sie gleich 📄"],["Max: Lasst uns Jonas aus der Gruppe werfen 😂",true,"Jemanden absichtlich ausschließen ist gemein."],["Ela: Hier ist ein Foto von Jonas beim Schlafen 😂",true,"Ohne Erlaubnis kein Foto von anderen posten."],["Tom: Schickt das an alle weiter, sonst passiert euch was 👻",true,"Kettenbriefe machen Angst. Nicht weiterschicken."],["Sara: Morgen Sport, Turnschuhe nicht vergessen!"],["Max: Jonas ist so ein Loser 👎",true,"Beleidigungen sind nie okay."]],
+      merke:"Wenn du so etwas siehst: nicht mitmachen, Screenshot machen, einer Lehrkraft zeigen."}),
+    paare({titel:"Netz-Wörter",punkte:10,text:"Verbinde die Wörter mit ihrer Bedeutung.",
+      paare:[["😡 Cybermobbing","jemanden im Netz immer wieder fertigmachen"],["🚫 Blockieren","die Person kann dir nicht mehr schreiben"],["🚩 Melden","der App Bescheid sagen"],["🔒 Privatsphäre","was nur dich etwas angeht"],["📸 Screenshot","ein Bild vom Bildschirm als Beweis"]]}),
+    entscheidung({titel:"Online-Freunde",punkte:15,
+      szenen:[
+        {bild:"🎮",text:"Ein Spieler, mit dem du oft Brawl Stars zockst, will dich treffen. Du kennst ihn nur online.",optionen:[["Nein sagen und den Eltern davon erzählen",true,"Richtig. Online kann sich jeder als Kind ausgeben."],["Hingehen, er ist ja nett",false,"Du weißt nicht, wer wirklich dahinter steckt."]]},
+        {bild:"📹",text:"Jemand aus dem Chat will einen Video-Anruf, wenn du allein im Zimmer bist.",optionen:[["Ablehnen und einem Erwachsenen Bescheid sagen",true,"Genau. Das ist ein Warnzeichen."],["Mitmachen, ist doch nur ein Video",false,"Fremde sollen dich nicht allein sehen."]]},
+        {bild:"😰",text:"Dir schickt jemand ein Bild, das dir Angst macht.",optionen:[["Nicht weiterschicken und einem Erwachsenen zeigen",true,"Super. Du hast nichts falsch gemacht."],["Allen in der Klasse zeigen",false,"So verbreitest du es weiter."]]},
+      ],merke:"Online-Freunde sind <b>Fremde</b>, bis deine Eltern sie kennen."}),
+    auswaehlen({titel:"Vor dem Senden",punkte:10,text:"Bevor du etwas postest, stellst du dir Fragen. Welche Fragen sind <b>gut</b>? Tippe sie an.",
+      karten:[["Würde ich das auch ins Gesicht sagen?",true],["Ist das freundlich?",true],["Dürfen das alle sehen?",true],["Habe ich gefragt, ob ich das Foto posten darf?",true],["Bekomme ich dafür viele Likes?",false],["Ist das lustiger als bei den anderen?",false]],
+      merke:"Erst denken, dann senden. Was einmal im Netz ist, bleibt oft für immer."}),
   ],
 });

@@ -28,5 +28,14 @@ station({
     robo({titel:"Level 10: Der kürzeste Weg",punkte:20,karte:["#######","#S....#","#.###.#","#.....#","#.###.#","#....Z#","#######"],max:8,loesung:"R R R R D D D D",
       text:"Viele Wege führen zum Ziel. Aber schaffst du es mit <b>höchstens 8 Befehlen</b>?",
       merke:"Gute Programme sind nicht nur richtig, sondern auch <b>kurz</b>. Das spart Zeit und Strom."}),
+    /* ---- Ergänzt im Nov. 2026 (mehr Übung, damit die Station eine Stunde füllt; neue Teile immer hinten anhängen) ---- */
+    robo({titel:"Level 11: Die Schlange",punkte:15,karte:["#########","#S......#","#######.#","#.......#","#.#######","#......Z#","#########"],loesung:"R R R R R R D D L L L L L L D D R R R R R R",
+      text:"Ein langer Weg wie eine Schlange. Zähl die Felder genau – das Programm wird lang!"}),
+    robo({titel:"Bug-Alarm 3 🐞",punkte:15,karte:["#######","#S..#Z#","###.#.#","###...#","#######"],vorgabe:"R R D R R U U",loesung:"R R D D R R U U",
+      text:"Wieder ein Bug! Starte das Programm, schau, wo es kracht, und repariere es."}),
+    robo({titel:"Level 13: Drei Münzen",punkte:20,karte:["#########","#S..M...#","#.#####.#","#M#...#M#","#.#.Z.#.#","#...#...#","#########"],loesung:"D D U U R R R R R R D D D D L L U L",
+      text:"Drei Münzen sind verteilt. Plane den Weg, bevor du startest!"}),
+    robo({titel:"Level 14: Der kürzeste Weg 2",punkte:20,karte:["#######","#S..#.#","#.#.#.#","#.#...#","#...#Z#","#######"],max:7,loesung:"R R D D R R D",
+      text:"Schaffst du es mit <b>höchstens 7 Befehlen</b>?"}),
   ],
 });

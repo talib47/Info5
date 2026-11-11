@@ -28,5 +28,16 @@ station({
     robo({titel:"Schleifen-Meister",punkte:20,karte:["##########","#S.......#","########.#","#ZMMMMMM.#","##########"],max:6,schleifen:true,loesung:"7x(R) 2x(D) 7x(L)",
       text:"Das letzte Level: Hin, runter und zurück – mit allen Münzen und höchstens <b>6 Befehlen</b>!",
       merke:"Super. Schleifen stecken in jedem Spiel und jeder App – zum Beispiel, wenn sich eine Figur immer wieder bewegt."}),
+    /* ---- Ergänzt im Nov. 2026 (mehr Übung, damit die Station eine Stunde füllt; neue Teile immer hinten anhängen) ---- */
+    malRoboter({titel:"Die Linie",punkte:10,w:6,h:6,programm:"M 5x(D M)",
+      text:"Ein kurzes Programm mit Schleife. Start oben links."}),
+    robo({titel:"Die lange Treppe",punkte:15,karte:["########","#S######","#..#####","##..####","###..###","####..##","#####.Z#","########"],max:3,schleifen:true,loesung:"5x(D R)",
+      text:"Eine lange Treppe! Höchstens <b>3 Befehle</b>."}),
+    robo({titel:"Die Schlange mit Schleifen",punkte:20,karte:["#########","#S......#","#######.#","#.......#","#.#######","#......Z#","#########"],max:10,schleifen:true,loesung:"6x(R) 2x(D) 6x(L) 2x(D) 6x(R)",
+      text:"Kennst du diese Schlange? Diesmal hast du nur <b>10 Befehle</b>. Benutze Schleifen!"}),
+    robo({titel:"Doppel-Schritte",punkte:20,karte:["##########","#S..######","###...####","#####...##","#######.Z#","##########"],max:5,schleifen:true,loesung:"3x(R R D) R",
+      text:"Zwei nach rechts, eins nach unten … Finde das Muster. Höchstens <b>5 Befehle</b>."}),
+    paare({titel:"Schleifen im Alltag",punkte:10,text:"Schleifen gibt es nicht nur im Computer. Was wird hier wiederholt?",
+      paare:[["🪜 Treppe steigen","Stufe hoch – bis man oben ist"],["🪢 Seilspringen","springen – 20-mal"],["🪥 Zähne putzen","schrubben – 3 Minuten lang"],["⏰ Uhr","der Zeiger tickt – immer weiter"],["🎵 Lied","Strophe und Refrain – mehrmals"]]}),
   ],
 });

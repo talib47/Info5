@@ -236,7 +236,7 @@ function tippen({titel,punkte=15,merke,text,zeilen,zeigeTastatur=true,rennen}){r
 /* ---------- Tasten-Missionen: echte Tasten und Tastenkürzel in einem Übungsfeld ausprobieren ----------
    tastenMissionen({titel,punkte,merke,text,start:"Text im Feld",missionen:[{text:"…",tasten:["Strg","C"],test:e=>…}]}) */
 function tastenMissionen({titel,punkte=15,merke,text,start="",missionen}){return{titel,punkte,merke,zeige(el,ctx){
-  const d=ctx.daten;d.m=d.m||0;
+  const d=ctx.daten;d.m=d.m||0;let pause=false;
   const zeichne=()=>{
     const fertig=d.m>=missionen.length,ms=missionen[d.m];
     el.innerHTML=kopfText(text)+(fertig?`<div class="msg ok">Alle ${missionen.length} Aufgaben geschafft. Tippe auf „Weiter“.</div>`
@@ -248,9 +248,14 @@ function tastenMissionen({titel,punkte=15,merke,text,start="",missionen}){return
     f.oninput=()=>{d.feld=f.value;ctx.speichern()};
     f.onkeydown=e=>{
       if((e.ctrlKey||e.metaKey)&&["s","p","f","d","h","w","n","t"].includes(e.key.toLowerCase()))e.preventDefault();
-      const ms=missionen[d.m];if(!ms)return;
-      if(ms.test(e,f)){setTimeout(()=>{d.feld=f.value;d.m++;ctx.speichern();zeichne();const g=el.querySelector(".uebfeld");g.focus();g.selectionStart=g.selectionEnd=g.value.length;
-        if(d.m>=missionen.length)ctx.geschafft(punkte);else toast("Richtig. Nächste Aufgabe.")},ms.verzoegert?150:30);return}
+      const ms=missionen[d.m];if(!ms||pause)return;
+      if(ms.test(e,f)){pause=true;setTimeout(()=>{d.feld=f.value;d.m++;ctx.speichern();
+        const weiter=()=>{pause=false;zeichne();const g=el.querySelector(".uebfeld");g.focus();g.selectionStart=g.selectionEnd=g.value.length;
+          if(d.m>=missionen.length)ctx.geschafft(punkte);else el.querySelector(".tastaufgabe")?.classList.add("neu")};
+        /* Deutlich zeigen, dass es geklappt hat – erst dann kommt die nächste Aufgabe */
+        const box=el.querySelector(".tastaufgabe");
+        if(box&&d.m<missionen.length){box.classList.add("geschafft");box.innerHTML=`<p class="haken">✓</p><p class="was">Richtig!</p><p class="wie">Gleich kommt Aufgabe ${d.m+1} von ${missionen.length}.</p>`;setTimeout(weiter,1100)}
+        else weiter()},ms.verzoegert?150:30);return}
       /* Falsche Taste: sofort sagen, was passiert ist – sonst tippen Kinder nur weiter und hängen fest */
       if(e.ctrlKey||e.metaKey||e.key.length!==1)return;
       const zwei=ms.tasten.length>1,shift=ms.tasten.some(t=>t.startsWith("Umschalt"));

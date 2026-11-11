@@ -43,6 +43,27 @@ station({
         {bild:"🎬",text:"Ein Video zeigt einen berühmten Fußballer, der komische Sachen sagt. Es sieht total echt aus.",optionen:[["Vorsicht – das könnte ein Fake-Video sein, das mit KI gemacht wurde",true,"Genau. Solche Fake-Videos heißen <b>Deepfakes</b>."],["Sofort an alle weiterschicken",false,"Erst prüfen! Mit KI kann man heute echt aussehende Fake-Videos machen."]]},
         {bild:"📝",text:"Eine KI könnte deine Hausaufgabe komplett schreiben.",optionen:[["Die KI höchstens als Hilfe nutzen und selbst denken",true,"Super! Lernen musst du selbst – die KI kann es nicht für dich."],["Alles abschreiben lassen",false,"Dann lernst du nichts – und in der Klassenarbeit hilft dir keine KI."]]},
       ],merke:"KI ist ein <b>Werkzeug</b>. Sie kann sich irren – darum musst du immer mitdenken."}),
+    /* ---- Ergänzt im Nov. 2026 (mehr Übung, damit die Station eine Stunde füllt; neue Teile immer hinten anhängen) ---- */
+    baumFolgen({titel:"Der Tier-Baum 2",punkte:15,baum:TIERBAUM,
+      text:"Gleicher Baum, neue Tiere. Beantworte die Fragen für jedes Tier.",
+      dinge:[{ico:"🦆",name:"Ente",eig:{fliegt:1,federn:1,wasser:1}},{ico:"🐝",name:"Biene",eig:{fliegt:1}},{ico:"🦈",name:"Hai",eig:{wasser:1}},{ico:"🐈",name:"Katze",eig:{}},
+        {ico:"🐧",name:"Pinguin",eig:{federn:1,wasser:1},hinweis:"Oh! Ein Pinguin ist ein <b>Vogel</b>, kann aber nicht fliegen. Der Baum sagt „Fisch“. Auch hier sind die Fragen nicht gut genug."}],
+      merke:"Ein Entscheidungsbaum ist nur so schlau wie seine <b>Fragen</b>."}),
+    sortieren({titel:"Gute Trainingsdaten?",punkte:10,text:"Eine KI soll Katzen erkennen. Welche Beispiele sind <b>richtig</b> beschriftet, welche <b>falsch</b>?",
+      toepfe:[["ok","Richtig beschriftet","✅"],["no","Falsch beschriftet","❌"]],
+      karten:[["Foto von einer Katze – Beschriftung „Katze“","🐈","ok"],["Foto von einem Hund – Beschriftung „Katze“","🐕","no"],["Foto von einer Katze – Beschriftung „keine Katze“","🐈","no"],["Foto von einem Auto – Beschriftung „keine Katze“","🚗","ok"],["Foto von einem Tiger – Beschriftung „Katze“","🐅","no"],["Foto von einer Katze im Schnee – Beschriftung „Katze“","🐈","ok"]],
+      merke:"Falsch beschriftete Beispiele bringen der KI Fehler bei."}),
+    entscheidung({titel:"Warum macht die KI das?",punkte:15,
+      szenen:[
+        {bild:"🕶️",text:"Die Gesichtserkennung erkennt dich mit Sonnenbrille nicht.",optionen:[["Sie hat dein Gesicht nie mit Brille gelernt",true,"Richtig. Sie kennt nur die Muster aus ihren Beispielen."],["Sie mag keine Sonnenbrillen",false,"Eine KI mag gar nichts – sie rechnet nur."]]},
+        {bild:"⚽",text:"Deine Video-App zeigt dir fast nur noch Fußball-Videos.",optionen:[["Sie hat gelernt, dass du oft Fußball schaust",true,"Genau. Sie lernt aus dem, was du anklickst."],["Es gibt keine anderen Videos",false,"Doch, die KI zeigt sie dir nur nicht."]]},
+        {bild:"🌍",text:"Die Übersetzungs-KI übersetzt einen Witz, aber er ist nicht mehr lustig.",optionen:[["Sie versteht den Witz nicht, sie übersetzt nur Wörter nach Mustern",true,"Richtig. KI versteht nicht wirklich, was sie schreibt."],["Sie will dich ärgern",false,"Eine KI will nichts."]]},
+      ]}),
+    paare({titel:"KI-Wörter",punkte:10,text:"Verbinde die Wörter mit ihrer Bedeutung.",
+      paare:[["📚 Trainingsdaten","Beispiele, aus denen die KI lernt"],["🔍 Muster","was in vielen Beispielen gleich ist"],["🌳 Entscheidungsbaum","Ja-Nein-Fragen bis zur Antwort"],["💬 Chatbot","eine KI, mit der man schreiben kann"],["🎭 Deepfake","ein mit KI gefälschtes Video"]]}),
+    auswaehlen({titel:"Was kann KI gut?",punkte:10,text:"Was kann eine KI heute gut? Tippe es an.",
+      karten:[["Gesichter auf Fotos erkennen",true],["Texte übersetzen",true],["Gesprochene Sprache verstehen",true],["Spam-Mails aussortieren",true],["Immer die Wahrheit sagen",false],["Wissen, wie du dich fühlst",false],["Für dich lernen",false]],
+      merke:"KI ist stark bei <b>Mustern</b>. Sie kann sich aber irren und weiß nicht, was wahr ist."}),
   ],
 });
 }

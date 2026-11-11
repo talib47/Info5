@@ -44,6 +44,25 @@ station({
     passwortTester({titel:"Dein Meister-Passwort",punkte:15,
       text:"Zum Schluss: Erfinde mit dem <b>Satz-Trick</b> ein neues Passwort, das alle Regeln schafft. (Ein ausgedachtes – nicht dein echtes!)",
       merke:"Geschafft. Du weißt jetzt mehr über Passwörter als viele Erwachsene. 🛡️"}),
+    /* ---- Ergänzt im Nov. 2026 (mehr Übung, damit die Station eine Stunde füllt; neue Teile immer hinten anhängen) ---- */
+    auswaehlen({titel:"Was gehört nicht ins Passwort?",punkte:10,text:"Hacker probieren zuerst Dinge aus, die man über dich wissen kann. Was gehört <b>nicht</b> in ein Passwort? Tippe es an.",
+      karten:[["Dein Vorname",true],["Dein Geburtstag",true],["Der Name von deinem Haustier",true],["123456",true],["Dein Lieblingsverein",true],["Ein ausgedachter Satz",false],["Sonderzeichen wie # oder !",false],["Zahlen, die nichts mit dir zu tun haben",false]],
+      merke:"Alles, was Freunde oder Fremde über dich wissen, kann ein Hacker auch herausfinden."}),
+    sortieren({titel:"Stark oder schwach? Teil 2",punkte:10,text:"Neue Passwörter. Welche sind schwach, welche stark?",
+      toepfe:[["s","Schwach – schnell geknackt","🔓"],["k","Stark – sicher","🔒"]],
+      karten:[["messi10","","s"],["passwort","","s"],["11111111","","s"],["roblox2015","","s"],["Mi&Tim+2Katzen!","","k"],["Rot#Fuchs7springt_hoch","","k"],["Ich3ss?Gern-Pizza","","k"]]}),
+    eingabe({titel:"Satz-Trick üben 3",punkte:10,egal:"nichts",
+      text:"Mach aus diesem Satz ein Passwort: erster Buchstabe von jedem Wort, Zahlen und Satzzeichen bleiben.",
+      html:`<p class="frage" style="margin-top:12px">„Mein Bruder Ali isst 5 Pizzen pro Woche!“</p>`,
+      antwort:["MBAi5PpW!"],platz:"Passwort"}),
+    entscheidung({titel:"Hilfe, gehackt?",punkte:15,text:"Was machst du?",
+      szenen:[
+        {bild:"😨",text:"Dein Freund sagt: „Dein Spiele-Konto schreibt mir komische Nachrichten.“",optionen:[["Sofort das Passwort ändern und einem Erwachsenen Bescheid sagen",true,"Richtig. Vielleicht kennt jemand dein Passwort."],["Nichts tun, das geht von allein weg",false,"Nein. Der Hacker macht sonst weiter."],["Das Konto einfach nie mehr benutzen",false,"Dann bleibt der Hacker drin. Erst Passwort ändern!"]]},
+        {bild:"👀",text:"Jemand hat dir beim Eintippen über die Schulter geschaut.",optionen:[["Das Passwort bald ändern",true,"Genau. Sicher ist sicher."],["Ihm sagen, dass er es vergessen soll",false,"Vergessen kann man nicht auf Befehl."]]},
+        {bild:"💻",text:"Du warst am Schul-PC in deinem Konto und musst schnell weg.",optionen:[["Kurz abmelden, dann gehen",true,"Super. Sonst ist die nächste Person in deinem Konto."],["Einfach gehen, der Nächste guckt schon nicht",false,"Doch, das kann passieren."]]},
+      ]}),
+    reihenfolge({titel:"Ein Passwort ändern",punkte:10,text:"So änderst du ein Passwort. Bring die Schritte in die richtige Reihenfolge.",
+      schritte:["Ins Konto einloggen","Die Einstellungen öffnen","„Passwort ändern“ wählen","Das alte Passwort eingeben","Das neue starke Passwort zweimal eingeben","Speichern"]}),
   ],
 });
 }

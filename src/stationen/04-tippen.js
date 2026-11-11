@@ -26,5 +26,17 @@ station({
     tippen({titel:"Blind tippen",punkte:20,zeigeTastatur:false,zeilen:["Informatik ist toll.","Mein Tier ist schlau.","Ich kann das!"],
       text:"Profi-Stufe: <b>Keine Hilfe-Tastatur mehr!</b> Deine Finger wissen jetzt, wo die Tasten sind.",
       merke:"Profis schauen auf den Bildschirm, nicht auf die Tasten. Mit Übung tippst du bald schneller, als du schreibst."}),
+    /* ---- Ergänzt im Nov. 2026 (mehr Übung, damit die Station eine Stunde füllt; neue Teile immer hinten anhängen) ---- */
+    tippen({titel:"Oben: W, O und P",punkte:15,zeilen:["sws lol","wo wo","wolf wolf","post post","wo ist pia"],
+      text:"Der <b>Ringfinger links</b> greift nach oben zum <b>W</b>, der <b>Ringfinger rechts</b> zum <b>O</b>. Das <b>P</b> holt der kleine Finger rechts."}),
+    tippen({titel:"Unten: N, M, C und V",punkte:15,zeilen:["jnj jmj","dcd fvf","mama nana","vier mal","nicht mich"],
+      text:"Jetzt greifen die Finger nach <b>unten</b>. Danach sofort zurück auf die Grundreihe."}),
+    tippen({titel:"Fußball-Sätze",punkte:15,zeilen:["Der Ball ist rund.","Messi schießt ein Tor!","Wer gewinnt heute?"],
+      text:"Sätze mit Großbuchstaben und Satzzeichen. Denk an ⇧ mit der <b>anderen</b> Hand."}),
+    tippen({titel:"Zahlen tippen",punkte:15,zeilen:["Ich bin 10 Jahre alt.","Wir haben 2 Katzen.","Um 8 Uhr ist Schule!"],
+      text:"Die Zahlen stehen in der obersten Reihe. Streck den Finger kurz nach oben und komm wieder zurück."}),
+    tippen({titel:"Blind tippen 2",punkte:20,zeigeTastatur:false,zeilen:["Ich spiele gern Fußball.","Heute ist ein guter Tag!","Tippen macht Spaß."],
+      text:"Noch einmal ohne Hilfe-Tastatur. Langsam und genau!",
+      merke:"Jeden Tag ein paar Minuten üben, und in einem Monat tippst du doppelt so schnell."}),
   ],
 });

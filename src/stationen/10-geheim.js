@@ -34,6 +34,16 @@ station({
     caesarRad({titel:"Die Geheimbotschaft",punkte:20,wort:"VASBEZNGVX VFG FHCRE",schluessel:13,modus:"ent",antwort:"INFORMATIK IST SUPER",
       text:"Letzte Mission, Agent! Diese Botschaft ist mit dem Schlüssel <b>13</b> verschlüsselt. Entschlüssle sie. (Die Abstände zwischen den Wörtern kannst du mittippen.)",
       merke:"Echte Verschlüsselung (wie bei WhatsApp) benutzt riesige Schlüssel mit Millionen Stellen. Die kann kein Computer der Welt durchprobieren."}),
+    /* ---- Ergänzt im Nov. 2026 (mehr Übung, damit die Station eine Stunde füllt; neue Teile immer hinten anhängen) ---- */
+    caesarRad({titel:"Fußball-Geheimnis",punkte:10,wort:"IXVVEDOO",schluessel:3,modus:"ent",antwort:"FUSSBALL",
+      text:"Entschlüssle mit dem Schlüssel <b>3</b>. Such jeden Geheim-Buchstaben in der <b>unteren</b> Reihe."}),
+    caesarRad({titel:"Verschlüssle ROBLOX",punkte:15,wort:"ROBLOX",schluessel:2,modus:"ver",antwort:"TQDNQZ",
+      text:"Verschlüssle <b>ROBLOX</b> mit dem Schlüssel <b>2</b>."}),
+    caesarRad({titel:"Noch ein Code zum Knacken",punkte:15,wort:"PIVRIR",schluessel:4,modus:"knacken",antwort:"LERNEN",
+      text:"Wieder ist der Schlüssel unbekannt. Probier mit ◀ und ▶, bis ein echtes Wort herauskommt."}),
+    eingabe({titel:"Gartenzaun: SCHULE",punkte:15,
+      text:"Verschlüssle <b>SCHULE</b> mit dem Gartenzaun: erst die ganze <b>obere</b> Reihe lesen, dann die ganze <b>untere</b>.",
+      html:zaun("SCHULE"),antwort:"SHLCUE",platz:"Geheimtext"}),
   ],
 });
 }

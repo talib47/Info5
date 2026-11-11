@@ -50,6 +50,22 @@ station({
       merke:"Sogar eine Taschenlampe ist ein Automat – mit nur zwei Zuständen: an und aus."}),
     reihenfolge({titel:"Die Waschmaschine",punkte:10,text:"Eine Waschmaschine geht von Zustand zu Zustand. Bring die Zustände in die richtige Reihenfolge.",
       schritte:["Bereit: Programm wählen","Wasser einlassen","Waschen","Spülen","Schleudern","Fertig: Tür entriegelt"]}),
+    /* ---- Ergänzt im Nov. 2026 (mehr Übung, damit die Station eine Stunde füllt; neue Teile immer hinten anhängen) ---- */
+    automat({titel:"Der Aufzug",punkte:15,
+      text:"Auch ein Aufzug ist ein Automat. Probier ihn aus und erledige die Aufträge.",
+      zustaende:{uo:["Unten, Tür offen","🚪","EG · Tür offen"],uz:["Unten, Tür zu","🛗","EG · Tür zu"],oz:["Oben, Tür zu","🛗","1. Stock · Tür zu"],oo:["Oben, Tür offen","🚪","1. Stock · Tür offen"]},
+      start:"uo",
+      knoepfe:[["zu","Tür schließen"],["auf","Tür öffnen"],["hoch","⬆️ 1. Stock"],["runter","⬇️ Erdgeschoss"]],
+      ueber:{"uo|zu":"uz","uz|auf":"uo","uz|hoch":"oz","oz|auf":"oo","oo|zu":"oz","oz|runter":"uz"},
+      ziele:[["Fahr in den 1. Stock und öffne die Tür",gab("oz","auf","oo")],["Drück ⬆️, während unten die Tür offen ist. Fährt der Aufzug?",gab("uo","hoch","uo")],["Fahr wieder ins Erdgeschoss",gab("oz","runter","uz")]],
+      merke:"Der Aufzug fährt nur im Zustand <b>Tür zu</b>. So schützt der Automat die Menschen."}),
+    sortieren({titel:"Zustand oder Eingabe? Teil 2",punkte:10,text:"Zustand (wie es gerade ist) oder Eingabe (was man tut)?",
+      toepfe:[["z","Zustand – so ist es gerade","⏸️"],["e","Eingabe – das tut man","👆"]],
+      karten:[["Aufzug steht im 3. Stock","","z"],["Knopf 5 drücken","","e"],["Handy ist gesperrt","","z"],["Finger auflegen","","e"],["Waschmaschine schleudert","","z"],["Tür öffnen","","e"]]}),
+    paare({titel:"Welche Zustände?",punkte:10,text:"Welche Zustände hat der Automat?",
+      paare:[["🔦 Taschenlampe","an, aus"],["🚶 Fußgänger-Ampel","rot, grün"],["🚦 Ampel für Autos","rot, rot-gelb, grün, gelb"],["🥤 Getränkeautomat","wartet, bezahlt, gibt aus"],["🔒 Zahlenschloss","zu, 1. Ziffer richtig, 2. Ziffer richtig, offen"]]}),
+    reihenfolge({titel:"Der Fahrkartenautomat",punkte:10,text:"Bring die Schritte am Fahrkartenautomaten in die richtige Reihenfolge.",
+      schritte:["Ziel auswählen","Fahrkarte auswählen","Preis wird angezeigt","Geld einwerfen","Fahrkarte und Wechselgeld nehmen"]}),
   ],
 });
 }
