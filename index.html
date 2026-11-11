@@ -796,7 +796,7 @@ body[data-seite="kompakt"] .wahl{margin-bottom:4px}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="0ff86d1b69";
+const VERSION="91d39cf93b";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -1014,7 +1014,7 @@ const EINE_PRO_TAG=true;
 const RAENGE=[[0,"🌱","Neuling"],[150,"🖱️","Klick-Kenner"],[400,"💾","Daten-Detektiv"],[750,"🔐","Code-Knacker"],[1100,"🤖","Robo-Meister"],[1500,"🧠","Informatik-Ass"],[1900,"🏆","Informatik-Legende"]];
 
 /* Bewertung wie im Notenbuch: + / o / − aus den Prozent der Punkte (Grenzen hier anpassen) */
-const PLUS_AB=75,O_AB=40;
+const PLUS_AB=90,O_AB=70;
 const zeichenAus=p=>p>=PLUS_AB?"+":p>=O_AB?"o":"−";
 const ZEICHEN_TEXT={"+":"Stark gearbeitet","o":"Ordentlich, da geht mehr","−":"Das war zu wenig"};
 const zeichenKlasse=z=>z==="+"?"good":z==="o"?"":"bad";
@@ -1042,7 +1042,17 @@ function status(st){
 }
 /* Der Spielplatz ist die Belohnung für gute Arbeit: Er öffnet nur, wenn die Station von heute ein + hat (Schnell-Durchklicken lohnt sich nicht). */
 const heuteFertig=()=>PFAD().filter(s=>{const p=meineStaende()[s.id];return p?.fertig&&tagVon(p.fertig)===heuteTag()});
-const spielplatzOffen=()=>VS||heuteFertig().some(s=>zeichenAus(prozent(s,meineStaende()[s.id]))==="+");
+const plusHeute=()=>heuteFertig().some(s=>zeichenAus(prozent(s,meineStaende()[s.id]))==="+");
+/* Gespielt wird für alle gleichzeitig: erst in den letzten SPIEL_MIN Minuten der Stunde. Davor: Lernzeit-Karte auf Papier. */
+const SPIEL_MIN=10;
+function spielAb(){ /* Uhrzeit (Minuten) ab der der Spielplatz heute öffnet – null, wenn gerade keine Stunde laut Plan läuft */
+  if(!sitzung)return null;const b=berlin();
+  const s=STUNDENPLAN.find(x=>x.klasse===sitzung.klasse&&x.tag===b.tag&&b.min>=hm(x.von)-PUFFER&&b.min<hm(x.von)+x.min+15);
+  return s?hm(s.von)+s.min-SPIEL_MIN:null}
+const uhr=m=>`${String(Math.floor(m/60)).padStart(2,"0")}:${String(m%60).padStart(2,"0")}`;
+const spielZeit=()=>{const a=spielAb();return a===null||berlin().min>=a};
+const spielplatzOffen=()=>VS||(plusHeute()&&spielZeit());
+const kartenHinweis=()=>{const a=spielAb();return`Hol dir jetzt bei deiner Lehrkraft die <b>Lernzeit-Karte</b> zu dieser Station.${a!==null?` Der Spielplatz öffnet um <b>${uhr(a)} Uhr</b>.`:""}`};
 /* Aufräumen beim Verlassen eines Teils (z. B. Tastatur-Abhörer, Zeitgeber) */
 let aufraeumListe=[];
 function aufraeumen(){aufraeumListe.forEach(f=>{try{f()}catch(e){}});aufraeumListe=[]}
@@ -1243,7 +1253,7 @@ function seiteStart(){
   const spielListe=`<div class="spiele">${SPIELE().map(x=>`<button class="spiel" data-sp="${x.id}">${pix(x.id,24)}<b>${esc(x.titel)}</b></button>`).join("")}</div>`;
   /* Oben steht genau eine Sache: die Station von heute – oder, wenn sie geschafft ist, der Spielplatz als Belohnung */
   const heute=VS?"":!akt?`<div class="heute-karte">${pix("pixel",56,"blau")}<div><p class="eyebrow">Alles geschafft</p><h2>Du hast alle ${pfad.length} Stationen geschafft.</h2><p class="muted">Starke Leistung. Der Spielplatz gehört dir.</p></div></div>`
-    :stAkt==="morgen"?`<div class="heute-karte">${pix(akt.id,56)}<div><p class="eyebrow">Für heute fertig</p><h2>Deine Station ist geschafft.</h2><p class="muted">${spOffen?"Du hast ein + geschafft und darfst spielen.":"Für den Spielplatz brauchst du ein +. Du kannst deine Station verbessern: Tippe sie unten im Lernpfad an."} Nächste Stunde geht es weiter mit „${esc(akt.titel)}“</p></div></div>`
+    :stAkt==="morgen"?`<div class="heute-karte">${pix(akt.id,56)}<div><p class="eyebrow">Für heute fertig</p><h2>Deine Station ist geschafft.</h2><p class="muted">${spOffen?"Du hast ein + geschafft und darfst spielen.":plusHeute()?kartenHinweis():"Für den Spielplatz brauchst du ein +. Du kannst deine Station verbessern: Tippe sie unten im Lernpfad an."} Nächste Stunde geht es weiter mit „${esc(akt.titel)}“</p></div></div>`
     :`<button class="heute-karte" data-id="${akt.id}">${pix(akt.id,56,"blau")}<div><p class="eyebrow">${s[akt.id]?"Hier machst du weiter":"Deine Station heute"}</p><h2>${esc(akt.titel)}</h2><p class="muted">${esc(akt.kurz)}</p></div><span class="btn">${s[akt.id]?"Weitermachen":"Anfangen"}</span></button>`;
   const spielplatz=VS?`<h2 style="margin:28px 0 6px">Spielplatz</h2><p class="muted">Bonus-Spiele ohne Note. Kinder sehen sie erst, wenn die Station von heute geschafft ist.</p><div class="spielplatz">${spielListe}</div>`
     :spOffen?`<div class="spielplatz"><h2>Spielplatz</h2><p class="muted">Deine Belohnung für heute. Hier gibt es keine Note.</p>${spielListe}</div>`:"";
@@ -1261,8 +1271,9 @@ function seiteStart(){
   ${VS?"":spielplatz}
   <h2 style="margin:8px 0 0">${VS?"Lernpfad":"Dein Lernpfad"}</h2>
   <ol class="lernpfad">${liste}</ol>
-  ${VS?spielplatz:spOffen||!akt?"":`<p class="spielplatz zu-hinweis">Der Spielplatz öffnet sich, wenn du deine Station von heute mit einem + schaffst.</p>`}
+  ${VS?spielplatz:spOffen||!akt||plusHeute()?"":`<p class="spielplatz zu-hinweis">Der Spielplatz öffnet sich am Ende der Stunde, wenn du deine Station von heute mit einem + schaffst.</p>`}
   <p class="muted small" style="margin-top:22px">Version ${VERSION}</p>`;
+  if(!VS&&!spOffen&&plusHeute()){const t=setInterval(()=>{if(spielplatzOffen()){clearInterval(t);toast("Der Spielplatz ist jetzt offen.");render()}},20000);aufraeumListe.push(()=>clearInterval(t))}
   kopfAktiv();
   document.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{const x=STATIONEN.find(y=>y.id===b.dataset.id),stt=status(x);
     if(stt==="zu")return toast("Schaff zuerst die Station davor.");
@@ -1276,7 +1287,7 @@ function seiteStation(st){
   aufraeumen();
   const stt=status(st);
   if(stt==="zu"||stt==="morgen"){location.hash=home();return}
-  if(st.spiel&&!spielplatzOffen()){toast("🔒 Der Spielplatz öffnet, wenn du heute deine Station geschafft hast.");location.hash=home();return}
+  if(st.spiel&&!spielplatzOffen()){toast(plusHeute()?"🔒 Der Spielplatz öffnet erst am Ende der Stunde.":"🔒 Der Spielplatz öffnet, wenn du heute deine Station mit + geschafft hast.");location.hash=home();return}
   const frei=VS||!!st.spiel;   // frei: „Weiter“ geht immer (Vorschau und Spielplatz)
   if(!laufend||laufend.st!==st){
     const prog=meineStaende()[st.id]||{schritt:0,punkte:{},daten:{},start:Date.now(),aktiv:0};
@@ -1365,7 +1376,8 @@ function seiteErgebnis(st,prog){
   </div>
   <p style="font-weight:700">Zeig dieses Ergebnis deiner Lehrkraft.${st.kreativ?" Die Note für Kreativität gibt die Lehrkraft.":""}</p>
   ${st.ergebnis?`<div class="block">${st.ergebnis(prog.daten)}</div>`:""}
-  <div class="nav noprint"><button class="btn ghost" id="zur">Zum Lernpfad</button>${VS?"":z==="+"?`<button class="btn" id="spielen">Zum Spielplatz</button>`:`<button class="btn" id="besser">Station verbessern</button>`}</div>
+  ${!VS&&z==="+"&&!spielZeit()?`<div class="msg info" style="margin:0 0 16px">${kartenHinweis()}</div>`:""}
+  <div class="nav noprint"><button class="btn ghost" id="zur">Zum Lernpfad</button>${VS?"":z==="+"&&spielZeit()?`<button class="btn" id="spielen">Zum Spielplatz</button>`:z==="+"?"":`<button class="btn" id="besser">Station verbessern</button>`}</div>
   ${VS||z==="+"?"":`<p class="muted" style="margin-top:14px">Der Spielplatz öffnet nur mit einem +. Du kannst die Station noch einmal machen. Dann zählt dein neues Ergebnis.</p>`}`;
   kopfAktiv();
   if(st.nachErgebnis)st.nachErgebnis(prog.daten);
