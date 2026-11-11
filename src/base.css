@@ -780,3 +780,9 @@ body[data-seite="kompakt"] .wahl{margin-bottom:4px}
 .tastaufgabe.neu{animation:neu 1.2s ease-out}
 @keyframes neu{0%{box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 45%,transparent);border-color:var(--accent)}100%{box-shadow:0 0 0 0 transparent}}
 @media (prefers-reduced-motion:reduce){.tastaufgabe .haken,.tastaufgabe.neu{animation:none}}
+
+/* Mühe-Stern und Hilfe-Hinweis */
+.stern-btn{border:1.5px solid var(--line);background:none;border-radius:8px;min-width:40px;min-height:36px;font-size:1.1rem;filter:grayscale(1);opacity:.45;cursor:pointer}
+.stern-btn.an{filter:none;opacity:1;border-color:#E2B93B;background:color-mix(in srgb,#E2B93B 18%,transparent)}
+.stern-msg{margin:0 0 14px}
+.hilfe-box{margin:14px 0 0;padding:12px 16px;border-radius:var(--r);background:var(--tint);border-left:5px solid var(--accent);font-size:1.0625rem;line-height:1.5}

@@ -158,6 +158,13 @@ const db={
     if(CLOUD){const {error}=await sb.from("kinder").update({token:null,geraet:null}).eq("id",id);if(error)throw error;return}
     const d=vdb.lesen();const k=d.kinder.find(x=>x.id===id);if(k){k.token=null;k.geraet=null;vdb.schreiben(d)}
   },
+  /* Mühe-Stern: steht im Stand der Station; nur die Lehrkraft setzt ihn (der Server übernimmt ihn beim Speichern des Kindes) */
+  async lStern(id,station,an){
+    if(CLOUD){const {data,error}=await sb.from("staende").select("prog").eq("kind_id",id).eq("station",station).single();if(error)throw error;
+      const prog={...data.prog};if(an)prog.stern=true;else delete prog.stern;
+      const r=await sb.from("staende").update({prog}).eq("kind_id",id).eq("station",station);if(r.error)throw r.error;return}
+    const d=vdb.lesen();const pr=d.staende[id]?.[station];if(pr){if(an)pr.stern=true;else delete pr.stern;vdb.schreiben(d)}
+  },
   async lStandLoeschen(id,station){
     if(CLOUD){const {error}=await sb.from("staende").delete().eq("kind_id",id).eq("station",station);if(error)throw error;return}
     const d=vdb.lesen();if(d.staende[id])delete d.staende[id][station];vdb.schreiben(d);

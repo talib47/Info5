@@ -113,8 +113,13 @@ begin
   select id into kid from kinder where token=p_token;
   if kid is null then return false; end if;
   if length(p_prog::text)>20000 or length(p_station)>40 then return false; end if;
-  insert into staende(kind_id,station,prog,geaendert) values(kid,p_station,p_prog,now())
-    on conflict(kind_id,station) do update set prog=excluded.prog, geaendert=now();
+  -- Den Mühe-Stern setzt nur die Lehrkraft: Das Kind kann ihn weder setzen noch überschreiben.
+  -- Er bleibt, solange es derselbe Versuch ist (gleicher Start); bei „Station verbessern“ fällt er weg.
+  insert into staende(kind_id,station,prog,geaendert) values(kid,p_station,p_prog - 'stern',now())
+    on conflict(kind_id,station) do update set
+      prog=(excluded.prog - 'stern') || case when staende.prog ? 'stern' and (staende.prog->'start') is not distinct from (excluded.prog->'start')
+                                              then jsonb_build_object('stern',staende.prog->'stern') else '{}'::jsonb end,
+      geaendert=now();
   update kinder set aktiv_seit=now() where id=kid;
   return true;
 end $$;
