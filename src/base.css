@@ -755,3 +755,7 @@ body[data-seite="kompakt"] .wahl{margin-bottom:4px}
 .paare.wartet-r>div:last-child .karte,.paare.wartet-l>div:first-child .karte{outline:2px dashed var(--accent);outline-offset:2px}
 .paare .karte.rechts.an{background:var(--tint);border-color:var(--accent)}
 .karte small.esel{display:block;font-weight:500;font-size:.8125rem;color:var(--muted,#5b6475);margin-top:2px}
+
+/* Schulnote 1–6 neben dem Zeichen */
+.stempel .note16{font:800 1.25rem/1 var(--sans);margin:-4px 0 4px}
+.n16{display:inline-block;margin-left:6px;font-weight:750;font-size:.9375rem;white-space:nowrap}
