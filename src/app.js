@@ -63,7 +63,8 @@ const zeichenKlasse=z=>z==="+"?"good":z==="o"?"":"bad";
 const zeit=ms=>{const m=Math.round((ms||0)/60000);return m<1?"unter 1 Min.":m+" Min."};
 const maxPunkte=st=>st.schritte.reduce((a,s)=>a+(s.punkte||0),0);
 const summe=prog=>Object.values(prog?.punkte||{}).reduce((a,b)=>a+b,0);
-const prozent=(st,prog)=>{const m=maxPunkte(st);return m?Math.round(summe(prog)/m*100):100};
+/* Fertige Stationen behalten ihr damaliges Maximum – kommen später Teile dazu, bleibt die alte Note gültig */
+const prozent=(st,prog)=>{const m=prog?.fertig&&prog.erg?.max?prog.erg.max:maxPunkte(st);return m?Math.round(summe(prog)/m*100):100};
 const ABZEICHEN={"+":"🥇","o":"🥈","−":"🥉"};
 const heuteTag=()=>new Date().toDateString(),tagVon=ms=>new Date(ms).toDateString();
 const PFAD=()=>STATIONEN.filter(s=>!s.spiel),SPIELE=()=>STATIONEN.filter(s=>s.spiel);

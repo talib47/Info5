@@ -810,7 +810,7 @@ body[data-seite="kompakt"] .wahl{margin-bottom:4px}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="125e87513c";
+const VERSION="c341b37903";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -1042,7 +1042,8 @@ const zeichenKlasse=z=>z==="+"?"good":z==="o"?"":"bad";
 const zeit=ms=>{const m=Math.round((ms||0)/60000);return m<1?"unter 1 Min.":m+" Min."};
 const maxPunkte=st=>st.schritte.reduce((a,s)=>a+(s.punkte||0),0);
 const summe=prog=>Object.values(prog?.punkte||{}).reduce((a,b)=>a+b,0);
-const prozent=(st,prog)=>{const m=maxPunkte(st);return m?Math.round(summe(prog)/m*100):100};
+/* Fertige Stationen behalten ihr damaliges Maximum – kommen später Teile dazu, bleibt die alte Note gültig */
+const prozent=(st,prog)=>{const m=prog?.fertig&&prog.erg?.max?prog.erg.max:maxPunkte(st);return m?Math.round(summe(prog)/m*100):100};
 const ABZEICHEN={"+":"🥇","o":"🥈","−":"🥉"};
 const heuteTag=()=>new Date().toDateString(),tagVon=ms=>new Date(ms).toDateString();
 const PFAD=()=>STATIONEN.filter(s=>!s.spiel),SPIELE=()=>STATIONEN.filter(s=>s.spiel);
@@ -2544,6 +2545,42 @@ station({
       schritte:["Text mit der Maus markieren","Strg + C drücken","Zum Dokument wechseln","Dort hinklicken, wo der Text hin soll","Strg + V drücken"]}),
     tippen({titel:"Tipp-Test",punkte:15,zeilen:["Ich bin ein Profi.","Strg und C kopiert!"],
       text:"Zum Schluss: zwei Sätze mit Großbuchstaben und Satzzeichen. Für Großbuchstaben drückst du ⇧ mit dem kleinen Finger der <b>anderen</b> Hand.",
+      merke:"Stark. Jetzt kommt der Profi-Teil."}),
+    /* ---- Profi-Teil (Nov. 2026 ergänzt, damit die Station eine Stunde füllt; neue Teile immer hinten anhängen) ---- */
+    entscheidung({titel:"Welche Taste hilft?",punkte:15,text:"Lies die Situation genau. Welche Taste oder welches Kürzel hilft dir?",
+      szenen:[
+        {bild:"🔠",text:"Plötzlich schreibst du ALLES GROSS, obwohl du das nicht willst.",optionen:[["Die Feststelltaste ⇪ einmal drücken",true,"Richtig. Die Feststelltaste war aus Versehen an."],["Die Leertaste drücken",false,"Die Leertaste macht nur einen Abstand."],["Den Computer neu starten",false,"Viel zu viel. Eine Taste reicht."]]},
+        {bild:"😱",text:"Du hast aus Versehen einen ganzen Satz gelöscht. Du willst ihn zurück.",optionen:[["Strg + Z",true,"Genau. Z wie zurück."],["Strg + S",false,"Das speichert nur. Der Satz bleibt weg."],["Enter",false,"Enter macht eine neue Zeile."]]},
+        {bild:"📝",text:"Du füllst ein Formular aus und willst ins nächste Feld springen.",optionen:[["Die Tab-Taste ⇥",true,"Richtig. Tab springt ins nächste Feld."],["Die Rücktaste ⌫",false,"Die Rücktaste löscht ein Zeichen."],["Strg + P",false,"Das druckt die Seite."]]},
+        {bild:"💾",text:"Dein Steckbrief ist fertig. Du willst nicht, dass er verloren geht.",optionen:[["Strg + S",true,"Genau. S wie speichern."],["Strg + A",false,"Das markiert nur alles."],["Strg + V",false,"Das fügt etwas ein."]]},
+        {bild:"🔤",text:"Am Ende von deinem Wort steht ein falscher Buchstabe: „Hundd“.",optionen:[["Einmal die Rücktaste ⌫",true,"Richtig. Die Rücktaste löscht das Zeichen links vom Strich."],["Strg + Z",false,"Das macht vielleicht mehr rückgängig, als du willst."],["Die Feststelltaste",false,"Die macht nur alles groß."]]},
+        {bild:"🖨️",text:"Dein Lehrer sagt: „Druck deine Seite aus.“",optionen:[["Strg + P",true,"Genau. P wie Print, das heißt drucken."],["Strg + C",false,"Das kopiert nur."],["Strg + Z",false,"Das macht rückgängig."]]},
+      ],merke:"Erst überlegen, dann drücken. Für fast jedes Problem gibt es eine Taste."}),
+    eingabe({titel:"Satz reparieren 1",punkte:10,egal:"nichts",
+      text:"In diesem Satz fehlen der <b>Großbuchstabe am Anfang</b> und der <b>Punkt am Ende</b>. Schreib ihn richtig ins Feld.",
+      html:`<p class="frage" style="margin-top:12px">ich spiele gern fußball</p>`,antwort:["Ich spiele gern fußball.","Ich spiele gern Fußball.","Ich spiele gern fussball.","Ich spiele gern Fussball."],platz:"Der richtige Satz"}),
+    eingabe({titel:"Satz reparieren 2",punkte:10,egal:"nichts",
+      text:"Hier fehlen ein Großbuchstabe am Anfang, ein Großbuchstabe beim Namen und ein <b>Fragezeichen</b> am Ende. Schreib den Satz richtig.",
+      html:`<p class="frage" style="margin-top:12px">kommt mia heute mit</p>`,antwort:["Kommt Mia heute mit?"],platz:"Der richtige Satz"}),
+    tippen({titel:"Tipp-Profi",punkte:15,zeilen:["Ali hat 2 Hunde.","Wo ist mein Ball?","Lena spielt Roblox!","Mein Passwort bleibt geheim."],
+      text:"Vier Sätze mit Großbuchstaben, Zahlen und Satzzeichen. Lass dir Zeit. Jeder Fehler kostet Punkte."}),
+    tastenMissionen({titel:"Text umbauen",punkte:15,text:"Im Übungsfeld steht ein Satz. Klick hinein. Dann baust du ihn nur mit der Tastatur um.",
+      start:"Ich mag Pizza.",missionen:[
+        {text:"Geh ganz an den Anfang vom Satz.",wie:"Drück die Taste Pos1. Sie liegt über den Pfeiltasten, neben Einfg. Der Strich springt ganz nach vorn.",tasten:["Pos1"],test:e=>e.key==="Home"},
+        {text:"Markiere den ganzen Satz.",wie:"Strg gedrückt halten und A drücken.",tasten:["Strg","A"],test:strg("a")},
+        {text:"Schneide den Satz aus.",wie:"Strg gedrückt halten und X drücken. Der Satz verschwindet, aber der Computer merkt ihn sich.",tasten:["Strg","X"],test:strg("x"),verzoegert:true},
+        {text:"Füge den Satz wieder ein.",wie:"Strg und V.",tasten:["Strg","V"],test:strg("v"),verzoegert:true},
+        {text:"Mach eine neue Zeile.",wie:"Drück Enter.",tasten:["Enter ↵"],test:e=>e.key==="Enter"},
+        {text:"Füge den Satz noch einmal ein.",wie:"Strg und V. Jetzt steht er zweimal da.",tasten:["Strg","V"],test:strg("v"),verzoegert:true},
+        {text:"Speichere wie ein Profi.",wie:"Strg gedrückt halten und S drücken. (Hier passiert nichts, aber in Word oder Pages wäre es jetzt gespeichert.)",tasten:["Strg","S"],test:strg("s")},
+      ],merke:"<b>Strg + X</b> schneidet aus: Der Text ist weg und kann woanders wieder eingefügt werden."}),
+    geraet(
+      mausParcours({titel:"Maus-Meisterprüfung",punkte:10,text:"Alles gemischt. Lies jede Aufgabe genau.",
+        aufgaben:["doppel","ziehen","rechts","klick","ziehen","doppel","rechts","doppel","klick","ziehen"]}),
+      touchParcours({titel:"Finger-Meisterprüfung",punkte:10,text:"Alles gemischt. Lies jede Aufgabe genau.",
+        aufgaben:["doppel","ziehen","lang","tipp","wischen","zoom","lang","doppel","ziehen","wischen"]})),
+    paare({titel:"Alles gelernt?",punkte:15,text:"Zum Schluss alles gemischt. Was gehört zusammen?",
+      paare:[["⇪ Feststelltaste","ALLES GROSS"],["⇥ Tab","ins nächste Feld springen"],["Rechtsklick","Menü mit mehr Möglichkeiten"],["Strg + X","ausschneiden"],["Doppelklick","Ordner öffnen"],["Strg + Z","rückgängig machen"]],
       merke:"Geschafft. Ab jetzt kannst du alle Tasten, die du in Informatik brauchst."}),
   ],
 });
