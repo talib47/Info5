@@ -78,17 +78,26 @@ function paare({titel,punkte=10,merke,text,paare:liste}){return{titel,punkte,mer
   const gruppen=[];for(let k=0;k<liste.length;k+=3)gruppen.push(liste.map((_,i)=>i).slice(k,k+3));
   if(gruppen.length>1&&gruppen[gruppen.length-1].length===1)gruppen[gruppen.length-2].push(...gruppen.pop());
   const d=ctx.daten;if(!d.reihe){d.reihe=mischenAnders(liste.map((_,i)=>i));ctx.speichern()}d.zu=d.zu||{};d.runde=Math.min(d.runde||0,gruppen.length-1);   // d.zu: rechtsIndex → linksIndex
-  let wahl=null,falsch=new Set(),lob="";
+  let wahl=null,wahlR=null,falsch=new Set(),lob="";   // wahl = links gewählt, wahlR = rechts gewählt
   const zeichne=()=>{const g=gruppen[d.runde],rechts=d.reihe.filter(r=>g.includes(r));
-    el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">${gruppen.length>1?`Runde ${d.runde+1} von ${gruppen.length}. `:""}Tippe links etwas an, dann rechts das Passende</p>
-      <div class="paare"><div>${g.map((i,n)=>{const vergeben=Object.values(d.zu).includes(i);return`<button class="karte links${wahl===i?" an":""}" data-l="${i}" style="--pf:${PAAR_FARBEN[n%8]}"><span class="pnr${vergeben?" voll":""}">${n+1}</span>${liste[i][0]}</button>`}).join("")}</div>
-      <div>${rechts.map(r=>{const l=d.zu[r],n=g.indexOf(l);return`<button class="karte rechts${falsch.has(r)?" falsch":""}" data-r="${r}" ${l!=null?`style="--pf:${PAAR_FARBEN[n%8]}"`:""}><span class="pnr${l!=null?" voll":""}">${l!=null?n+1:"?"}</span>${liste[r][1]}</button>`}).join("")}</div></div>${MLD}`;
+    const fertigG=g.every(r=>d.zu[r]!=null);
+    const schritt=fertigG?`<span class="pschritt">✓</span> Alle verbunden. Tippe unten auf „Weiter“.`
+      :wahl!=null?`<span class="pschritt">2</span> Gut! Jetzt <b>rechts</b> das Passende anklicken.`
+      :wahlR!=null?`<span class="pschritt">2</span> Gut! Jetzt <b>links</b> das Passende anklicken.`
+      :`<span class="pschritt">1</span> Klick <b>links</b> auf eine Karte. Dann klickst du <b>rechts</b> auf das, was dazu passt.`;
+    el.innerHTML=kopfText(text)+(gruppen.length>1?`<p class="eyebrow" style="margin-top:12px">Runde ${d.runde+1} von ${gruppen.length}</p>`:"")+`
+      <p class="paar-tipp">${schritt}</p>
+      <div class="paare${wahl!=null?" wartet-r":wahlR!=null?" wartet-l":""}"><div>${g.map((i,n)=>{const vergeben=Object.values(d.zu).includes(i);return`<button class="karte links${wahl===i?" an":""}" data-l="${i}" style="--pf:${PAAR_FARBEN[n%8]}"><span class="pnr${vergeben?" voll":""}">${n+1}</span>${liste[i][0]}</button>`}).join("")}</div>
+      <div>${rechts.map(r=>{const l=d.zu[r],n=g.indexOf(l);return`<button class="karte rechts${falsch.has(r)?" falsch":""}${wahlR===r?" an":""}" data-r="${r}" ${l!=null?`style="--pf:${PAAR_FARBEN[n%8]}"`:""}><span class="pnr${l!=null?" voll":""}">${l!=null?n+1:"?"}</span>${liste[r][1]}</button>`}).join("")}</div></div>${MLD}`;
     if(lob){meldung(el,true,lob);lob=""}
-    el.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>{const i=+b.dataset.l;wahl=wahl===i?null:i;zeichne()});
+    const verbinde=(l,r)=>{for(const k in d.zu)if(d.zu[k]===l)delete d.zu[k];d.zu[r]=l;wahl=null;wahlR=null;falsch.delete(r);ctx.speichern();zeichne()};
+    el.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>{const i=+b.dataset.l;
+      if(wahlR!=null)return verbinde(i,wahlR);
+      wahl=wahl===i?null:i;zeichne()});
     el.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{const r=+b.dataset.r;
-      if(wahl==null){if(d.zu[r]!=null){delete d.zu[r];ctx.speichern();zeichne()}else toast("Tippe zuerst links etwas an.");return}
-      for(const k in d.zu)if(d.zu[k]===wahl)delete d.zu[k];
-      d.zu[r]=wahl;wahl=null;falsch.delete(r);ctx.speichern();zeichne()});
+      if(wahl!=null)return verbinde(wahl,r);
+      if(d.zu[r]!=null){delete d.zu[r];ctx.speichern()}   // schon verbunden: lösen und neu wählen
+      wahlR=wahlR===r?null:r;zeichne()});
   };
   zeichne();
   ctx.pruefer=()=>{const g=gruppen[d.runde],fs=g.filter(r=>d.zu[r]!==r),leer=g.some(r=>d.zu[r]==null),letzte=d.runde===gruppen.length-1;
@@ -210,7 +219,12 @@ function tippen({titel,punkte=15,merke,text,zeilen,zeigeTastatur=true,rennen}){r
     const z=zeilen[d.z];
     if(e.key===z[d.p]){d.p++;if(d.p>=z.length){d.z++;d.p=0;if(fertig()){d.zeit=Date.now()-d.start;
         const p=Math.max(Math.ceil(punkte/2),punkte-Math.floor(d.f/4));ctx.speichern();ctx.geschafft(p)}}zeichne()}
-    else{d.f++;zeichne(true)}
+    else{d.f++;zeichne(true);
+      const soll=z[d.p],caps=e.getModifierState&&e.getModifierState("CapsLock");
+      if(e.key.toLowerCase()===soll.toLowerCase()&&e.key!==soll){
+        if(soll===soll.toLowerCase())meldung(el,false,caps?`Du schreibst <b>GROSS</b>, hier soll aber <b>klein</b> stehen. Die <b>Feststelltaste ⇪</b> ist an: Drück sie einmal, dann ist sie aus.`
+          :`Du schreibst <b>GROSS</b>, hier soll aber <b>klein</b> stehen. Lass die <b>Umschalt-Taste ⇧</b> los.`);
+        else meldung(el,false,`Hier kommt ein <b>Großbuchstabe</b>: Halte <b>Umschalt ⇧</b> gedrückt und drück dann ${esc(soll.toLowerCase())}.`)}}
     ctx.speichern();
   };
   document.addEventListener("keydown",taste);ctx.beimVerlassen(()=>document.removeEventListener("keydown",taste));

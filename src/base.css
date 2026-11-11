@@ -745,3 +745,13 @@ body[data-seite="login"] #app{max-width:24rem;min-height:0;margin-top:max(40px,1
 body[data-seite="kompakt"] #app{max-width:40rem;min-height:0;margin-top:max(40px,14vh)}
 body[data-seite="kompakt"] .wahl{margin-bottom:4px}
 @media (max-width:560px){body[data-seite="kompakt"] #app{margin-top:0;min-height:100vh}}
+
+/* Merke: Textmarker hinter dem ganzen Wort (nicht nur halb darunter) */
+.aha b:first-child{background:var(--marker);color:var(--marker-ink);padding:1px 5px;border-radius:3px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+
+/* Paare verbinden: klare Schritt-Anzeige, wartende Seite sichtbar machen */
+.paar-tipp{display:flex;align-items:center;gap:10px;margin:14px 0 12px;font-size:1.0625rem;font-weight:600}
+.pschritt{flex:none;display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-ink,#fff);font-weight:800;font-size:.9375rem}
+.paare.wartet-r>div:last-child .karte,.paare.wartet-l>div:first-child .karte{outline:2px dashed var(--accent);outline-offset:2px}
+.paare .karte.rechts.an{background:var(--tint);border-color:var(--accent)}
+.karte small.esel{display:block;font-weight:500;font-size:.8125rem;color:var(--muted,#5b6475);margin-top:2px}

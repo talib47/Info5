@@ -12,6 +12,10 @@ const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const lsDel=k=>{try{localStorage.removeItem(k)}catch(e){}};
+/* Anmeldung des Kindes nur für diesen Tab: Neu laden behält sie, Tab oder Browser schließen meldet ab */
+const ssGet=k=>{try{return JSON.parse(sessionStorage.getItem(k))}catch(e){return null}};
+const ssSet=(k,v)=>{try{sessionStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const ssDel=k=>{try{sessionStorage.removeItem(k)}catch(e){}};
 function toast(t){document.querySelectorAll(".toast").forEach(x=>x.remove());const el=document.createElement("div");el.className="toast";el.setAttribute("role","status");el.textContent=t;document.body.append(el);setTimeout(()=>el.remove(),2400)}
 
 /* Klassen: hier jedes Schuljahr anpassen */
@@ -97,15 +101,18 @@ let aufraeumListe=[];
 function aufraeumen(){aufraeumListe.forEach(f=>{try{f()}catch(e){}});aufraeumListe=[]}
 
 /* ---------- Sitzung des Kindes ---------- */
-let sitzung=lsGet("if5-sitzung");      // {klasse, tier, token}
-let staende=lsGet("if5-staende")||{};  // {stationId: prog}
+/* Alte Versionen hatten die Anmeldung dauerhaft gespeichert: nur übernehmen, wenn die Stunde gerade läuft */
+(()=>{const alt=lsGet("if5-sitzung");if(alt&&!ssGet("if5-sitzung")&&planOffen(alt.klasse)){ssSet("if5-sitzung",alt);ssSet("if5-staende",lsGet("if5-staende")||{})}
+  lsDel("if5-sitzung");lsDel("if5-staende")})();
+let sitzung=ssGet("if5-sitzung");      // {klasse, tier, token} – nur in diesem Tab
+let staende=ssGet("if5-staende")||{};  // {stationId: prog}
 let laufend=null;                      // {st, prog}
 /* Lehrer-Vorschau (#v): alle Stationen und Teile frei durchklicken, nichts wird gespeichert */
 let VS=false,vStaende={};
 const basis=()=>VS?"v/":"",home=()=>VS?"v":"";
 const meineStaende=()=>VS?vStaende:staende;
 
-function staendeLokal(){lsSet("if5-staende",staende)}
+function staendeLokal(){ssSet("if5-staende",staende)}
 let pushTimer=null,pushWarte=new Set();
 function speichern(sofort){
   if(!laufend)return;
@@ -131,7 +138,7 @@ function notkopie(){if(!sitzung||!pushWarte.size)return;const s={};pushWarte.for
   const alt=lsGet("if5-ungesendet")||[];const rest=alt.filter(x=>!(x.klasse===sitzung.klasse&&x.tier===sitzung.tier));
   rest.push({klasse:sitzung.klasse,tier:sitzung.tier,staende:s,zeit:Date.now()});lsSet("if5-ungesendet",rest.slice(-12))}
 const weiterAls=(a,b)=>!b||(!!a.fertig&&!b.fertig)||Object.keys(a.punkte||{}).length>Object.keys(b.punkte||{}).length;
-function rauswurf(t){notkopie();sitzung=null;staende={};laufend=null;lsDel("if5-sitzung");lsDel("if5-staende");toast(t);location.hash="";render()}
+function rauswurf(t){notkopie();sitzung=null;staende={};laufend=null;ssDel("if5-sitzung");ssDel("if5-staende");toast(t);location.hash="";render()}
 
 /* Automatisch abmelden, wenn die Stunde vorbei ist (10 Minuten Nachlauf für Ergebniskarte und Speichern),
    damit die nächste Gruppe am selben PC nicht im fremden Tier landet. */
@@ -209,7 +216,7 @@ const kopf=()=>`<div class="top noprint"><div class="brand">${LOGO}<span>Informa
 function kopfAktiv(){const b=$("#raus");if(b)b.onclick=async()=>{
   if(!confirm("Abmelden? Dein Stand ist gespeichert."))return;
   clearTimeout(pushTimer);await hochladen();notkopie();try{await db.abmelden(sitzung.token)}catch(e){}
-  sitzung=null;staende={};laufend=null;lsDel("if5-sitzung");lsDel("if5-staende");location.hash="";render()}}
+  sitzung=null;staende={};laufend=null;ssDel("if5-sitzung");ssDel("if5-staende");location.hash="";render()}}
 const vorschauHinweis=()=>db.online?"":`<p class="muted small" style="margin-top:18px">Vorschau: Alles wird nur in diesem Browser gespeichert.</p>`;
 
 /* 1. Klasse wählen */
@@ -272,7 +279,7 @@ function seiteNeuTier(klasse,vergeben){
 
 function anmeldeErgebnis(klasse,tier,r,nochmal){
   const t=tierInfo(tier);
-  if(r.token){sitzung={klasse,tier,token:r.token};lsSet("if5-sitzung",sitzung);lsSet("if5-zuletzt",{klasse,tier});staende=r.staende||{};
+  if(r.token){sitzung={klasse,tier,token:r.token};ssSet("if5-sitzung",sitzung);lsSet("if5-zuletzt",{klasse,tier});staende=r.staende||{};
     /* Liegt auf diesem PC noch ein nicht gesendeter Stand von diesem Tier? Dann jetzt nachreichen. */
     const un=(lsGet("if5-ungesendet")||[]).find(x=>x.klasse===klasse&&x.tier===tier);
     if(un){Object.entries(un.staende).forEach(([id,p])=>{if(weiterAls(p,staende[id])){staende[id]=p;pushWarte.add(id)}});
