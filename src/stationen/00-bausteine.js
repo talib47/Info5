@@ -52,22 +52,64 @@ function sortieren({titel,punkte=10,merke,text,toepfe,karten,warum,breit}){retur
 /* ---------- Reihenfolge: Schritte in die richtige Reihenfolge bringen ----------
    reihenfolge({titel,punkte,merke,text,schritte:["erst","dann",…]})  (in richtiger Reihenfolge angeben) */
 function reihenfolge({titel,punkte=10,merke,text,schritte}){return{titel,punkte,merke,zeige(el,ctx){
-  const d=ctx.daten;if(!d.reihe){d.reihe=mischenAnders(schritte.map((_,i)=>i));ctx.speichern()}d.gew=d.gew||[];
-  let falsch=new Set();
+  /* Schritt für Schritt: Das Kind wählt immer nur den NÄCHSTEN Schritt und erfährt sofort, ob er stimmt.
+     (Früher: erst alles einordnen, dann prüfen – das war für viele zu schwer.) */
+  const d=ctx.daten;if(!d.reihe){d.reihe=mischenAnders(schritte.map((_,i)=>i));ctx.speichern()}
+  d.gew=(d.gew||[]).filter((x,k)=>x===k);   // nur der richtige Anfang zählt (auch bei alten Ständen)
+  const n=schritte.length,WORT=["Erstes","Zweites","Drittes","Viertes","Fünftes","Sechstes","Siebtes","Achtes"];
+  let falsch=-1;
   const zeichne=()=>{
-    const frei=d.reihe.filter(i=>!d.gew.includes(i));
-    el.innerHTML=kopfText(text)+`
-      <div class="paar" style="margin-top:12px"><div><p class="eyebrow">Tippe die Schritte der Reihe nach an</p><div class="karten spalte">${frei.map(i=>`<button class="karte" data-f="${i}">${schritte[i]}</button>`).join("")||`<p class="muted">Alle eingeordnet.</p>`}</div></div>
-      <div><p class="eyebrow">Deine Reihenfolge</p><ol class="reihe">${d.gew.map((i,k)=>`<li><button class="karte${falsch.has(k)?" falsch":""}" data-g="${k}" title="Zurücklegen">${schritte[i]} <span class="weg">✕</span></button></li>`).join("")}${frei.length?`<li class="leer">…</li>`:""}</ol></div></div>${MLD}`;
-    el.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{d.gew.push(+b.dataset.f);falsch.clear();ctx.speichern();zeichne()});
-    el.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{d.gew.splice(+b.dataset.g,1);falsch.clear();ctx.speichern();zeichne()});
+    const k=d.gew.length,fertig=k>=n,frei=d.reihe.filter(i=>!d.gew.includes(i));
+    const tipp=fertig?`<span class="pschritt">✓</span> Alle Schritte stehen in der richtigen Reihenfolge. Tippe unten auf „Weiter“.`
+      :`<span class="pschritt">${k+1}</span> Was kommt als <b>${WORT[k]||(k+1)+"."}</b>? Klick den Schritt links an.`;
+    el.innerHTML=kopfText(text)+`<p class="paar-tipp">${tipp}</p>
+      <div class="paar"><div><p class="eyebrow">Diese Schritte fehlen noch</p><div class="karten spalte">${frei.map(i=>`<button class="karte${falsch===i?" falsch":""}" data-f="${i}">${schritte[i]}</button>`).join("")||`<p class="muted">Alle eingeordnet.</p>`}</div></div>
+      <div><p class="eyebrow">Die richtige Reihenfolge</p><ol class="reihe fest">${schritte.map((_,q)=>q<k?`<li class="ok">${schritte[q]}</li>`:`<li class="leer${q===k?" dran":""}">${q===k?"Hier kommt der nächste Schritt hin":"…"}</li>`).join("")}</ol></div></div>${MLD}`;
+    el.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{const i=+b.dataset.f;
+      if(i===d.gew.length){d.gew.push(i);falsch=-1;ctx.speichern();zeichne();
+        if(d.gew.length>=n){meldung(el,true,"Richtig. Die Reihenfolge stimmt.");ctx.geschafft(punkte)}
+        else meldung(el,true,"Richtig! Und was kommt danach?")}
+      else{falsch=i;ctx.fehler();zeichne();
+        meldung(el,false,i<d.gew.length?"Der Schritt ist schon eingeordnet.":"Das kommt erst <b>später</b>. Überleg: Was muss man <b>vorher</b> machen?")}});
   };
   zeichne();
-  ctx.pruefer=()=>{const fs=d.gew.map((x,k)=>x===k?-1:k).filter(k=>k>=0);
-    return bewerte(ctx,el,{leer:d.gew.length<schritte.length,leerText:"Ordne zuerst alle Schritte ein.",fehler:fs.length,stand:d.gew.join(),punkte,
-      okText:"Richtig. Die Reihenfolge stimmt.",markiere:()=>{falsch=new Set(fs);zeichne()}})};
+  ctx.pruefer=()=>{if(d.gew.length>=n){ctx.geschafft(punkte);return true}meldung(el,false,"Ordne zuerst alle Schritte ein. Klick links den nächsten Schritt an.");return false};
   ctx.loesung=()=>{d.gew=schritte.map((_,i)=>i);zeichne()};
   if(ctx.geloest)schonGeloest(el);
+}}}
+
+/* ---------- Tempo-Runde: einen kurzen Satz auf Zeit tippen (Stoppuhr, eigener Rekord) ----------
+   tippTempo({titel,punkte,text,satz}) – volle Punkte fürs Schaffen; die Zeit ist nur Ansporn */
+function tippTempo({titel,punkte=10,merke,text,satz}){return{titel,punkte,merke,zeige(el,ctx){
+  const d=ctx.daten;let p=0,f=0,start=0,ende=0,timer=null,neuRekord=false;
+  const mmss=ms=>{const t=Math.floor(ms/1000);return`${Math.floor(t/60)}:${String(t%60).padStart(2,"0")}`};
+  const uhr=()=>{const u=el.querySelector(".tempo-uhr");if(u)u.textContent="⏱ "+mmss(start?(ende||Date.now())-start:0)};
+  const zeichne=blitz=>{
+    const fertig=!!ende;
+    el.innerHTML=kopfText(text)+`
+      <div class="tempo-kopf"><span class="tempo-uhr">⏱ 0:00</span><span>${d.best?`Dein Rekord: <b>${mmss(d.best)}</b>`:"Noch kein Rekord"}</span></div>
+      <div class="tippzeile${blitz?" blitz":""}">${[...satz].map((x,i)=>`<span class="${i<p?"ok":i===p&&!fertig?"jetzt":""}">${x===" "?"␣":esc(x)}</span>`).join("")}</div>
+      ${fertig?`<div class="msg ok">${neuRekord?"<b>Neuer Rekord!</b> ":""}Geschafft in <b>${Math.round((ende-start)/1000)} Sekunden</b>. Das sind ${Math.round(satz.length/((ende-start)/60000))} Anschläge pro Minute. Tippfehler: ${f}.</div>
+        <button class="btn ghost" id="tnoch" style="margin-top:10px">Noch einmal: Rekord knacken</button>`
+        :`<p class="muted small">Einfach lostippen. Die Uhr startet mit dem ersten Buchstaben.</p>`}${MLD}`;
+    uhr();
+    const b=el.querySelector("#tnoch");if(b)b.onclick=()=>{p=0;f=0;start=0;ende=0;neuRekord=false;zeichne()};
+  };
+  const taste=e=>{
+    if(ende||e.ctrlKey||e.altKey||e.metaKey||e.key.length!==1)return;
+    if(document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName))return;
+    e.preventDefault();
+    if(!start){start=Date.now();timer=setInterval(uhr,250)}
+    if(e.key===satz[p]){p++;
+      if(p>=satz.length){ende=Date.now();clearInterval(timer);const t=ende-start;
+        neuRekord=!!d.best&&t<d.best;if(!d.best||t<d.best)d.best=t;d.runden=(d.runden||0)+1;ctx.speichern();ctx.geschafft(punkte)}
+      zeichne()}
+    else{f++;zeichne(true)}
+  };
+  document.addEventListener("keydown",taste);ctx.beimVerlassen(()=>{document.removeEventListener("keydown",taste);clearInterval(timer)});
+  zeichne();
+  ctx.pruefer=()=>{if(d.best){ctx.geschafft(punkte);return true}meldung(el,false,"Tippe zuerst den Satz einmal ganz ab.");return false};
+  ctx.loesung=()=>{d.best=d.best||20000;p=satz.length;start=Date.now()-20000;ende=Date.now();zeichne()};
 }}}
 
 /* ---------- Paare: Links und rechts verbinden ----------

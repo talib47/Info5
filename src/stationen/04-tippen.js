@@ -38,5 +38,7 @@ station({
     tippen({titel:"Blind tippen 2",punkte:20,zeigeTastatur:false,zeilen:["Ich spiele gern Fußball.","Heute ist ein guter Tag!","Tippen macht Spaß."],
       text:"Noch einmal ohne Hilfe-Tastatur. Langsam und genau!",
       merke:"Jeden Tag ein paar Minuten üben, und in einem Monat tippst du doppelt so schnell."}),
+    tippTempo({titel:"Tempo-Runde",punkte:10,satz:"Der schnelle Fuchs tippt ohne Fehler.",
+      text:"Wie schnell kannst du diesen Satz tippen? Die Stoppuhr läuft mit. Danach kannst du deinen eigenen Rekord knacken."}),
   ],
 });

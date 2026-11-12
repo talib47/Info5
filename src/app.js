@@ -90,7 +90,7 @@ function status(st){
 /* Der Spielplatz ist die Belohnung für gute Arbeit: Er öffnet nur, wenn die Station von heute ein + hat (Schnell-Durchklicken lohnt sich nicht). */
 const heuteFertig=()=>PFAD().filter(s=>{const p=meineStaende()[s.id];return p?.fertig&&tagVon(p.fertig)===heuteTag()});
 const plusHeute=()=>heuteFertig().some(s=>bewertung(s,meineStaende()[s.id]).z==="+");
-/* Gespielt wird für alle gleichzeitig: erst in den letzten SPIEL_MIN Minuten der Stunde. Davor: Lernzeit-Karte auf Papier. */
+/* Gespielt wird für alle gleichzeitig: erst in den letzten SPIEL_MIN Minuten der Stunde. Davor: Note verbessern. */
 const SPIEL_MIN=10;
 function spielAb(){ /* Uhrzeit (Minuten) ab der der Spielplatz heute öffnet – null, wenn gerade keine Stunde laut Plan läuft */
   if(!sitzung)return null;const b=berlin();
@@ -99,8 +99,10 @@ function spielAb(){ /* Uhrzeit (Minuten) ab der der Spielplatz heute öffnet –
 const uhr=m=>`${String(Math.floor(m/60)).padStart(2,"0")}:${String(m%60).padStart(2,"0")}`;
 const spielZeit=()=>{const a=spielAb();return a===null||berlin().min>=a};
 const spielplatzOffen=()=>VS||(plusHeute()&&spielZeit());
-const kartenHinweis=()=>{const a=spielAb(),nx=PFAD().find(x=>!meineStaende()[x.id]?.fertig),weiter=nx&&status(nx)==="offen";
-  return(weiter?`Weil du ein + hast, darfst du heute noch die <b>nächste Station</b> machen. Tippe auf „Zum Lernpfad“.`:`Hol dir jetzt bei deiner Lehrkraft die <b>Lernzeit-Karte</b> zu dieser Station.`)+(a!==null?` Der Spielplatz öffnet um <b>${uhr(a)} Uhr</b>.`:"")};
+/* Welche Teile einer fertigen Station lassen sich verbessern? (nur Teile aus dem eigenen Durchgang, bei denen Punkte fehlen) */
+const verbesserbar=(st,p)=>p?.fertig?st.schritte.map((_,k)=>k).filter(k=>k in (p.punkte||{})&&p.punkte[k]<st.schritte[k].punkte):[];
+const kartenHinweis=()=>{const a=spielAb(),kann=heuteFertig().some(x=>verbesserbar(x,meineStaende()[x.id]).length);
+  return(a!==null?`Der Spielplatz öffnet um <b>${uhr(a)} Uhr</b>. `:"")+(kann?"Bis dahin kannst du deine Note noch verbessern: Tippe unten im Lernpfad auf deine Station von heute.":"")};
 /* Aufräumen beim Verlassen eines Teils (z. B. Tastatur-Abhörer, Zeitgeber) */
 let aufraeumListe=[];
 function aufraeumen(){aufraeumListe.forEach(f=>{try{f()}catch(e){}});aufraeumListe=[]}
@@ -345,36 +347,54 @@ function seiteStation(st){
     laufend={st,prog};
   }
   const {prog}=laufend;
-  if(prog.fertig)return seiteErgebnis(st,prog);
-  const i=Math.min(prog.schritt,st.schritte.length-1),sch=st.schritte[i];
-  const geloest=i in prog.punkte;
+  /* Verbessern-Modus (prog.verb): Die Station bleibt fertig, das Kind macht nur die Teile mit Punktverlust noch einmal.
+     Punkte können dabei nur steigen. vb={offen:[Teile],punkte:{},fehler:{},schritt} */
+  const vb=prog.verb||null;
+  if(prog.fertig&&!vb)return seiteErgebnis(st,prog);
+  const i=Math.min(vb?vb.schritt:prog.schritt,st.schritte.length-1),sch=st.schritte[i];
+  const erledigt=k=>vb?(!vb.offen.includes(k)||k in vb.punkte):k in prog.punkte;
+  const fk=vb?(vb.fehler=vb.fehler||{}):(prog.fehler=prog.fehler||{});
+  const geloest=erledigt(i);
+  const rest=st.schritte.map((_,k)=>k).filter(k=>k!==i&&!erledigt(k)).length;
   $("#app").innerHTML=`
-  <div class="leiste noprint"><div class="wo">${pix(st.id,22)}<span>${esc(st.titel)}</span></div><span>Teil ${i+1} von ${st.schritte.length}</span>${st.spiel?`<span class="pts">Spielplatz, ohne Note</span>`:`<span class="pts">${summe(prog)} Punkte</span>`}</div>
-  <div class="steps noprint springen">${st.schritte.map((_,k)=>{const darf=VS||k in prog.punkte||k<=(prog.weitester||0);
-    return`<i class="${k in prog.punkte?"ok":k===i?"now":""}${darf?"":" zu"}"${darf?` data-sp="${k}" title="Zu Teil ${k+1}"`:""}></i>`}).join("")}</div>
+  <div class="leiste noprint"><div class="wo">${pix(st.id,22)}<span>${esc(st.titel)}</span></div><span>Teil ${i+1} von ${st.schritte.length}${vb?` · <b>Note verbessern</b>`:""}</span>${st.spiel?`<span class="pts">Spielplatz, ohne Note</span>`:`<span class="pts">${summe(prog)} Punkte</span>`}</div>
+  <div class="steps noprint springen">${st.schritte.map((_,k)=>{const darf=VS||(vb?vb.offen.includes(k):k in prog.punkte||k<=(prog.weitester||0));
+    return`<i class="${k===i&&!erledigt(k)?"now":erledigt(k)?"ok":""}${k===i?" hier":""}${darf?"":" zu"}"${darf?` data-sp="${k}" title="Zu Teil ${k+1}"`:""}></i>`}).join("")}</div>
   <h1>${esc(sch.titel)}</h1>
   ${sch.merke?`<div class="aha merke"><b>Merke</b> ${sch.merke}</div>`:""}
   <div id="body"></div>
   <div id="hilfe"></div>
   <div class="nav noprint">
-    <button class="btn ghost pfeil" id="zur">${i===0?"Zum Lernpfad":"Zurück"}</button>
-    <button class="btn pfeil" id="weiter">${i===st.schritte.length-1?"Fertig":"Weiter"}</button>
+    <button class="btn ghost pfeil" id="zur">${vb?"Zum Ergebnis":i===0?"Zum Lernpfad":"Zurück"}</button>
+    <button class="btn pfeil" id="weiter">${(VS||st.spiel?i===st.schritte.length-1:rest===0)?"Fertig":"Weiter"}</button>
   </div>`;
-  prog.weitester=Math.max(prog.weitester||0,i);
+  if(!vb)prog.weitester=Math.max(prog.weitester||0,i);
   kopfAktiv();
   prog.daten[i]=prog.daten[i]||{};
+  /* Hilfe-Kasten: nach 3 Fehlversuchen ein Schubs, nach 6 (oder 6 Minuten am selben Teil) darf man überspringen */
+  const hilfeBox=mitSkip=>{const h=$("#hilfe");if(!h||VS||erledigt(i))return;
+    h.innerHTML=`<div class="hilfe-box"><b>Kurz durchatmen.</b> ${sch.tipp||"Lies die Aufgabe oben noch einmal langsam, Wort für Wort. Schau dir das Beispiel und den Merke-Kasten an."} Kommst du trotzdem nicht weiter? <b>Heb die Hand.</b> Fragen ist schlau, nicht peinlich.
+      ${mitSkip?`<div class="skip-zeile">Du hast es oft versucht. Das ist okay. <button class="btn ghost" id="skip">Diesen Teil überspringen</button><span class="muted small">Dafür gibt es keine Punkte. Du kannst den Teil später noch einmal machen.</span></div>`:""}</div>`;
+    if(mitSkip)$("#skip").onclick=()=>{if(erledigt(i))return;
+      if(vb)vb.punkte[i]=0;else{prog.punkte[i]=0;prog.skip=prog.skip||{};prog.skip[i]=1}
+      speichern(true);toast("Übersprungen. Weiter geht es mit dem nächsten Teil.");vor()};
+    h.scrollIntoView({block:"nearest",behavior:"smooth"})};
+  if(!frei&&!geloest){const t=setTimeout(()=>hilfeBox(true),6*60000);aufraeumListe.push(()=>clearTimeout(t))}
   const ctx={
     daten:prog.daten[i],
     geloest,
     speichern:()=>speichern(),
     /* Ein falscher Versuch kostet 2 Punkte, aber höchstens die Hälfte der Punkte dieses Teils */
-    fehler(){prog.fehler=prog.fehler||{};prog.fehler[i]=(prog.fehler[i]||0)+1;speichern();
-      /* Nach jedem 3. Fehlversuch an derselben Stelle: ein ruhiger Schubs statt nur „falsch“ */
-      if(prog.fehler[i]%3===0&&!VS){const h=$("#hilfe");if(h){h.innerHTML=`<div class="hilfe-box"><b>Kurz durchatmen.</b> ${sch.tipp||"Lies die Aufgabe oben noch einmal langsam, Wort für Wort. Schau dir das Beispiel und den Merke-Kasten an."} Kommst du trotzdem nicht weiter? <b>Heb die Hand.</b> Fragen ist schlau, nicht peinlich.</div>`;h.scrollIntoView({block:"nearest",behavior:"smooth"})}}
+    fehler(){fk[i]=(fk[i]||0)+1;speichern();
+      if(fk[i]>=6)hilfeBox(true);else if(fk[i]%3===0)hilfeBox(false);
       /* Raten erkennen: zwei falsche Versuche innerhalb weniger Sekunden → kurze Lese-Pause statt weiterem Raten */
       const jetzt=Date.now();serie=jetzt-letzterFehler<7000?serie+1:1;letzterFehler=jetzt;
       if(serie>=2&&!frei){serie=0;lesePause(15)}},
-    geschafft(p){if(!(i in prog.punkte)){const f=(prog.fehler||{})[i]||0;p=Math.max(Math.ceil(p/2),p-2*f);prog.punkte[i]=p;speichern(true);
+    geschafft(p){if(!erledigt(i)){const f=fk[i]||0;p=Math.max(Math.ceil(p/2),p-2*f);
+        if(vb){vb.punkte[i]=p;if(p>(prog.punkte[i]||0)){prog.punkte[i]=p;if(prog.skip)delete prog.skip[i]}
+          prog.erg={...prog.erg,p:summe(prog),z:zeichenAus(prozent(st,prog))}}
+        else prog.punkte[i]=p;
+        speichern(true);const h=$("#hilfe");if(h)h.innerHTML="";
         if(p>0)toast(`Geschafft, +${p} Punkte`);
         $(".pts").textContent=`${summe(prog)} Punkte`;
         $(".steps").children[i].className="ok"}
@@ -387,9 +407,15 @@ function seiteStation(st){
   sch.zeige($("#body"),ctx);
   if(VS&&ctx.loesung){$("#body").insertAdjacentHTML("beforebegin",`<button class="btn ghost noprint" id="loesung" style="margin:0 0 14px;min-height:40px;padding:6px 14px">Lösung zeigen (nur Vorschau)</button>`);
     $("#loesung").onclick=()=>{ctx.loesung();$("#loesung").remove()}}
-  document.querySelectorAll("[data-sp]").forEach(x=>x.onclick=()=>{prog.schritt=+x.dataset.sp;speichern();seiteStation(st);scrollTo(0,0)});
-  $("#zur").onclick=()=>{if(i===0){location.hash=home()}else{prog.schritt=i-1;speichern();seiteStation(st);scrollTo(0,0)}};
-  const vor=()=>{if(i===st.schritte.length-1){
+  const geheZu=k=>{if(vb)vb.schritt=k;else prog.schritt=k;speichern();seiteStation(st);scrollTo(0,0)};
+  const endeVerb=()=>{delete prog.verb;prog.verbessert=Date.now();prog.erg={...prog.erg,p:summe(prog),z:zeichenAus(prozent(st,prog))};speichern(true);seiteErgebnis(st,prog);scrollTo(0,0)};
+  document.querySelectorAll("[data-sp]").forEach(x=>x.onclick=()=>geheZu(+x.dataset.sp));
+  $("#zur").onclick=()=>{if(vb)return endeVerb();if(i===0){location.hash=home()}else geheZu(i-1)};
+  const naechster=()=>{const n=st.schritte.length;for(let k=i+1;k<n;k++)if(!erledigt(k))return k;for(let k=0;k<i;k++)if(!erledigt(k))return k;return -1};
+  const vor=()=>{
+    if(vb){const k=naechster();return k<0?endeVerb():geheZu(k)}
+    if(!frei){const k=naechster();if(k>=0)return geheZu(k)}
+    if(frei?i===st.schritte.length-1:true){
       if(st.spiel){delete staende[st.id];staendeLokal();laufend=null;toast("Gut gespielt.");location.hash=home();return}
       prog.fertig=Date.now();prog.erg={p:summe(prog),max:maxPunkte(st),z:zeichenAus(prozent(st,prog)),f:Object.values(prog.fehler||{}).reduce((a,b)=>a+b,0)};speichern(true);seiteErgebnis(st,prog)}
     else{prog.schritt=i+1;speichern();seiteStation(st)}
@@ -402,7 +428,7 @@ function seiteStation(st){
     tick();pauseTimer=setInterval(tick,500);aufraeumListe.push(()=>clearInterval(pauseTimer));
     toast("Nicht raten. Lies die Aufgabe noch einmal in Ruhe.")}
   $("#weiter").onclick=()=>{if(sperre)return;
-    if(frei||i in prog.punkte)return vor();
+    if(frei||erledigt(i))return vor();
     if(ctx.pruefer){if(ctx.pruefer()){sperre=true;setTimeout(vor,900)}return}
     toast("Löse zuerst diesen Teil.")};
 }
@@ -417,7 +443,8 @@ function konfetti(){
 function seiteErgebnis(st,prog){
   aufraeumen();
     const pz=prozent(st,prog);
-  const bw=bewertung(st,prog),z=bw.z;
+  const bw=bewertung(st,prog),z=bw.z,offen=VS?[]:verbesserbar(st,prog);
+  const teile=offen.length===1?"den einen Teil":`die ${offen.length} Teile`;
   $("#app").innerHTML=kopf()+`
   <p class="eyebrow">Ergebnis, ${esc(st.titel)}</p>
   <div class="ergebnis result">
@@ -431,15 +458,19 @@ function seiteErgebnis(st,prog){
   ${bw.stern?`<div class="msg ok stern-msg">⭐ Deine Lehrkraft hat gesehen, wie viel Mühe du dir gegeben hast. Darum ist deine Note eine Stufe besser.</div>`:""}
   <p style="font-weight:700">Zeig dieses Ergebnis deiner Lehrkraft.${st.kreativ?" Die Note für Kreativität gibt die Lehrkraft.":""}</p>
   ${st.ergebnis?`<div class="block">${st.ergebnis(prog.daten)}</div>`:""}
-  ${!VS&&z==="+"&&!spielZeit()?`<div class="msg info" style="margin:0 0 16px">${kartenHinweis()}</div>`:""}
-  ${VS||z==="+"?"":`<p class="muted" style="margin:0 0 14px">Der Spielplatz öffnet nur mit einem +. Du kannst die Station noch einmal machen. Dann zählt dein neues Ergebnis.</p>`}
-  <div class="nav noprint"><button class="btn ghost" id="zur">Zum Lernpfad</button>${VS?"":z==="+"&&spielZeit()?`<button class="btn" id="spielen">Zum Spielplatz</button>`:z==="+"?"":`<button class="btn" id="besser">Station verbessern</button>`}</div>
+  ${!VS&&z==="+"&&!spielZeit()&&spielAb()!==null?`<div class="msg info" style="margin:0 0 14px">Der Spielplatz öffnet um <b>${uhr(spielAb())} Uhr</b>.</div>`:""}
+  ${VS?"":offen.length?`<p class="muted" style="margin:0 0 14px">${z==="+"?"":"Der Spielplatz öffnet nur mit einem +. "}Du kannst deine Note verbessern: Du machst nur ${teile} noch einmal, bei denen du Punkte verloren hast. Deine Punkte können dabei nur mehr werden.</p>`
+    :z==="+"?"":`<p class="muted" style="margin:0 0 14px">Der Spielplatz öffnet nur mit einem +.</p>`}
+  <div class="nav noprint"><button class="btn ghost" id="zur">Zum Lernpfad</button>${offen.length?`<button class="btn${z==="+"&&spielZeit()?" ghost":""}" id="besser">Note verbessern</button>`:""}${!VS&&z==="+"&&spielZeit()?`<button class="btn" id="spielen">Zum Spielplatz</button>`:""}</div>
   `;
   kopfAktiv();
   if(st.nachErgebnis)st.nachErgebnis(prog.daten);
   $("#zur").onclick=()=>location.hash=home();
-  if($("#besser"))$("#besser").onclick=()=>{if(!confirm("Station noch einmal von vorn machen? Dein neues Ergebnis zählt dann."))return;
-    staende[st.id]={schritt:0,punkte:{},daten:{},start:Date.now(),aktiv:0,versuch:(prog.versuch||1)+1};laufend=null;staendeLokal();seiteStation(st)};
+  if($("#besser"))$("#besser").onclick=()=>{
+    if(!prog.erst)prog.erst={p:summe(prog),pz:bw.pz};   // erstes Ergebnis merken – die Lehrkraft sieht „vorher → jetzt“
+    prog.daten=prog.daten||{};offen.forEach(k=>{prog.daten[k]={}});
+    prog.verb={offen,punkte:{},fehler:{},schritt:offen[0]};prog.versuch=(prog.versuch||1)+1;
+    laufend={st,prog};speichern(true);seiteStation(st);scrollTo(0,0)};
   if($("#spielen"))$("#spielen").onclick=()=>{location.hash=home();setTimeout(()=>document.querySelector(".spielplatz")?.scrollIntoView({behavior:"smooth"}),100)};
   if(VS)$(".nav").insertAdjacentHTML("beforeend",`<button class="btn ghost" id="vnochmal">Station noch mal</button>`),$("#vnochmal").onclick=()=>{delete vStaende[st.id];laufend=null;seiteStation(st)};
 }
@@ -539,7 +570,7 @@ function lehrerZeigen(){
   const zeile=k=>{const t=tierInfo(k.tier),s=d.staende[k.id]||{};
     const status=k.besetzt?`<span class="chip good">angemeldet</span> <button class="link" data-a="freigeben" data-id="${k.id}">abmelden</button>`:`<span class="muted small">–</span>`;
     const zellen=PFAD().map(st=>{const p=s[st.id];if(!p)return`<td class="muted c">·</td>`;const pz=prozent(st,p);
-      return`<td class="c" title="${esc(st.titel)}: ${pz} %${p.fertig?"":" · Teil "+((p.schritt||0)+1)}">${p.fertig?(()=>{const b=bewertung(st,p);return`<span class="chip ${zeichenKlasse(b.z)} gross-z">${b.note}${b.stern?"⭐":""}</span>`})():`<span class="muted small">…${pz}%</span>`}</td>`}).join("");
+      return`<td class="c" title="${esc(st.titel)}: ${pz} %${p.fertig?"":" · Teil "+((p.schritt||0)+1)}">${p.fertig?(()=>{const b=bewertung(st,p);return`<span class="chip ${zeichenKlasse(b.z)} gross-z">${b.note}${b.stern?"⭐":""}</span><span class="pzk">${pz} %</span>`})():`<span class="muted small">…${pz}%</span>`}</td>`}).join("");
     return`<tr><td class="t"><span class="e">${t.emoji}</span>${esc(t.name)}</td>
       <td><input type="text" class="vn" data-id="${k.id}" value="${esc(namen[k.id]||"")}" placeholder="Wer ist das?" list="dl-${esc(kl)}"></td><td>${status}</td>${zellen}
       <td><button class="link" data-a="mehr" data-id="${k.id}" aria-label="Mehr">⋯</button></td></tr>`};
@@ -554,15 +585,16 @@ function lehrerZeigen(){
       PFAD().forEach(st=>{const p=s[st.id];if(!p)return;
         const tag=new Date(p.fertig||p.start||0).toDateString();if(tag!==heute)return;
         const bw=bewertung(st,p),pz=bw.pz,z=bw.z,f=p.fehler||{},fGes=Object.values(f).reduce((a,b)=>a+b,0),fHier=f[p.schritt||0]||0,min=Math.round((p.aktiv||0)/60000);
-        const hinweis=!p.fertig&&fHier>=3?"hängt an diesem Teil":p.fertig&&min<15?"sehr schnell fertig":fGes>=12?"viele Fehlversuche":"";
-        zeilen.push({name:namen[k.id]||`${t.emoji} ${t.name}`,z,note:bw.note,stern:bw.stern,kid:k.id,sid:st.id,st:st.titel,pz,fertig:!!p.fertig,teil:`Teil ${(p.schritt||0)+1} von ${st.schritte.length}`,min,fGes,hinweis,da:k.besetzt})})});
+        const sk=Object.keys(p.skip||{}).length;
+        const hinweis=[!p.fertig&&fHier>=3?"hängt an diesem Teil":p.fertig&&min<15?"sehr schnell fertig":fGes>=12?"viele Fehlversuche":"",sk?`${sk} übersprungen`:""].filter(Boolean).join(" · ");
+        zeilen.push({name:namen[k.id]||`${t.emoji} ${t.name}`,z,note:bw.note,stern:bw.stern,kid:k.id,sid:st.id,erst:p.erst&&p.erst.pz!==pz?p.erst.pz:null,st:st.titel,pz,fertig:!!p.fertig,teil:`Teil ${(p.schritt||0)+1} von ${st.schritte.length}`,min,fGes,hinweis,da:k.besetzt})})});
     if(!zeilen.length)return`<div class="block"><h2 style="margin-bottom:4px">Heute</h2><p class="muted" style="margin:0">Heute hat in ${kl} noch niemand gearbeitet. Sobald Kinder anfangen, siehst du hier, wer wo ist und wer Hilfe braucht.</p></div>`;
     zeilen.sort((a,b)=>(b.hinweis?1:0)-(a.hinweis?1:0)||a.name.localeCompare(b.name,"de"));
     window._noten=zeilen.map(x=>`${x.name}\t${x.st}\t${x.z} (${x.note}${x.stern?" ⭐":""})${x.fertig?"":" nicht fertig"}`).join("\n");
     return`<div class="block" style="overflow-x:auto"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Heute</h2>${notenKreis(zeilen.filter(x=>x.fertig).map(x=>x.note))}<button class="btn ghost noprint" id="kopie" style="min-height:40px;padding:6px 14px">Noten kopieren</button></div>
       <p class="muted small" style="margin:4px 0 10px">Aktualisiert sich alle 20 Sekunden. Kinder mit Hinweis stehen oben. Wer nicht fertig wurde, bekommt das Zeichen für das, was geschafft ist.</p>
-      <table class="liste heute-t"><thead><tr><th>Kind</th><th>Station</th><th>Stand</th><th class="c">Minuten</th><th class="c">Fehlversuche</th><th>Hinweis</th><th class="c" title="Mühe-Stern: hebt die Note um eine Stufe">Mühe</th><th class="c">Note</th></tr></thead><tbody>
-      ${zeilen.map(x=>`<tr class="${x.hinweis?"auff":""}"><td class="t">${esc(x.name)}</td><td>${esc(x.st)}</td><td>${x.fertig?"fertig":x.teil}</td><td class="c">${x.min}</td><td class="c">${x.fGes}</td><td>${x.hinweis?`<b>${x.hinweis}</b>`:""}</td><td class="c"><button class="stern-btn${x.stern?" an":""}" data-stern="${x.kid}|${x.sid}" title="${x.stern?"Mühe-Stern wieder wegnehmen":"Mühe-Stern geben: Note eine Stufe besser"}">⭐</button></td><td class="c"><span class="chip ${zeichenKlasse(x.z)} gross-z" title="${x.z} · ${x.pz} %${x.stern?" · mit Mühe-Stern":""}">${x.note}</span></td></tr>`).join("")}</tbody></table></div>`})()}
+      <table class="liste heute-t"><thead><tr><th>Kind</th><th>Station</th><th>Stand</th><th class="c">Minuten</th><th class="c">Fehlversuche</th><th>Hinweis</th><th class="c" title="Mühe-Stern: hebt die Note um eine Stufe">Mühe</th><th class="c" title="Erreichte Punkte in Prozent. „81 → 93“ heißt: nach dem Verbessern">%</th><th class="c">Note</th></tr></thead><tbody>
+      ${zeilen.map(x=>`<tr class="${x.hinweis?"auff":""}"><td class="t">${esc(x.name)}</td><td>${esc(x.st)}</td><td>${x.fertig?"fertig":x.teil}</td><td class="c">${x.min}</td><td class="c">${x.fGes}</td><td>${x.hinweis?`<b>${x.hinweis}</b>`:""}</td><td class="c"><button class="stern-btn${x.stern?" an":""}" data-stern="${x.kid}|${x.sid}" title="${x.stern?"Mühe-Stern wieder wegnehmen":"Mühe-Stern geben: Note eine Stufe besser"}">⭐</button></td><td class="c pz">${x.erst!=null?`<span class="muted">${x.erst} → </span>`:""}${x.pz} %</td><td class="c"><span class="chip ${zeichenKlasse(x.z)} gross-z" title="${x.z} · ${x.pz} %${x.stern?" · mit Mühe-Stern":""}">${x.note}</span></td></tr>`).join("")}</tbody></table></div>`})()}
   <div class="block" style="overflow-x:auto"><h2 style="margin-bottom:8px">Alle Stationen</h2>
     ${kinder.length?`<table class="liste"><thead><tr><th>Tier</th><th>Vorname <span class="muted small">(nur hier)</span></th><th>Status</th>${PFAD().map((st,i)=>`<th class="c" title="${esc(st.titel)}">${i+1}</th>`).join("")}<th></th></tr></thead><tbody>${kinder.map(zeile).join("")}</tbody></table>`
       :`<p style="margin:0">Noch keine Kinder in ${kl}. Trag unten die Klassenliste ein, dann bekommt jedes Kind ein Tier.</p>`}
