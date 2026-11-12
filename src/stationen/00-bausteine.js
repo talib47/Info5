@@ -112,6 +112,71 @@ function tippTempo({titel,punkte=10,merke,text,satz}){return{titel,punkte,merke,
   ctx.loesung=()=>{d.best=d.best||20000;p=satz.length;start=Date.now()-20000;ende=Date.now();zeichne()};
 }}}
 
+/* ---------- Vorlage: ein Satz oder Text, den das Kind bearbeiten soll – bewusst NICHT fett, damit Fettdruck in der Aufgabe wertvoll bleibt ---------- */
+const vorlage=(t,label="So steht es da")=>`<div class="vorlage"><span class="vl">${label}</span><p>${t}</p></div>`;
+
+/* ---------- Lückentext mit Wortkasten (Merk-Check am Ende einer Station) ----------
+   luecken({titel,punkte,text,saetze:["Die {Maus} ist ein {Eingabegerät}."],extra:["Drucker"]})
+   Wort antippen → es springt in die nächste freie Lücke. Lücke antippen → Wort geht zurück. */
+function luecken({titel,punkte=15,merke,text,saetze,extra=[]}){return{titel,punkte,merke,zeige(el,ctx){
+  const d=ctx.daten;const teile=[],soll=[];
+  saetze.forEach(z=>{const t=[];z.split(/(\{[^}]+\})/).forEach(x=>{if(/^\{.*\}$/.test(x)){t.push(soll.length);soll.push(x.slice(1,-1))}else if(x)t.push(x)});teile.push(t)});
+  const woerter=[...soll,...extra];
+  if(!d.reihe||d.reihe.length!==woerter.length){d.reihe=mischen(woerter.map((_,i)=>i));d.f={};ctx.speichern()}
+  d.f=d.f||{};let falsch=new Set(),wahl=null;
+  const benutzt=()=>new Set(Object.values(d.f));
+  const frei=()=>soll.map((_,g)=>g).filter(g=>d.f[g]==null);
+  const zeichne=()=>{
+    const b=benutzt(),offen=frei(),ziel=wahl!=null&&d.f[wahl]==null?wahl:offen[0];
+    el.innerHTML=kopfText(text||"Setz die Wörter aus dem Wortkasten in die Lücken. Tippe ein Wort an – es springt in die markierte Lücke.")+`
+      <div class="wortkasten">${d.reihe.map(i=>`<button class="wort${b.has(i)?" weg":""}" data-w="${i}" ${b.has(i)?"disabled":""}>${esc(woerter[i])}</button>`).join("")}</div>
+      <div class="ltext">${teile.map(t=>`<p>${t.map(x=>typeof x==="number"?`<button class="luecke${d.f[x]!=null?" voll":""}${x===ziel?" ziel":""}${falsch.has(x)?" falsch":""}" data-g="${x}">${d.f[x]!=null?esc(woerter[d.f[x]]):"&nbsp;"}</button>`:esc(x)).join("")}</p>`).join("")}</div>${MLD}`;
+    el.querySelectorAll("[data-w]").forEach(k=>k.onclick=()=>{const o=frei();if(!o.length)return;const g=wahl!=null&&d.f[wahl]==null?wahl:o[0];
+      d.f[g]=+k.dataset.w;wahl=null;falsch.delete(g);ctx.speichern();zeichne()});
+    el.querySelectorAll("[data-g]").forEach(k=>k.onclick=()=>{const g=+k.dataset.g;
+      if(d.f[g]!=null){delete d.f[g];falsch.delete(g);wahl=g;ctx.speichern()}else wahl=g;zeichne()});
+  };
+  zeichne();
+  ctx.pruefer=()=>{const fs=soll.map((w,g)=>d.f[g]!=null&&woerter[d.f[g]]===w?-1:g).filter(g=>g>=0);
+    return bewerte(ctx,el,{leer:frei().length>0,leerText:"Füll zuerst alle Lücken.",fehler:fs.length,stand:soll.map((_,g)=>d.f[g]).join(),punkte,
+      okText:"Richtig. Alle Lücken stimmen.",markiere:()=>{falsch=new Set(fs);zeichne()}})};
+  ctx.loesung=()=>{d.f={};soll.forEach((w,g)=>{d.f[g]=woerter.findIndex((x,i)=>x===w&&!Object.values(d.f).includes(i))});zeichne()};
+  if(ctx.geloest)schonGeloest(el);
+}}}
+
+/* ---------- Die geheime Maschine: EVA zum Ausprobieren ----------
+   maschine({titel,punkte,text,runden:[{f:x=>x*2,regel:"mal 2",falsch:["plus 2","plus 4"]}]})
+   Das Kind gibt Zahlen ein, sieht die Ausgabe und findet heraus, was die Verarbeitung macht. */
+function maschine({titel,punkte=15,merke,text,runden}){return{titel,punkte,merke,zeige(el,ctx){
+  const d=ctx.daten;d.r=d.r||0;d.v=d.v||[];
+  const zeichne=()=>{
+    if(d.r>=runden.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle ${runden.length} Maschinen durchschaut. Tippe auf „Weiter“.</div>`;return}
+    const R=runden[d.r];if(!d.opt||d.opt.length!==R.falsch.length+1){d.opt=mischen([R.regel,...R.falsch])}
+    const genug=d.v.length>=3;
+    el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Maschine ${d.r+1} von ${runden.length}</p>
+      <div class="eva-m"><div class="eva-k"><span>Eingabe</span><input type="text" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="Zahl" id="mz"></div>
+        <i>→</i><div class="eva-k mitte"><span>Verarbeitung</span><b>⚙️ ?</b></div><i>→</i>
+        <div class="eva-k"><span>Ausgabe</span><b id="ma">${d.v.length?R.f(d.v[d.v.length-1]):"…"}</b></div>
+        <button class="btn" id="ml">Los</button></div>
+      ${d.v.length?`<table class="liste eva-t"><thead><tr><th>Eingabe</th>${d.v.map(x=>`<td>${x}</td>`).join("")}</tr></thead><tbody><tr><th>Ausgabe</th>${d.v.map(x=>`<td><b>${R.f(x)}</b></td>`).join("")}</tr></tbody></table>`:""}
+      <p class="frage" style="margin-top:16px">Was macht die Maschine mit der Zahl?</p>
+      ${genug?`<div class="karten">${d.opt.map((o,i)=>`<button class="karte" data-o="${i}">Sie rechnet <b>${o}</b></button>`).join("")}</div>`
+        :`<p class="muted">Probier zuerst <b>${3-d.v.length}</b> ${d.v.length===2?"weitere Zahl":d.v.length?"weitere Zahlen":"verschiedene Zahlen"} aus. Dann kannst du antworten.</p>`}${MLD}`;
+    const inp=el.querySelector("#mz"),los=()=>{const x=parseInt(inp.value,10);
+      if(isNaN(x)||x<0||x>999){meldung(el,false,"Tippe eine Zahl von 0 bis 999 ins Feld <b>Eingabe</b>.");inp.focus();return}
+      if(!d.v.includes(x))d.v.push(x);else{d.v=d.v.filter(y=>y!==x);d.v.push(x)}
+      if(d.v.length>8)d.v.shift();ctx.speichern();zeichne();el.querySelector("#mz").focus()};
+    el.querySelector("#ml").onclick=los;inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();los()}};
+    el.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{
+      if(d.opt[+b.dataset.o]===R.regel){d.r++;d.v=[];d.opt=null;ctx.speichern();zeichne();
+        if(d.r>=runden.length)ctx.geschafft(punkte);else meldung(el,true,`Richtig: Die Maschine rechnete <b>${R.regel}</b>. Hier kommt die nächste.`)}
+      else{ctx.fehler();b.classList.add("falsch");meldung(el,false,"Das passt nicht zu allen Zahlen. Schau in die Tabelle und probier noch eine Zahl aus.")}});
+  };
+  zeichne();
+  ctx.pruefer=()=>{if(d.r>=runden.length){ctx.geschafft(punkte);return true}meldung(el,false,"Finde zuerst bei allen Maschinen heraus, was sie rechnen.");return false};
+  ctx.loesung=()=>{d.r=runden.length;zeichne()};
+}}}
+
 /* ---------- Paare: Links und rechts verbinden ----------
    paare({titel,punkte,merke,text,paare:[["links","rechts"],…]}) */
 const PAAR_FARBEN=["#4338CA","#E5383B","#2DA44E","#F08A24","#8E5BD6","#0EA5B7","#C2185B","#8B5A2B"];

@@ -24,7 +24,7 @@
   --good-soft:#E6F4EB; --bad-soft:#FBE9EB;
   --tint:rgba(31,68,200,.09);
   --sans:"Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; --serif:var(--sans);
-  --mono:"Hyperlegible Mono",var(--mono);
+  --mono:"Hyperlegible Mono",ui-monospace,Menlo,Consolas,monospace;
   --r:8px; --r-l:10px; --r-m:10px;
   --lift:0 0 0 1.5px var(--line);
 }
@@ -823,6 +823,54 @@ ol.reihe.fest li.leer.dran{border-color:var(--accent);color:var(--ink)}
 td.pz{white-space:nowrap;font-variant-numeric:tabular-nums}
 .paar-tipp{display:block}
 .paar-tipp .pschritt{margin-right:10px;vertical-align:middle}
+
+/* Vorlage (Satz, der bearbeitet wird): eigener Look statt Fettdruck */
+.vorlage{margin:12px 0 4px;padding:12px 16px 14px;border:1.5px dashed var(--muted);border-radius:var(--r);background:var(--fill)}
+.vorlage .vl{display:block;font-size:.75rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.vorlage p{margin:0;font:500 1.375rem/1.4 var(--mono)}
+.vorlage p b{font-weight:800;color:var(--accent)}
+/* Lückentext */
+.wortkasten{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px;padding:12px;border:1.5px solid var(--line);border-radius:var(--r);background:var(--fill)}
+.wort{border:1.5px solid var(--ink);background:var(--surface);color:var(--ink);border-radius:8px;padding:8px 14px;font:700 1rem/1.2 var(--sans);min-height:40px;cursor:pointer}
+.wort.weg{opacity:.28;border-style:dashed;cursor:default}
+.ltext p{margin:12px 0;font-size:1.125rem;line-height:2.1}
+.luecke{display:inline-block;min-width:7.5em;min-height:38px;padding:4px 10px;margin:0 4px;border:0;border-bottom:3px solid var(--muted);border-radius:6px 6px 0 0;background:var(--fill);color:var(--ink);font:700 1.0625rem/1.3 var(--sans);vertical-align:middle;cursor:pointer}
+.luecke.ziel{border-bottom-color:var(--accent);background:var(--tint)}
+.luecke.voll{border-bottom-color:var(--ink);background:var(--surface)}
+.luecke.falsch{border-bottom-color:var(--bad);color:var(--bad);background:var(--bad-soft,#FDE8EA)}
+/* Die geheime Maschine */
+.eva-m{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px;margin:8px 0 12px}
+.eva-m>i{align-self:center;font-style:normal;font-weight:800;font-size:1.5rem;color:var(--muted)}
+.eva-k{display:grid;gap:4px;justify-items:center;align-content:center;min-width:112px;padding:10px 12px;border:2px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.eva-k span{font-size:.75rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.eva-k b{font:800 1.75rem/1.2 var(--mono)}
+.eva-k.mitte{border-color:var(--ink);background:var(--fill)}
+.eva-k input{width:84px;text-align:center;font:800 1.5rem/1.2 var(--mono);padding:4px;border:2px solid var(--accent);border-radius:8px;background:var(--surface);color:var(--ink)}
+.eva-m .btn{align-self:center}
+.eva-t{width:auto;margin:0 0 4px} .eva-t td,.eva-t th{text-align:center;padding:6px 14px;font-family:var(--mono)}
+.karte.falsch{border-color:var(--bad)}
+/* Spielplatz-Spiele */
+.sp-kopf{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 16px;margin:8px 0;color:var(--muted)}
+.sp-kopf b{color:var(--ink)}
+.sp-feld{display:block;max-width:100%;height:auto;border:2px solid var(--ink);border-radius:var(--r);image-rendering:pixelated}
+.sp-pfeile{display:none;margin-top:10px;justify-items:center;gap:6px}
+.sp-pfeile div{display:flex;gap:6px}
+.sp-pfeile button{width:64px;height:56px;border:2px solid var(--ink);border-radius:10px;background:var(--surface);color:var(--ink);font-size:1.25rem}
+@media (pointer:coarse){.sp-pfeile{display:grid}}
+.sp-jagd{position:relative;height:340px;border:2px solid var(--ink);border-radius:var(--r);background:var(--fill);display:grid;place-items:center;overflow:hidden}
+.sp-ziel{position:absolute;border:0;border-radius:50%;cursor:pointer;background:radial-gradient(circle,#fff 0 18%,#D24B3E 19% 42%,#fff 43% 62%,#D24B3E 63%)}
+.sp-memo{display:grid;grid-template-columns:repeat(4,minmax(0,92px));gap:10px;justify-content:start}
+.sp-memo button{aspect-ratio:1;border:2px solid var(--ink);border-radius:12px;background:var(--accent);font-size:2.25rem;cursor:pointer;line-height:1}
+.sp-memo button.auf{background:var(--surface);cursor:default}
+.sp-memo button.ok{border-color:var(--good);background:var(--good-soft)}
+.sp-zahl{font-size:1.5rem;margin:12px 0}
+.sp-lampen{display:flex;flex-wrap:wrap;gap:10px}
+.sp-lampen button{display:grid;justify-items:center;gap:2px;width:84px;padding:10px 6px;border:2px solid var(--ink);border-radius:12px;background:var(--surface);color:var(--ink);cursor:pointer}
+.sp-lampen button span{font-size:2rem;filter:grayscale(1);opacity:.35}
+.sp-lampen button.an{background:#FFE55C;color:#2B2500} .sp-lampen button.an span{filter:none;opacity:1}
+.sp-lampen button b{font:800 1.25rem/1 var(--mono)}
+.spiel .rek{margin-left:auto;font-size:.8125rem;font-weight:700;color:var(--muted);white-space:nowrap}
+table.liste.eva-t{width:auto}
 /* Bausteine der Stationen */
 .paar{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;align-items:start;margin-top:8px}
 .px{display:grid;gap:2px;background:var(--line);border:2px solid var(--line);border-radius:10px;overflow:hidden;width:100%;max-width:340px;aspect-ratio:1;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -858,7 +906,7 @@ td.pz{white-space:nowrap;font-variant-numeric:tabular-nums}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="5bbda31e65";
+const VERSION="bbfbbb0ee4";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -1118,7 +1166,8 @@ function status(st){
   const vor=s[pfad[i-1].id];
   if(!vor?.fertig)return"zu";
   if(p)return"offen";
-  if(EINE_PRO_TAG&&tagVon(vor.fertig)===heuteTag())return"morgen";
+  /* Eine NEUE Station pro Tag. Wer eine angefangene Station von einem früheren Tag heute erst fertig macht, darf heute noch die nächste beginnen. */
+  if(EINE_PRO_TAG&&tagVon(vor.fertig)===heuteTag()&&tagVon(vor.start||vor.fertig)===heuteTag())return"morgen";
   return"offen";
 }
 /* Der Spielplatz ist die Belohnung für gute Arbeit: Er öffnet nur, wenn die Station von heute ein + hat (Schnell-Durchklicken lohnt sich nicht). */
@@ -1154,6 +1203,17 @@ const basis=()=>VS?"v/":"",home=()=>VS?"v":"";
 const meineStaende=()=>VS?vStaende:staende;
 
 function staendeLokal(){ssSet("if5-staende",staende)}
+/* Spielplatz-Statistik: zählt leise mit (Starts, Zeit, Rekord). Liegt als eigener Stand „spielplatz“ beim Kind.
+   Die Lehrkraft sieht sie nur auf Wunsch (aufklappbar), sie hat nichts mit der Note zu tun. */
+let vSpiel={spiele:{}};
+function spielStat(id,f){
+  const p=VS||!sitzung?vSpiel:(staende.spielplatz=staende.spielplatz||{spiele:{}});p.spiele=p.spiele||{};
+  const g=p.spiele[id]=p.spiele[id]||{n:0,ms:0};f(g);
+  if(VS||!sitzung)return;
+  staendeLokal();pushWarte.add("spielplatz");clearTimeout(pushTimer);pushTimer=setTimeout(hochladen,4000)}
+const spielRekord=id=>((VS||!sitzung?vSpiel:staende.spielplatz)?.spiele?.[id]?.best)??null;
+/* Ein Spiel meldet sein Ergebnis. klein=true: weniger ist besser (z. B. Züge). Gibt true zurück bei neuem Rekord. */
+function rekord(id,wert,klein){let neu=false;spielStat(id,g=>{g.runden=(g.runden||0)+1;if(!klein&&wert<=0)return;if(g.best==null||(klein?wert<g.best:wert>g.best)){neu=g.best!=null;g.best=wert}});return neu}
 let pushTimer=null,pushWarte=new Set();
 function speichern(sofort){
   if(!laufend)return;
@@ -1249,6 +1309,10 @@ const PIX={
   zahlen:["0100100","1111111","0100100","0100100","1111111","0100100","0000000"],
 };
 PIX.robobonus=PIX.robo;PIX.tipprennen=PIX.tippen;PIX.kimalen=PIX.ki;
+PIX.schlange=["0000000","1110000","0010000","0011100","0000100","0100111","0000000"];
+PIX.jagd=["0011100","0100010","1001001","1011101","1001001","0100010","0011100"];
+PIX.memory=["1110111","1010101","1110111","0000000","1110111","1010111","1110111"];
+PIX.lampen=["0011100","0111110","0111110","0111110","0011100","0011100","0001000"];
 const pix=(id,px=28,kl="")=>{const m=PIX[id]||PIX.pixel;
   return`<svg class="pix ${kl}" width="${px}" height="${px}" viewBox="0 0 7 7" aria-hidden="true" shape-rendering="crispEdges">${m.map((r,y)=>[...r].map((c,x)=>c==="1"?`<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="currentColor"/>`:"").join("")).join("")}</svg>`};
 const LOGO=pix("logo",26,"blau");
@@ -1337,7 +1401,7 @@ function seiteStart(){
   const n=sterne(),[,,rName]=rang(n),nr=naechsterRang(n);
   const akt=pfad.find(x=>!s[x.id]?.fertig);
   const stAkt=akt?status(akt):null,spOffen=spielplatzOffen();
-  const spielListe=`<div class="spiele">${SPIELE().map(x=>`<button class="spiel" data-sp="${x.id}">${pix(x.id,24)}<b>${esc(x.titel)}</b></button>`).join("")}</div>`;
+  const spielListe=`<div class="spiele">${SPIELE().map(x=>`<button class="spiel" data-sp="${x.id}">${pix(x.id,24)}<b>${esc(x.titel)}</b>${spielRekord(x.id)!=null?`<span class="rek" title="Dein Rekord">★ ${spielRekord(x.id)}</span>`:""}</button>`).join("")}</div>`;
   /* Oben steht genau eine Sache: die Station von heute – oder, wenn sie geschafft ist, der Spielplatz als Belohnung */
   const heute=VS?"":!akt?`<div class="heute-karte">${pix("pixel",56,"blau")}<div><p class="eyebrow">Alles geschafft</p><h2>Du hast alle ${pfad.length} Stationen geschafft.</h2><p class="muted">Starke Leistung. Der Spielplatz gehört dir.</p></div></div>`
     :stAkt==="morgen"?`<div class="heute-karte">${pix(akt.id,56)}<div><p class="eyebrow">Für heute fertig</p><h2>Deine Station ist geschafft.</h2><p class="muted">${spOffen?"Du hast ein + geschafft und darfst spielen.":plusHeute()?kartenHinweis():"Für den Spielplatz brauchst du ein +. Du kannst deine Station verbessern: Tippe sie unten im Lernpfad an."} Nächste Stunde geht es weiter mit „${esc(akt.titel)}“</p></div></div>`
@@ -1376,6 +1440,8 @@ function seiteStation(st){
   if(stt==="zu"||stt==="morgen"){location.hash=home();return}
   if(st.spiel&&!spielplatzOffen()){toast(plusHeute()?"🔒 Der Spielplatz öffnet erst am Ende der Stunde.":"🔒 Der Spielplatz öffnet, wenn du heute deine Station mit + geschafft hast.");location.hash=home();return}
   const frei=VS||!!st.spiel;   // frei: „Weiter“ geht immer (Vorschau und Spielplatz)
+  if(st.spiel){if(!laufend||laufend.st!==st)spielStat(st.id,g=>g.n++);
+    const t0=Date.now();aufraeumListe.push(()=>spielStat(st.id,g=>g.ms=(g.ms||0)+Math.min(Date.now()-t0,20*60000)))}
   if(!laufend||laufend.st!==st){
     const prog=meineStaende()[st.id]||{schritt:0,punkte:{},daten:{},start:Date.now(),aktiv:0};
     laufend={st,prog};
@@ -1639,6 +1705,13 @@ function lehrerZeigen(){
     <p class="small" style="margin:10px 0 6px">Ein Name pro Zeile (Vorname oder Vor- und Nachname). Jedes neue Kind bekommt ein freies Tier. Wer schon ein Tier hat, behält es. Die Namen sieht nur dein Lehrer-Konto.</p>
     <textarea class="uebfeld" id="kliste" style="min-height:160px" spellcheck="false">${esc([...new Set([...(listen[kl]||[]),...kinder.map(k=>namen[k.id]).filter(Boolean)])].join("\n"))}</textarea>
     <div class="row" style="margin-top:10px"><button class="btn" id="zuteilen">Speichern und Tiere zuteilen</button><span class="muted small">Danach: Kärtchen drucken und verteilen.</span></div></details>
+  ${(()=>{const mit=kinder.filter(k=>d.staende[k.id]?.spielplatz?.spiele);if(!mit.length)return"";const SP=SPIELE();
+    return`<details class="block noprint"><summary><b>Spielplatz-Statistik</b> <span class="muted small">– nur zur Info, ohne Note</span></summary>
+      <p class="small muted" style="margin:10px 0 6px">Wie oft ein Kind ein Spiel geöffnet hat und sein Rekord (★). Rechts: Minuten auf dem Spielplatz insgesamt.</p>
+      <div style="overflow-x:auto"><table class="liste"><thead><tr><th>Kind</th>${SP.map(x=>`<th class="c">${esc(x.titel)}</th>`).join("")}<th class="c">Min.</th></tr></thead><tbody>
+      ${mit.map(k=>{const t=tierInfo(k.tier),sp=d.staende[k.id].spielplatz.spiele;let ms=0;
+        return`<tr><td class="t">${esc(namen[k.id]||`${t.emoji} ${t.name}`)}</td>${SP.map(x=>{const g=sp[x.id];if(!g)return`<td class="muted c">·</td>`;ms+=g.ms||0;return`<td class="c">${g.n}×${g.best!=null?` <span class="muted">★ ${g.best}</span>`:""}</td>`}).join("")}<td class="c">${Math.round(ms/60000)}</td></tr>`}).join("")}
+      </tbody></table></div></details>`})()}
   <div class="row noprint">
     <button class="btn ghost" id="druck" ${kinder.length?"":"disabled"}>Kärtchen drucken</button>
     <button class="btn" id="notfall">Notfall-Datei: alle Noten speichern</button>
@@ -1863,6 +1936,71 @@ function tippTempo({titel,punkte=10,merke,text,satz}){return{titel,punkte,merke,
   zeichne();
   ctx.pruefer=()=>{if(d.best){ctx.geschafft(punkte);return true}meldung(el,false,"Tippe zuerst den Satz einmal ganz ab.");return false};
   ctx.loesung=()=>{d.best=d.best||20000;p=satz.length;start=Date.now()-20000;ende=Date.now();zeichne()};
+}}}
+
+/* ---------- Vorlage: ein Satz oder Text, den das Kind bearbeiten soll – bewusst NICHT fett, damit Fettdruck in der Aufgabe wertvoll bleibt ---------- */
+const vorlage=(t,label="So steht es da")=>`<div class="vorlage"><span class="vl">${label}</span><p>${t}</p></div>`;
+
+/* ---------- Lückentext mit Wortkasten (Merk-Check am Ende einer Station) ----------
+   luecken({titel,punkte,text,saetze:["Die {Maus} ist ein {Eingabegerät}."],extra:["Drucker"]})
+   Wort antippen → es springt in die nächste freie Lücke. Lücke antippen → Wort geht zurück. */
+function luecken({titel,punkte=15,merke,text,saetze,extra=[]}){return{titel,punkte,merke,zeige(el,ctx){
+  const d=ctx.daten;const teile=[],soll=[];
+  saetze.forEach(z=>{const t=[];z.split(/(\{[^}]+\})/).forEach(x=>{if(/^\{.*\}$/.test(x)){t.push(soll.length);soll.push(x.slice(1,-1))}else if(x)t.push(x)});teile.push(t)});
+  const woerter=[...soll,...extra];
+  if(!d.reihe||d.reihe.length!==woerter.length){d.reihe=mischen(woerter.map((_,i)=>i));d.f={};ctx.speichern()}
+  d.f=d.f||{};let falsch=new Set(),wahl=null;
+  const benutzt=()=>new Set(Object.values(d.f));
+  const frei=()=>soll.map((_,g)=>g).filter(g=>d.f[g]==null);
+  const zeichne=()=>{
+    const b=benutzt(),offen=frei(),ziel=wahl!=null&&d.f[wahl]==null?wahl:offen[0];
+    el.innerHTML=kopfText(text||"Setz die Wörter aus dem Wortkasten in die Lücken. Tippe ein Wort an – es springt in die markierte Lücke.")+`
+      <div class="wortkasten">${d.reihe.map(i=>`<button class="wort${b.has(i)?" weg":""}" data-w="${i}" ${b.has(i)?"disabled":""}>${esc(woerter[i])}</button>`).join("")}</div>
+      <div class="ltext">${teile.map(t=>`<p>${t.map(x=>typeof x==="number"?`<button class="luecke${d.f[x]!=null?" voll":""}${x===ziel?" ziel":""}${falsch.has(x)?" falsch":""}" data-g="${x}">${d.f[x]!=null?esc(woerter[d.f[x]]):"&nbsp;"}</button>`:esc(x)).join("")}</p>`).join("")}</div>${MLD}`;
+    el.querySelectorAll("[data-w]").forEach(k=>k.onclick=()=>{const o=frei();if(!o.length)return;const g=wahl!=null&&d.f[wahl]==null?wahl:o[0];
+      d.f[g]=+k.dataset.w;wahl=null;falsch.delete(g);ctx.speichern();zeichne()});
+    el.querySelectorAll("[data-g]").forEach(k=>k.onclick=()=>{const g=+k.dataset.g;
+      if(d.f[g]!=null){delete d.f[g];falsch.delete(g);wahl=g;ctx.speichern()}else wahl=g;zeichne()});
+  };
+  zeichne();
+  ctx.pruefer=()=>{const fs=soll.map((w,g)=>d.f[g]!=null&&woerter[d.f[g]]===w?-1:g).filter(g=>g>=0);
+    return bewerte(ctx,el,{leer:frei().length>0,leerText:"Füll zuerst alle Lücken.",fehler:fs.length,stand:soll.map((_,g)=>d.f[g]).join(),punkte,
+      okText:"Richtig. Alle Lücken stimmen.",markiere:()=>{falsch=new Set(fs);zeichne()}})};
+  ctx.loesung=()=>{d.f={};soll.forEach((w,g)=>{d.f[g]=woerter.findIndex((x,i)=>x===w&&!Object.values(d.f).includes(i))});zeichne()};
+  if(ctx.geloest)schonGeloest(el);
+}}}
+
+/* ---------- Die geheime Maschine: EVA zum Ausprobieren ----------
+   maschine({titel,punkte,text,runden:[{f:x=>x*2,regel:"mal 2",falsch:["plus 2","plus 4"]}]})
+   Das Kind gibt Zahlen ein, sieht die Ausgabe und findet heraus, was die Verarbeitung macht. */
+function maschine({titel,punkte=15,merke,text,runden}){return{titel,punkte,merke,zeige(el,ctx){
+  const d=ctx.daten;d.r=d.r||0;d.v=d.v||[];
+  const zeichne=()=>{
+    if(d.r>=runden.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle ${runden.length} Maschinen durchschaut. Tippe auf „Weiter“.</div>`;return}
+    const R=runden[d.r];if(!d.opt||d.opt.length!==R.falsch.length+1){d.opt=mischen([R.regel,...R.falsch])}
+    const genug=d.v.length>=3;
+    el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Maschine ${d.r+1} von ${runden.length}</p>
+      <div class="eva-m"><div class="eva-k"><span>Eingabe</span><input type="text" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="Zahl" id="mz"></div>
+        <i>→</i><div class="eva-k mitte"><span>Verarbeitung</span><b>⚙️ ?</b></div><i>→</i>
+        <div class="eva-k"><span>Ausgabe</span><b id="ma">${d.v.length?R.f(d.v[d.v.length-1]):"…"}</b></div>
+        <button class="btn" id="ml">Los</button></div>
+      ${d.v.length?`<table class="liste eva-t"><thead><tr><th>Eingabe</th>${d.v.map(x=>`<td>${x}</td>`).join("")}</tr></thead><tbody><tr><th>Ausgabe</th>${d.v.map(x=>`<td><b>${R.f(x)}</b></td>`).join("")}</tr></tbody></table>`:""}
+      <p class="frage" style="margin-top:16px">Was macht die Maschine mit der Zahl?</p>
+      ${genug?`<div class="karten">${d.opt.map((o,i)=>`<button class="karte" data-o="${i}">Sie rechnet <b>${o}</b></button>`).join("")}</div>`
+        :`<p class="muted">Probier zuerst <b>${3-d.v.length}</b> ${d.v.length===2?"weitere Zahl":d.v.length?"weitere Zahlen":"verschiedene Zahlen"} aus. Dann kannst du antworten.</p>`}${MLD}`;
+    const inp=el.querySelector("#mz"),los=()=>{const x=parseInt(inp.value,10);
+      if(isNaN(x)||x<0||x>999){meldung(el,false,"Tippe eine Zahl von 0 bis 999 ins Feld <b>Eingabe</b>.");inp.focus();return}
+      if(!d.v.includes(x))d.v.push(x);else{d.v=d.v.filter(y=>y!==x);d.v.push(x)}
+      if(d.v.length>8)d.v.shift();ctx.speichern();zeichne();el.querySelector("#mz").focus()};
+    el.querySelector("#ml").onclick=los;inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();los()}};
+    el.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{
+      if(d.opt[+b.dataset.o]===R.regel){d.r++;d.v=[];d.opt=null;ctx.speichern();zeichne();
+        if(d.r>=runden.length)ctx.geschafft(punkte);else meldung(el,true,`Richtig: Die Maschine rechnete <b>${R.regel}</b>. Hier kommt die nächste.`)}
+      else{ctx.fehler();b.classList.add("falsch");meldung(el,false,"Das passt nicht zu allen Zahlen. Schau in die Tabelle und probier noch eine Zahl aus.")}});
+  };
+  zeichne();
+  ctx.pruefer=()=>{if(d.r>=runden.length){ctx.geschafft(punkte);return true}meldung(el,false,"Finde zuerst bei allen Maschinen heraus, was sie rechnen.");return false};
+  ctx.loesung=()=>{d.r=runden.length;zeichne()};
 }}}
 
 /* ---------- Paare: Links und rechts verbinden ----------
@@ -2713,11 +2851,11 @@ station({
         {bild:"🖨️",text:"Dein Lehrer sagt: „Druck deine Seite aus.“",optionen:[["Strg + P",true,"Genau. P wie Print, das heißt drucken."],["Strg + C",false,"Das kopiert nur."],["Strg + Z",false,"Das macht rückgängig."]]},
       ],merke:"Erst überlegen, dann drücken. Für fast jedes Problem gibt es eine Taste."}),
     eingabe({titel:"Satz reparieren 1",punkte:10,egal:"nichts",
-      text:"In diesem Satz fehlen der <b>Großbuchstabe am Anfang</b> und der <b>Punkt am Ende</b>. Schreib ihn richtig ins Feld.",
-      html:`<p class="frage" style="margin-top:12px">ich spiele gern fußball</p>`,antwort:["Ich spiele gern fußball.","Ich spiele gern Fußball.","Ich spiele gern fussball.","Ich spiele gern Fussball."],platz:"Der richtige Satz"}),
+      text:"In diesem Satz fehlen <b>2 Dinge</b>: der Großbuchstabe am Anfang und der Punkt am Ende. Schreib den Satz richtig ins Feld.",
+      html:vorlage("ich spiele gern fußball","Dieser Satz ist falsch geschrieben"),antwort:["Ich spiele gern fußball.","Ich spiele gern Fußball.","Ich spiele gern fussball.","Ich spiele gern Fussball."],platz:"Der richtige Satz"}),
     eingabe({titel:"Satz reparieren 2",punkte:10,egal:"nichts",
-      text:"Hier fehlen ein Großbuchstabe am Anfang, ein Großbuchstabe beim Namen und ein <b>Fragezeichen</b> am Ende. Schreib den Satz richtig.",
-      html:`<p class="frage" style="margin-top:12px">kommt mia heute mit</p>`,antwort:["Kommt Mia heute mit?"],platz:"Der richtige Satz"}),
+      text:"Hier fehlen <b>3 Dinge</b>: der Großbuchstabe am Anfang, der Großbuchstabe beim Namen und das Fragezeichen am Ende. Schreib den Satz richtig ins Feld.",
+      html:vorlage("kommt mia heute mit","Dieser Satz ist falsch geschrieben"),antwort:["Kommt Mia heute mit?"],platz:"Der richtige Satz"}),
     tippen({titel:"Tipp-Profi",punkte:15,zeilen:["Ali hat 2 Hunde.","Wo ist mein Ball?","Lena spielt Roblox!","Mein Passwort bleibt geheim."],
       text:"Vier Sätze mit Großbuchstaben, Zahlen und Satzzeichen. Lass dir Zeit. Jeder Fehler kostet Punkte."}),
     tastenMissionen({titel:"Text umbauen",punkte:15,text:"Im Übungsfeld steht ein Satz. Klick hinein. Dann baust du ihn nur mit der Tastatur um.",
@@ -2761,6 +2899,10 @@ station({
       merke:"<b>EVA</b>: Eingabe → Verarbeitung → Ausgabe. So arbeitet jeder Computer – vom Taschenrechner bis zur Spielkonsole."}),
     reihenfolge({titel:"EVA beim Musikhören",punkte:10,text:"Du willst ein Lied auf dem Handy hören. Bring die Schritte in die richtige Reihenfolge.",
       schritte:["Du tippst auf ▶️ (Eingabe)","Das Handy lädt das Lied aus dem Internet","Das Handy macht aus den Daten Töne (Verarbeitung)","Du hörst das Lied im Kopfhörer (Ausgabe)"]}),
+    maschine({titel:"Die geheime Maschine",punkte:15,
+      text:"Diese Maschine arbeitet nach dem EVA-Prinzip: Du gibst eine Zahl ein, sie <b>verarbeitet</b> die Zahl und gibt ein Ergebnis aus. Finde heraus, was sie rechnet!",
+      runden:[{f:x=>x+3,regel:"plus 3",falsch:["mal 3","plus 2"]},{f:x=>x*2,regel:"mal 2",falsch:["plus 2","plus 4"]},{f:x=>x*2+1,regel:"mal 2 und dann plus 1",falsch:["plus 3","mal 3"]}],
+      merke:"Die <b>Verarbeitung</b> sieht man nicht. Man sieht nur, was hineingeht und was herauskommt."}),
     paare({titel:"Ein Blick ins Gehäuse",punkte:15,text:"Im Computer arbeiten viele Teile zusammen – wie ein Team. Wer macht was?",
       paare:[["🧠 Prozessor (CPU)","rechnet alles aus – das Gehirn"],["⚡ Arbeitsspeicher (RAM)","merkt sich kurz, was gerade läuft"],["💾 Festplatte (SSD)","speichert Dateien für immer"],["🔌 Netzteil","versorgt alles mit Strom"],["🎮 Grafikkarte","berechnet die Bilder für den Bildschirm"],["📶 WLAN-Chip","verbindet mit dem Internet"]],
       merke:"Der <b>Prozessor</b> ist das Gehirn: Er schafft Milliarden Rechenschritte pro Sekunde."}),
@@ -2778,11 +2920,9 @@ station({
       text:"Ein Computer hat Eingabe, Verarbeitung und Ausgabe. Welche Dinge haben einen Computer eingebaut? Tippe alle an.",
       karten:[["📱 Handy",true],["⌚ Smartwatch",true],["🚗 modernes Auto",true,"hat sogar viele kleine Computer"],["🎮 Spielkonsole",true],["🏧 Geldautomat",true],["📺 Smart-TV",true],["🪑 Stuhl",false],["✏️ Bleistift",false],["🧺 Wäschekorb",false],["📚 Buch",false]],
       merke:"Computer stecken fast überall – oft ganz klein und versteckt. Man nennt sie dann <b>eingebettete Systeme</b>."}),
-    sortieren({titel:"Alles in einem: das Handy",punkte:10,
-      text:"Ein Handy hat alles eingebaut. Ordne die Teile vom Handy zu.",
-      toepfe:[["e","Eingabe","⬇️"],["v","Verarbeitung","⚙️"],["a","Ausgabe","⬆️"]],
-      karten:[["Touchscreen antippen","👆","e"],["Kamera","📷","e"],["Mikrofon","🎤","e"],["Prozessor","🧠","v"],["Display zeigt ein Bild","🖼️","a"],["Lautsprecher","🔊","a"],["Vibration","📳","a"]],
-      merke:"Der <b>Touchscreen</b> ist Eingabe und Ausgabe zugleich: Er zeigt Bilder und spürt deinen Finger."}),
+    auswaehlen({titel:"Rein und raus zugleich",punkte:10,text:"Manche Geräte können <b>beides</b>: Daten hineinbringen und herausgeben. Welche? Tippe sie an.",
+      karten:[["👆 Touchscreen",true,"spürt den Finger und zeigt Bilder"],["🎧 Headset mit Mikrofon",true],["🎮 Controller, der vibriert",true],["🥽 VR-Brille mit Bewegungs-Sensor",true],["🖱️ Maus",false],["🖨️ Drucker",false],["⌨️ Tastatur",false],["🔊 Lautsprecher",false]],
+      merke:"Geräte wie der <b>Touchscreen</b> sind Eingabe- und Ausgabegerät in einem."}),
     entscheidung({titel:"Computer-Doktor",punkte:15,text:"Am PC klappt etwas nicht. Was machst du als Computer-Profi?",
       szenen:[
         {bild:"🖱️",text:"Deine Maus bewegt den Zeiger nicht mehr.",optionen:[["Nachschauen, ob das Kabel richtig steckt",true,"Genau! Oft ist nur ein Stecker locker."],["Die Maus kräftig schütteln",false,"Davon wird sie nicht wieder heil."],["Einfach den PC vom Nachbarn benutzen",false,"Dann kann der Nachbar nicht mehr arbeiten."]]},
@@ -2793,10 +2933,6 @@ station({
     reihenfolge({titel:"Richtig starten und beenden",punkte:10,text:"So gehst du mit dem Schul-PC um. Bring die Schritte in die richtige Reihenfolge.",
       schritte:["PC einschalten","Warten, bis Windows fertig geladen ist","Programm öffnen und arbeiten","Arbeit speichern","Programm schließen","PC herunterfahren"],
       merke:"Nie einfach den Stecker ziehen – immer <b>herunterfahren</b>. Sonst können Daten kaputtgehen."}),
-    /* ---- Ergänzt im Nov. 2026 (mehr Übung, damit die Station eine Stunde füllt; neue Teile immer hinten anhängen) ---- */
-    auswaehlen({titel:"Rein und raus zugleich",punkte:10,text:"Manche Geräte können <b>beides</b>: Daten hineinbringen und herausgeben. Welche? Tippe sie an.",
-      karten:[["👆 Touchscreen",true,"spürt den Finger und zeigt Bilder"],["🎧 Headset mit Mikrofon",true],["🎮 Controller, der vibriert",true],["🥽 VR-Brille mit Bewegungs-Sensor",true],["🖱️ Maus",false],["🖨️ Drucker",false],["⌨️ Tastatur",false],["🔊 Lautsprecher",false]],
-      merke:"Geräte wie der <b>Touchscreen</b> sind Eingabe- und Ausgabegerät in einem."}),
     paare({titel:"Welches Programm nimmst du?",punkte:10,text:"Für jede Aufgabe gibt es die passende Software. Verbinde.",
       paare:[["📝 Word","einen Text schreiben"],["🌐 Firefox","im Internet surfen"],["🧮 Taschenrechner","schnell etwas ausrechnen"],["🐱 Scratch","ein Spiel programmieren"],["📁 Explorer","Dateien und Ordner finden"],["🎨 Paint","ein Bild malen"]]}),
     sortieren({titel:"EVA beim Zocken",punkte:15,text:"Auch eine Spielkonsole arbeitet nach dem EVA-Prinzip. Sortiere!",
@@ -2811,6 +2947,10 @@ station({
       ]}),
     eingabe({titel:"Das Gehirn des Computers",punkte:10,text:"Wie heißt das Teil, das im Computer alles ausrechnet? Schreib die Abkürzung mit <b>3 Buchstaben</b>.",
       antwort:["CPU"],platz:"Abkürzung",merke:"<b>CPU</b> heißt Central Processing Unit. Auf Deutsch: <b>Prozessor</b>."}),
+    luecken({titel:"Merk-Check",punkte:15,
+      saetze:["Jeder Computer arbeitet nach dem {EVA}-Prinzip.","Die Tastatur ist ein {Eingabegerät}.","Der Bildschirm ist ein {Ausgabegerät}.","Der {Prozessor} rechnet alles aus.","Teile zum Anfassen heißen {Hardware}.","Programme und Apps heißen {Software}.","Die {Festplatte} behält alles, auch ohne Strom."],
+      extra:["Drucker","Internet"],
+      merke:"Geschafft. Diese sieben Sätze sind das Wichtigste aus der Station."}),
   ],
 });
 
@@ -2952,12 +3092,12 @@ station({
       merke:"<b>Satz-Trick:</b> Aus einem Satz, den du dir leicht merken kannst, wird ein Passwort, das niemand errät."}),
     eingabe({titel:"Satz-Trick üben 1",punkte:10,egal:"nichts",
       text:"Mach aus diesem Satz ein Passwort: Nimm von jedem Wort den <b>ersten Buchstaben</b> (groß oder klein, wie im Satz). Zahlen und Satzzeichen bleiben.",
-      html:`<p class="frage" style="margin-top:12px">„<b>I</b>ch <b>e</b>sse <b>2</b> <b>E</b>is <b>a</b>m <b>T</b>ag<b>!</b>“</p>`,
+      html:vorlage(`„<b>I</b>ch <b>e</b>sse <b>2</b> <b>E</b>is <b>a</b>m <b>T</b>ag<b>!</b>“`,"Aus diesem Satz wird ein Passwort"),
       antwort:["Ie2EaT!"],platz:"Passwort",
       merke:"Achte auf Groß und klein: Für den Computer sind <b>A</b> und <b>a</b> verschiedene Zeichen."}),
     eingabe({titel:"Satz-Trick üben 2",punkte:10,egal:"nichts",
       text:"Jetzt ohne Hilfe: Erster Buchstabe von jedem Wort, Zahlen und Satzzeichen bleiben.",
-      html:`<p class="frage" style="margin-top:12px">„Am Sonntag spielt Lina 3 Stunden Fußball.“</p>`,
+      html:vorlage(`„Am Sonntag spielt Lina 3 Stunden Fußball.“`,"Aus diesem Satz wird ein Passwort"),
       antwort:["AsL3SF."],platz:"Passwort"}),
     entscheidung({titel:"Passwort-Profi",punkte:15,text:"Was machst du?",
       szenen:[
@@ -2981,7 +3121,7 @@ station({
       karten:[["messi10","","s"],["passwort","","s"],["11111111","","s"],["roblox2015","","s"],["Mi&Tim+2Katzen!","","k"],["Rot#Fuchs7springt_hoch","","k"],["Ich3ss?Gern-Pizza","","k"]]}),
     eingabe({titel:"Satz-Trick üben 3",punkte:10,egal:"nichts",
       text:"Mach aus diesem Satz ein Passwort: erster Buchstabe von jedem Wort, Zahlen und Satzzeichen bleiben.",
-      html:`<p class="frage" style="margin-top:12px">„Mein Bruder Ali isst 5 Pizzen pro Woche!“</p>`,
+      html:vorlage(`„Mein Bruder Ali isst 5 Pizzen pro Woche!“`,"Aus diesem Satz wird ein Passwort"),
       antwort:["MBAi5PpW!"],platz:"Passwort"}),
     entscheidung({titel:"Hilfe, gehackt?",punkte:15,text:"Was machst du?",
       szenen:[
@@ -3929,10 +4069,107 @@ station({
    Der Stand bleibt nur auf diesem Gerät und wird am Ende gelöscht (jedes Mal neu spielen). */
 {
 const P=()=>window.PIXEL;
+/* ===== Neue Spiele (Nov. 2026): mit eigenem Rekord. rekord(id,wert,kleinerIstBesser) und spielRekord(id) kommen aus app.js ===== */
+const zuf=n=>Math.floor(Math.random()*n);
+const rekText=(id,einheit)=>{const r=spielRekord(id);return r==null?"Noch kein Rekord":`Dein Rekord: <b>${r}</b> ${einheit}`};
+
+station({id:"schlange",nr:86,spiel:true,ico:"🐍",titel:"Schlange",kurz:"Friss Äpfel mit den Pfeiltasten",
+  schritte:[{titel:"Schlange",punkte:0,zeige(el,ctx){
+    const W=20,H=14,Z=24;
+    el.innerHTML=`<p>Steuere die Schlange mit den <b>Pfeiltasten</b>. Friss die roten Äpfel. Fahr nicht gegen die Wand und nicht in dich selbst.</p>
+      <div class="sp-kopf"><span id="pk">Äpfel: <b>0</b></span><span id="rk">${rekText("schlange","Äpfel")}</span></div>
+      <canvas id="cv" width="${W*Z}" height="${H*Z}" class="sp-feld"></canvas>
+      <div class="sp-pfeile" aria-label="Steuerung für Tablets"><button data-d="0,-1">▲</button><div><button data-d="-1,0">◀</button><button data-d="0,1">▼</button><button data-d="1,0">▶</button></div></div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="st">Start</button><span class="muted" id="inf"></span></div>`;
+    const cv=el.querySelector("#cv"),g=cv.getContext("2d"),css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+    let sn=[{x:5,y:7},{x:4,y:7},{x:3,y:7}],dir={x:1,y:0},nd=dir,apfel={x:12,y:7},timer=null,pkt=0,laeuft=false;
+    const male=()=>{g.clearRect(0,0,cv.width,cv.height);g.fillStyle=css("--fill")||"#F1F3F8";g.fillRect(0,0,cv.width,cv.height);
+      g.fillStyle="#D24B3E";g.fillRect(apfel.x*Z+4,apfel.y*Z+4,Z-8,Z-8);
+      sn.forEach((s,i)=>{g.fillStyle=i?"#2DA44E":"#17683A";g.fillRect(s.x*Z+1,s.y*Z+1,Z-2,Z-2)})};
+    const neuApfel=()=>{do{apfel={x:zuf(W),y:zuf(H)}}while(sn.some(s=>s.x===apfel.x&&s.y===apfel.y))};
+    const ende=()=>{laeuft=false;clearTimeout(timer);const neu=rekord("schlange",pkt);
+      el.querySelector("#inf").innerHTML=`Vorbei! Du hast <b>${pkt}</b> ${pkt===1?"Apfel":"Äpfel"} gefressen.${neu?" <b>Neuer Rekord!</b>":""}`;
+      el.querySelector("#rk").innerHTML=rekText("schlange","Äpfel");el.querySelector("#st").textContent="Noch mal";el.querySelector("#st").disabled=false};
+    const tick=()=>{dir=nd;const k={x:sn[0].x+dir.x,y:sn[0].y+dir.y};
+      if(k.x<0||k.y<0||k.x>=W||k.y>=H||sn.some(s=>s.x===k.x&&s.y===k.y))return ende();
+      sn.unshift(k);if(k.x===apfel.x&&k.y===apfel.y){pkt++;el.querySelector("#pk").innerHTML=`Äpfel: <b>${pkt}</b>`;neuApfel()}else sn.pop();male()};
+    const lauf=()=>{if(!laeuft)return;tick();if(laeuft)timer=setTimeout(lauf,Math.max(85,170-pkt*4))};
+    const start=()=>{sn=[{x:5,y:7},{x:4,y:7},{x:3,y:7}];dir=nd={x:1,y:0};pkt=0;neuApfel();laeuft=true;
+      el.querySelector("#pk").innerHTML="Äpfel: <b>0</b>";el.querySelector("#inf").textContent="";el.querySelector("#st").disabled=true;male();clearTimeout(timer);timer=setTimeout(lauf,400)};
+    const lenke=(x,y)=>{if(laeuft&&!(dir.x===-x&&dir.y===-y))nd={x,y}};
+    const taste=e=>{const m={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],s:[0,1],a:[-1,0],d:[1,0]}[e.key];
+      if(!m)return;if(laeuft)e.preventDefault();lenke(m[0],m[1])};
+    document.addEventListener("keydown",taste);ctx.beimVerlassen(()=>{document.removeEventListener("keydown",taste);clearTimeout(timer);laeuft=false});
+    el.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{const [x,y]=b.dataset.d.split(",").map(Number);lenke(x,y)});
+    el.querySelector("#st").onclick=start;male();
+  }}]});
+
+station({id:"jagd",nr:87,spiel:true,ico:"🎯",titel:"Klick-Jagd",kurz:"Triff so viele Ziele wie möglich",
+  schritte:[{titel:"Klick-Jagd",punkte:0,zeige(el,ctx){
+    const ZEIT=30;
+    el.innerHTML=`<p>Du hast <b>${ZEIT} Sekunden</b>. Klick so viele Ziele an, wie du schaffst. Die Ziele werden immer kleiner.</p>
+      <div class="sp-kopf"><span id="pk">Treffer: <b>0</b> · Zeit: <b>${ZEIT}</b></span><span id="rk">${rekText("jagd","Treffer")}</span></div>
+      <div class="sp-jagd" id="feld"><button class="btn" id="st">Start</button></div><p class="muted" id="inf" style="margin-top:10px"></p>`;
+    const feld=el.querySelector("#feld");let pkt=0,rest=ZEIT,timer=null,laeuft=false;
+    const kopf=()=>el.querySelector("#pk").innerHTML=`Treffer: <b>${pkt}</b> · Zeit: <b>${rest}</b>`;
+    const ziel=()=>{const gr=Math.max(34,70-pkt*2),b=document.createElement("button");b.className="sp-ziel";b.setAttribute("aria-label","Ziel");
+      b.style.width=b.style.height=gr+"px";b.style.left=zuf(Math.max(1,feld.clientWidth-gr))+"px";b.style.top=zuf(Math.max(1,feld.clientHeight-gr))+"px";
+      b.onclick=e=>{e.stopPropagation();if(!laeuft)return;pkt++;kopf();b.remove();ziel()};feld.append(b)};
+    const ende=()=>{laeuft=false;clearInterval(timer);feld.innerHTML=`<button class="btn" id="st">Noch mal</button>`;feld.querySelector("#st").onclick=start;
+      const neu=rekord("jagd",pkt);el.querySelector("#inf").innerHTML=`Zeit um! <b>${pkt}</b> Treffer in ${ZEIT} Sekunden.${neu?" <b>Neuer Rekord!</b>":""}`;el.querySelector("#rk").innerHTML=rekText("jagd","Treffer")};
+    function start(){pkt=0;rest=ZEIT;laeuft=true;feld.innerHTML="";el.querySelector("#inf").textContent="";kopf();ziel();
+      clearInterval(timer);timer=setInterval(()=>{rest--;kopf();if(rest<=0)ende()},1000)}
+    el.querySelector("#st").onclick=start;ctx.beimVerlassen(()=>{clearInterval(timer);laeuft=false});
+  }}]});
+
+station({id:"memory",nr:88,spiel:true,ico:"🃏",titel:"Memory",kurz:"Finde alle Paare mit wenigen Zügen",
+  schritte:[{titel:"Memory",punkte:0,zeige(el,ctx){
+    const BILDER=["🖱️","⌨️","🖥️","🖨️","💾","🔒","🤖","📶"];let karten,offen,gefunden,zuege,sperre;
+    const neu=()=>{karten=mischen([...BILDER,...BILDER]);offen=[];gefunden=new Set();zuege=0;sperre=false;zeichne()};
+    const zeichne=()=>{const fertig=gefunden.size===karten.length;
+      el.innerHTML=`<p>Deck immer zwei Karten auf. Gleiche Bilder bleiben offen. Schaffst du alle 8 Paare mit wenigen Zügen?</p>
+        <div class="sp-kopf"><span>Züge: <b>${zuege}</b></span><span>${(()=>{const r=spielRekord("memory");return r==null?"Noch kein Rekord":`Dein Rekord: <b>${r}</b> Züge`})()}</span></div>
+        <div class="sp-memo">${karten.map((b,i)=>{const auf=offen.includes(i)||gefunden.has(i);return`<button class="${auf?"auf":""}${gefunden.has(i)?" ok":""}" data-i="${i}" ${auf?"disabled":""} aria-label="${auf?b:"verdeckte Karte"}">${auf?b:""}</button>`}).join("")}</div>
+        ${fertig?`<div class="msg ok" style="margin-top:12px">Alle Paare gefunden in <b>${zuege}</b> Zügen.${el.dataset.neu==="1"?" <b>Neuer Rekord!</b>":""}</div>`:""}
+        <div class="row" style="margin-top:12px"><button class="btn ghost" id="nm">Neu mischen</button></div>`;
+      el.querySelector("#nm").onclick=()=>{el.dataset.neu="";neu()};
+      el.querySelectorAll("[data-i]").forEach(k=>k.onclick=()=>{if(sperre)return;const i=+k.dataset.i;offen.push(i);
+        if(offen.length===2){zuege++;const [a,b]=offen;
+          if(karten[a]===karten[b]){gefunden.add(a);gefunden.add(b);offen=[];
+            if(gefunden.size===karten.length)el.dataset.neu=rekord("memory",zuege,true)?"1":"";zeichne()}
+          else{sperre=true;zeichne();setTimeout(()=>{offen=[];sperre=false;if(el.isConnected)zeichne()},900)}}
+        else zeichne()});
+    };
+    neu();
+  }}]});
+
+station({id:"lampen",nr:89,spiel:true,ico:"💡",titel:"Lampen-Blitz",kurz:"Schalte die richtigen Lampen an",
+  schritte:[{titel:"Lampen-Blitz",punkte:0,zeige(el,ctx){
+    const ZEIT=60,WERT=[16,8,4,2,1];let an,soll,pkt=0,rest=ZEIT,timer=null,laeuft=false,gespielt=false;
+    const summe=()=>WERT.reduce((a,w,i)=>a+(an[i]?w:0),0);
+    const zeichne=()=>{
+      el.innerHTML=`<p>Jede Lampe hat einen Wert. Schalte die Lampen so an, dass die <b>Summe</b> genau die Zahl ergibt. Wie viele Zahlen schaffst du in ${ZEIT} Sekunden?</p>
+        <div class="sp-kopf"><span>Geschafft: <b>${pkt}</b> · Zeit: <b id="zt">${rest}</b></span><span>${rekText("lampen","Zahlen")}</span></div>
+        ${laeuft?`<p class="sp-zahl">Zahl: <b>${soll}</b> <span class="muted">· deine Summe: ${summe()}</span></p>
+          <div class="sp-lampen">${WERT.map((w,i)=>`<button class="${an[i]?"an":""}" data-l="${i}"><span>💡</span><b>${w}</b></button>`).join("")}</div>`
+          :`<div class="row"><button class="btn" id="st">${gespielt?"Noch mal":"Start"}</button><span class="muted" id="inf">${el.dataset.inf||""}</span></div>`}`;
+      const st=el.querySelector("#st");if(st)st.onclick=start;
+      el.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>{const i=+b.dataset.l;an[i]=!an[i];
+        if(summe()===soll){pkt++;runde()}zeichne()});
+    };
+    const runde=()=>{an=[false,false,false,false,false];let z;do{z=1+zuf(31)}while(z===soll);soll=z};
+    const ende=()=>{laeuft=false;clearInterval(timer);const neu=rekord("lampen",pkt);
+      el.dataset.inf=`Zeit um! ${pkt} ${pkt===1?"Zahl":"Zahlen"} geschafft.${neu?" Neuer Rekord!":""}`;gespielt=true;zeichne()};
+    function start(){pkt=0;rest=ZEIT;laeuft=true;el.dataset.inf="";runde();zeichne();
+      clearInterval(timer);timer=setInterval(()=>{rest--;const z=el.querySelector("#zt");if(z)z.textContent=rest;if(rest<=0)ende()},1000)}
+    ctx.beimVerlassen(()=>{clearInterval(timer);laeuft=false});
+    an=[false,false,false,false,false];soll=0;zeichne();
+  }}]});
+
 station({id:"atelier",nr:90,spiel:true,ico:"🎨",titel:"Pixel-Atelier",kurz:"Frei malen und als Bild speichern",
   schritte:[{titel:"Dein Kunstwerk",punkte:0,zeige(el,ctx){
     const d=ctx.daten,{PAL,NAMEN}=P();
-    el.innerHTML=`<p>Mal, was du willst! Wenn du fertig bist, kannst du dein Bild als Datei speichern.</p><div id="pal"></div><div class="frei" id="b"></div>
+    el.innerHTML=`<p>Mal, was du willst! Wenn du fertig bist, kannst du dein Bild als Datei speichern.</p><p class="muted small">Ideen: dein Lieblingstier · ein Fußball · ein Minecraft-Block · dein Name · eine Figur aus deinem Lieblingsspiel</p><div id="pal"></div><div class="frei" id="b"></div>
       <div class="row" style="margin-top:14px"><button class="btn" id="png">💾 Als Bild speichern</button><button class="btn ghost" id="l">🧽 Alles löschen</button></div>`;
     const leiste=farbLeiste(PAL,NAMEN,1,false,false);el.querySelector("#pal").append(leiste.el);
     const r=pixelRaster({w:16,h:16,werte:d.bild,palette:PAL,malbar:true,farbe:leiste.farbe,onAenderung:v=>{d.bild=v.slice();ctx.speichern()}});

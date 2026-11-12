@@ -24,12 +24,12 @@ station({
       merke:"<b>Satz-Trick:</b> Aus einem Satz, den du dir leicht merken kannst, wird ein Passwort, das niemand errät."}),
     eingabe({titel:"Satz-Trick üben 1",punkte:10,egal:"nichts",
       text:"Mach aus diesem Satz ein Passwort: Nimm von jedem Wort den <b>ersten Buchstaben</b> (groß oder klein, wie im Satz). Zahlen und Satzzeichen bleiben.",
-      html:`<p class="frage" style="margin-top:12px">„<b>I</b>ch <b>e</b>sse <b>2</b> <b>E</b>is <b>a</b>m <b>T</b>ag<b>!</b>“</p>`,
+      html:vorlage(`„<b>I</b>ch <b>e</b>sse <b>2</b> <b>E</b>is <b>a</b>m <b>T</b>ag<b>!</b>“`,"Aus diesem Satz wird ein Passwort"),
       antwort:["Ie2EaT!"],platz:"Passwort",
       merke:"Achte auf Groß und klein: Für den Computer sind <b>A</b> und <b>a</b> verschiedene Zeichen."}),
     eingabe({titel:"Satz-Trick üben 2",punkte:10,egal:"nichts",
       text:"Jetzt ohne Hilfe: Erster Buchstabe von jedem Wort, Zahlen und Satzzeichen bleiben.",
-      html:`<p class="frage" style="margin-top:12px">„Am Sonntag spielt Lina 3 Stunden Fußball.“</p>`,
+      html:vorlage(`„Am Sonntag spielt Lina 3 Stunden Fußball.“`,"Aus diesem Satz wird ein Passwort"),
       antwort:["AsL3SF."],platz:"Passwort"}),
     entscheidung({titel:"Passwort-Profi",punkte:15,text:"Was machst du?",
       szenen:[
@@ -53,7 +53,7 @@ station({
       karten:[["messi10","","s"],["passwort","","s"],["11111111","","s"],["roblox2015","","s"],["Mi&Tim+2Katzen!","","k"],["Rot#Fuchs7springt_hoch","","k"],["Ich3ss?Gern-Pizza","","k"]]}),
     eingabe({titel:"Satz-Trick üben 3",punkte:10,egal:"nichts",
       text:"Mach aus diesem Satz ein Passwort: erster Buchstabe von jedem Wort, Zahlen und Satzzeichen bleiben.",
-      html:`<p class="frage" style="margin-top:12px">„Mein Bruder Ali isst 5 Pizzen pro Woche!“</p>`,
+      html:vorlage(`„Mein Bruder Ali isst 5 Pizzen pro Woche!“`,"Aus diesem Satz wird ein Passwort"),
       antwort:["MBAi5PpW!"],platz:"Passwort"}),
     entscheidung({titel:"Hilfe, gehackt?",punkte:15,text:"Was machst du?",
       szenen:[

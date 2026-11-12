@@ -84,7 +84,8 @@ function status(st){
   const vor=s[pfad[i-1].id];
   if(!vor?.fertig)return"zu";
   if(p)return"offen";
-  if(EINE_PRO_TAG&&tagVon(vor.fertig)===heuteTag())return"morgen";
+  /* Eine NEUE Station pro Tag. Wer eine angefangene Station von einem früheren Tag heute erst fertig macht, darf heute noch die nächste beginnen. */
+  if(EINE_PRO_TAG&&tagVon(vor.fertig)===heuteTag()&&tagVon(vor.start||vor.fertig)===heuteTag())return"morgen";
   return"offen";
 }
 /* Der Spielplatz ist die Belohnung für gute Arbeit: Er öffnet nur, wenn die Station von heute ein + hat (Schnell-Durchklicken lohnt sich nicht). */
@@ -120,6 +121,17 @@ const basis=()=>VS?"v/":"",home=()=>VS?"v":"";
 const meineStaende=()=>VS?vStaende:staende;
 
 function staendeLokal(){ssSet("if5-staende",staende)}
+/* Spielplatz-Statistik: zählt leise mit (Starts, Zeit, Rekord). Liegt als eigener Stand „spielplatz“ beim Kind.
+   Die Lehrkraft sieht sie nur auf Wunsch (aufklappbar), sie hat nichts mit der Note zu tun. */
+let vSpiel={spiele:{}};
+function spielStat(id,f){
+  const p=VS||!sitzung?vSpiel:(staende.spielplatz=staende.spielplatz||{spiele:{}});p.spiele=p.spiele||{};
+  const g=p.spiele[id]=p.spiele[id]||{n:0,ms:0};f(g);
+  if(VS||!sitzung)return;
+  staendeLokal();pushWarte.add("spielplatz");clearTimeout(pushTimer);pushTimer=setTimeout(hochladen,4000)}
+const spielRekord=id=>((VS||!sitzung?vSpiel:staende.spielplatz)?.spiele?.[id]?.best)??null;
+/* Ein Spiel meldet sein Ergebnis. klein=true: weniger ist besser (z. B. Züge). Gibt true zurück bei neuem Rekord. */
+function rekord(id,wert,klein){let neu=false;spielStat(id,g=>{g.runden=(g.runden||0)+1;if(!klein&&wert<=0)return;if(g.best==null||(klein?wert<g.best:wert>g.best)){neu=g.best!=null;g.best=wert}});return neu}
 let pushTimer=null,pushWarte=new Set();
 function speichern(sofort){
   if(!laufend)return;
@@ -215,6 +227,10 @@ const PIX={
   zahlen:["0100100","1111111","0100100","0100100","1111111","0100100","0000000"],
 };
 PIX.robobonus=PIX.robo;PIX.tipprennen=PIX.tippen;PIX.kimalen=PIX.ki;
+PIX.schlange=["0000000","1110000","0010000","0011100","0000100","0100111","0000000"];
+PIX.jagd=["0011100","0100010","1001001","1011101","1001001","0100010","0011100"];
+PIX.memory=["1110111","1010101","1110111","0000000","1110111","1010111","1110111"];
+PIX.lampen=["0011100","0111110","0111110","0111110","0011100","0011100","0001000"];
 const pix=(id,px=28,kl="")=>{const m=PIX[id]||PIX.pixel;
   return`<svg class="pix ${kl}" width="${px}" height="${px}" viewBox="0 0 7 7" aria-hidden="true" shape-rendering="crispEdges">${m.map((r,y)=>[...r].map((c,x)=>c==="1"?`<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="currentColor"/>`:"").join("")).join("")}</svg>`};
 const LOGO=pix("logo",26,"blau");
@@ -303,7 +319,7 @@ function seiteStart(){
   const n=sterne(),[,,rName]=rang(n),nr=naechsterRang(n);
   const akt=pfad.find(x=>!s[x.id]?.fertig);
   const stAkt=akt?status(akt):null,spOffen=spielplatzOffen();
-  const spielListe=`<div class="spiele">${SPIELE().map(x=>`<button class="spiel" data-sp="${x.id}">${pix(x.id,24)}<b>${esc(x.titel)}</b></button>`).join("")}</div>`;
+  const spielListe=`<div class="spiele">${SPIELE().map(x=>`<button class="spiel" data-sp="${x.id}">${pix(x.id,24)}<b>${esc(x.titel)}</b>${spielRekord(x.id)!=null?`<span class="rek" title="Dein Rekord">★ ${spielRekord(x.id)}</span>`:""}</button>`).join("")}</div>`;
   /* Oben steht genau eine Sache: die Station von heute – oder, wenn sie geschafft ist, der Spielplatz als Belohnung */
   const heute=VS?"":!akt?`<div class="heute-karte">${pix("pixel",56,"blau")}<div><p class="eyebrow">Alles geschafft</p><h2>Du hast alle ${pfad.length} Stationen geschafft.</h2><p class="muted">Starke Leistung. Der Spielplatz gehört dir.</p></div></div>`
     :stAkt==="morgen"?`<div class="heute-karte">${pix(akt.id,56)}<div><p class="eyebrow">Für heute fertig</p><h2>Deine Station ist geschafft.</h2><p class="muted">${spOffen?"Du hast ein + geschafft und darfst spielen.":plusHeute()?kartenHinweis():"Für den Spielplatz brauchst du ein +. Du kannst deine Station verbessern: Tippe sie unten im Lernpfad an."} Nächste Stunde geht es weiter mit „${esc(akt.titel)}“</p></div></div>`
@@ -342,6 +358,8 @@ function seiteStation(st){
   if(stt==="zu"||stt==="morgen"){location.hash=home();return}
   if(st.spiel&&!spielplatzOffen()){toast(plusHeute()?"🔒 Der Spielplatz öffnet erst am Ende der Stunde.":"🔒 Der Spielplatz öffnet, wenn du heute deine Station mit + geschafft hast.");location.hash=home();return}
   const frei=VS||!!st.spiel;   // frei: „Weiter“ geht immer (Vorschau und Spielplatz)
+  if(st.spiel){if(!laufend||laufend.st!==st)spielStat(st.id,g=>g.n++);
+    const t0=Date.now();aufraeumListe.push(()=>spielStat(st.id,g=>g.ms=(g.ms||0)+Math.min(Date.now()-t0,20*60000)))}
   if(!laufend||laufend.st!==st){
     const prog=meineStaende()[st.id]||{schritt:0,punkte:{},daten:{},start:Date.now(),aktiv:0};
     laufend={st,prog};
@@ -605,6 +623,13 @@ function lehrerZeigen(){
     <p class="small" style="margin:10px 0 6px">Ein Name pro Zeile (Vorname oder Vor- und Nachname). Jedes neue Kind bekommt ein freies Tier. Wer schon ein Tier hat, behält es. Die Namen sieht nur dein Lehrer-Konto.</p>
     <textarea class="uebfeld" id="kliste" style="min-height:160px" spellcheck="false">${esc([...new Set([...(listen[kl]||[]),...kinder.map(k=>namen[k.id]).filter(Boolean)])].join("\n"))}</textarea>
     <div class="row" style="margin-top:10px"><button class="btn" id="zuteilen">Speichern und Tiere zuteilen</button><span class="muted small">Danach: Kärtchen drucken und verteilen.</span></div></details>
+  ${(()=>{const mit=kinder.filter(k=>d.staende[k.id]?.spielplatz?.spiele);if(!mit.length)return"";const SP=SPIELE();
+    return`<details class="block noprint"><summary><b>Spielplatz-Statistik</b> <span class="muted small">– nur zur Info, ohne Note</span></summary>
+      <p class="small muted" style="margin:10px 0 6px">Wie oft ein Kind ein Spiel geöffnet hat und sein Rekord (★). Rechts: Minuten auf dem Spielplatz insgesamt.</p>
+      <div style="overflow-x:auto"><table class="liste"><thead><tr><th>Kind</th>${SP.map(x=>`<th class="c">${esc(x.titel)}</th>`).join("")}<th class="c">Min.</th></tr></thead><tbody>
+      ${mit.map(k=>{const t=tierInfo(k.tier),sp=d.staende[k.id].spielplatz.spiele;let ms=0;
+        return`<tr><td class="t">${esc(namen[k.id]||`${t.emoji} ${t.name}`)}</td>${SP.map(x=>{const g=sp[x.id];if(!g)return`<td class="muted c">·</td>`;ms+=g.ms||0;return`<td class="c">${g.n}×${g.best!=null?` <span class="muted">★ ${g.best}</span>`:""}</td>`}).join("")}<td class="c">${Math.round(ms/60000)}</td></tr>`}).join("")}
+      </tbody></table></div></details>`})()}
   <div class="row noprint">
     <button class="btn ghost" id="druck" ${kinder.length?"":"disabled"}>Kärtchen drucken</button>
     <button class="btn" id="notfall">Notfall-Datei: alle Noten speichern</button>
