@@ -39,3 +39,15 @@
 .treffer{list-style:none;margin:6px 0 0;padding:0 4px 8px;columns:2 220px;column-gap:16px}
 .treffer li{font:600 .9375rem var(--mono);padding:5px 8px;border-bottom:1px solid var(--line);break-inside:avoid}
 .pfadzeile{margin-top:12px;font:700 1.0625rem var(--mono)}
+.dliste{width:100%}.dliste td.r{text-align:right}
+.sortk{border:0;background:none;font-weight:700;font-size:1rem;text-decoration:underline;padding:8px 4px;min-height:44px;color:var(--ink)}.sortk.an{color:var(--accent);text-decoration:underline}
+.dzeile{border:0;background:none;font:600 .9375rem var(--mono);padding:8px 4px;min-height:44px;text-align:left;width:100%;color:var(--ink)}
+.dzeile:hover{color:var(--accent)}.dzeile.falsch{color:var(--bad);text-decoration:line-through}
+.regeln{list-style:none;margin:10px 0 0;padding:0;font-weight:600}.regeln .ok{color:var(--good)}.regeln .no{color:var(--bad)}
+.kp{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.kp-ort{border:1.5px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px;min-height:150px;display:flex;flex-direction:column;gap:8px}
+.kp-ort .karte{font:600 .875rem var(--mono);overflow-wrap:anywhere}
+.kp-kopf{font-weight:700}
+.kp-knoepfe{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px}.kp-knoepfe span{flex:1 1 100%}
+.ex-ordner.datei.an{border-color:var(--accent)}
+@media (max-width:640px){.kp{grid-template-columns:1fr}.kp-ort{min-height:0}}
