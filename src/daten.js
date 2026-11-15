@@ -165,6 +165,14 @@ const db={
       const r=await sb.from("staende").update({prog}).eq("kind_id",id).eq("station",station);if(r.error)throw r.error;return}
     const d=vdb.lesen();const pr=d.staende[id]?.[station];if(pr){if(an)pr.stern=true;else delete pr.stern;vdb.schreiben(d)}
   },
+  /* Stand eines Kindes als Lehrkraft ändern (z. B. Lehrernote): lesen, fn(prog) anwenden, zurückschreiben */
+  async lProg(id,station,fn){
+    if(CLOUD){const {data,error}=await sb.from("staende").select("prog").eq("kind_id",id).eq("station",station).maybeSingle();if(error)throw error;
+      const prog={schritt:0,punkte:{},daten:{},start:Date.now(),aktiv:0,...(data?.prog||{})};fn(prog);
+      const r=data?await sb.from("staende").update({prog,geaendert:new Date().toISOString()}).eq("kind_id",id).eq("station",station)
+        :await sb.from("staende").insert({kind_id:id,station,prog});if(r.error)throw r.error;return}
+    const d=vdb.lesen();d.staende[id]=d.staende[id]||{};const pr=d.staende[id][station]=d.staende[id][station]||{schritt:0,punkte:{},daten:{},start:Date.now(),aktiv:0};fn(pr);vdb.schreiben(d)
+  },
   async lStandLoeschen(id,station){
     if(CLOUD){const {error}=await sb.from("staende").delete().eq("kind_id",id).eq("station",station);if(error)throw error;return}
     const d=vdb.lesen();if(d.staende[id])delete d.staende[id][station];vdb.schreiben(d);

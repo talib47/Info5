@@ -855,3 +855,14 @@ td.pz{white-space:nowrap;font-variant-numeric:tabular-nums}
 .sp-lampen button b{font:800 1.25rem/1 var(--mono)}
 .spiel .rek{margin-left:auto;font-size:.8125rem;font-weight:700;color:var(--muted);white-space:nowrap}
 table.liste.eva-t{width:auto}
+
+/* Lehrernote: Note anklicken und selbst festlegen */
+button.nchip{cursor:pointer;font:inherit;font-weight:750}
+button.nchip.offen{border:0;background:none;padding:2px 4px;text-decoration:underline dotted;font-weight:500}
+button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
+#ndlg{border:0;border-radius:var(--r-l);padding:22px 24px;max-width:26rem;width:calc(100% - 32px);background:var(--surface);color:var(--ink);box-shadow:0 12px 40px rgba(0,0,0,.25)}
+#ndlg::backdrop{background:rgba(22,32,63,.45)}
+#ndlg h2{margin:0}
+.ngrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.nbtn{min-height:44px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:750 1.0625rem var(--sans);cursor:pointer}
+.nbtn:hover{border-color:var(--ink)} .nbtn.an{background:var(--ink);color:var(--surface);border-color:var(--ink)}

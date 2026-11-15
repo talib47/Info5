@@ -61,8 +61,11 @@ const NOTEN=[[98,"1+"],[95,"1"],[92,"1−"],[90,"2+"],[86,"2"],[82,"2−"],[78,"
 const noteAus=p=>NOTEN.find(([g])=>p>=g)[1];
 /* Mühe-Stern (vergibt nur die Lehrkraft): hebt die Note um eine Stufe, z. B. 3+ → 2− */
 const notenIndex=p=>NOTEN.findIndex(([g])=>p>=g);
+/* Lehrernote (p.lnote, z. B. "2−"): Die Lehrkraft legt die Note selbst fest. Sie ersetzt Note der App und Stern, bis sie wieder entfernt wird. */
+const zeichenVonIndex=i=>i<=3?"+":i<=8?"o":"−";
 function bewertung(st,p){const pz=prozent(st,p);let i=notenIndex(pz);if(p?.stern)i=Math.max(0,i-1);
-  return{pz,note:NOTEN[i][1],z:i<=3?"+":i<=8?"o":"−",stern:!!p?.stern}}
+  const li=p?.lnote?NOTEN.findIndex(([,n])=>n===p.lnote):-1;if(li>=0)i=li;
+  return{pz,note:NOTEN[i][1],z:zeichenVonIndex(i),stern:li<0&&!!p?.stern,lehrer:li>=0}}
 const zeichenKlasse=z=>z==="+"?"good":z==="o"?"":"bad";
 const zeit=ms=>{const m=Math.round((ms||0)/60000);return m<1?"unter 1 Min.":m+" Min."};
 const maxPunkte=st=>st.schritte.reduce((a,s)=>a+(s.punkte||0),0);
@@ -101,7 +104,7 @@ const uhr=m=>`${String(Math.floor(m/60)).padStart(2,"0")}:${String(m%60).padStar
 const spielZeit=()=>{const a=spielAb();return a===null||berlin().min>=a};
 const spielplatzOffen=()=>VS||(plusHeute()&&spielZeit());
 /* Welche Teile einer fertigen Station lassen sich verbessern? (nur Teile aus dem eigenen Durchgang, bei denen Punkte fehlen) */
-const verbesserbar=(st,p)=>p?.fertig?st.schritte.map((_,k)=>k).filter(k=>k in (p.punkte||{})&&p.punkte[k]<st.schritte[k].punkte):[];
+const verbesserbar=(st,p)=>p?.fertig&&!p.lnote?st.schritte.map((_,k)=>k).filter(k=>k in (p.punkte||{})&&p.punkte[k]<st.schritte[k].punkte):[];
 const kartenHinweis=()=>{const a=spielAb(),kann=heuteFertig().some(x=>verbesserbar(x,meineStaende()[x.id]).length);
   return(a!==null?`Der Spielplatz öffnet um <b>${uhr(a)} Uhr</b>. `:"")+(kann?"Bis dahin kannst du deine Note noch verbessern: Tippe unten im Lernpfad auf deine Station von heute.":"")};
 /* Aufräumen beim Verlassen eines Teils (z. B. Tastatur-Abhörer, Zeitgeber) */
@@ -473,6 +476,7 @@ function seiteErgebnis(st,prog){
       <dt>Fertig am</dt><dd>${new Date(prog.fertig).toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</dd></dl></div>
     <div class="stempel"><span>Note für heute</span><span class="z note zeichen">${z}</span><span class="note16">Note ${bw.note}</span><span>${ZEICHEN_TEXT[z]}</span></div>
   </div>
+  ${bw.lehrer?`<div class="msg info stern-msg">Diese Note hat deine Lehrkraft festgelegt.</div>`:""}
   ${bw.stern?`<div class="msg ok stern-msg">⭐ Deine Lehrkraft hat gesehen, wie viel Mühe du dir gegeben hast. Darum ist deine Note eine Stufe besser.</div>`:""}
   <p style="font-weight:700">Zeig dieses Ergebnis deiner Lehrkraft.${st.kreativ?" Die Note für Kreativität gibt die Lehrkraft.":""}</p>
   ${st.ergebnis?`<div class="block">${st.ergebnis(prog.daten)}</div>`:""}
@@ -536,6 +540,26 @@ function notenKreis(liste){if(!liste.length)return"";
   return`<div class="nkreis"><svg viewBox="0 0 42 42" width="96" height="96" aria-hidden="true">${teile}<text x="21" y="20" text-anchor="middle" class="nk-z">${schnitt}</text><text x="21" y="26.5" text-anchor="middle" class="nk-t">Schnitt</text></svg>
     <ul>${n.map((a,i)=>a?`<li><i style="background:${N_FARBEN[i]}"></i><b>${a}×</b> Note ${i+1}</li>`:"").join("")}</ul></div>`}
 
+function noteDialog(kid,st,p,name){
+  let dlg=$("#ndlg");if(!dlg){dlg=document.createElement("dialog");dlg.id="ndlg";document.body.append(dlg)}
+  const auto=bewertung(st,{...p,lnote:null});
+  dlg.innerHTML=`<h2>Note festlegen</h2>
+    <p class="muted" style="margin:4px 0 14px">${esc(name)} · ${esc(st.titel)}<br>Note der App: <b>${auto.note}</b> (${auto.pz} %)${p.fertig?"":" · Station noch nicht fertig"}</p>
+    <div class="ngrid">${NOTEN.map(([,n])=>`<button class="nbtn${p.lnote===n?" an":""}" data-n="${n}">${n}</button>`).join("")}</div>
+    <p class="small muted" style="margin:14px 0">Deine Note ersetzt die Note der App. Das Kind kann sie nicht mehr verändern.${p.fertig?"":" Die Station gilt damit als abgeschlossen."}</p>
+    <div class="row" style="justify-content:space-between">${p.lnote?`<button class="btn ghost" data-n="">Wieder Note der App</button>`:"<span></span>"}<button class="btn ghost" id="nzu">Abbrechen</button></div>`;
+  dlg.querySelector("#nzu").onclick=()=>dlg.close();
+  dlg.querySelectorAll("[data-n]").forEach(b=>b.onclick=async()=>{const n=b.dataset.n;
+    try{await db.lProg(kid,st.id,pr=>{
+        if(!n){delete pr.lnote;return}
+        pr.lnote=n;delete pr.verb;pr.punkte=pr.punkte||{};
+        const pu=Object.values(pr.punkte).reduce((a,x)=>a+x,0),z=zeichenVonIndex(NOTEN.findIndex(([,x])=>x===n));
+        if(!pr.fertig){pr.fertig=Date.now();pr.erg={p:pu,max:maxPunkte(st),z,f:Object.values(pr.fehler||{}).reduce((a,x)=>a+x,0)}}
+        else pr.erg={...pr.erg,z}});
+      dlg.close();toast(n?`Note ${n} festgelegt`:"Es gilt wieder die Note der App");await lehrerLaden()}
+    catch(e){toast("Das hat nicht geklappt")}});
+  dlg.showModal()}
+
 function lehrerLogin(){
   document.body.dataset.seite="login";
   $("#app").innerHTML=`<div class="login-kopf">${LOGO}<div><div class="login-titel">Informatik 5</div><div class="muted small">Bereich für Lehrkräfte</div></div></div>
@@ -553,11 +577,11 @@ function notfallCsv(){const d=lDaten;if(!d)return"";
   const kopf=["Klasse","Name","Tier","Station","Stand","Note","Note 1–6","Punkte","von","Fehlversuche","Minuten","Fertig am"];
   const z=[];const schon=new Set();
   (d.abschluesse||[]).forEach(a=>{schon.add(a.kind_id+"|"+a.station+"|"+new Date(a.fertig_am).getTime());
-    z.push([a.klasse,namen[a.kind_id]||"",a.tier,titel[a.station]||a.station,tierVon[a.kind_id]?"fertig":"fertig (Kind gelöscht)",...(()=>{const pk=d.staende[a.kind_id]?.[a.station];if(pk?.stern&&pk.fertig&&new Date(a.fertig_am).getTime()===pk.fertig){const st=STATIONEN.find(s=>s.id===a.station);if(st){const b=bewertung(st,pk);return[b.z,b.note+" ⭐"]}}
+    z.push([a.klasse,namen[a.kind_id]||"",a.tier,titel[a.station]||a.station,tierVon[a.kind_id]?"fertig":"fertig (Kind gelöscht)",...(()=>{const pk=d.staende[a.kind_id]?.[a.station];if((pk?.stern||pk?.lnote)&&pk.fertig&&new Date(a.fertig_am).getTime()===pk.fertig){const st=STATIONEN.find(s=>s.id===a.station);if(st){const b=bewertung(st,pk);return[b.z,b.note+(b.lehrer?" (Lehrernote)":" ⭐")]}}
       return[a.note,a.max?noteAus(Math.round(a.punkte*100/a.max)):""]})(),a.punkte,a.max,a.fehlversuche,a.minuten,new Date(a.fertig_am).toLocaleString("de-DE")])});
   d.kinder.forEach(k=>Object.entries(d.staende[k.id]||{}).forEach(([id,p])=>{const st=STATIONEN.find(s=>s.id===id);if(!st||st.spiel)return;
     if(p.fertig&&schon.has(k.id+"|"+id+"|"+p.fertig))return;
-    z.push([k.klasse,namen[k.id]||"",k.tier,st.titel,p.fertig?"fertig":`Teil ${(p.schritt||0)+1} von ${st.schritte.length}`,bewertung(st,p).z,bewertung(st,p).note+(p.stern?" ⭐":""),summe(p),maxPunkte(st),Object.values(p.fehler||{}).reduce((a,b)=>a+b,0),Math.round((p.aktiv||0)/60000),p.fertig?new Date(p.fertig).toLocaleString("de-DE"):""])}));
+    z.push([k.klasse,namen[k.id]||"",k.tier,st.titel,p.fertig?"fertig":`Teil ${(p.schritt||0)+1} von ${st.schritte.length}`,bewertung(st,p).z,bewertung(st,p).note+(p.lnote?" (Lehrernote)":p.stern?" ⭐":""),summe(p),maxPunkte(st),Object.values(p.fehler||{}).reduce((a,b)=>a+b,0),Math.round((p.aktiv||0)/60000),p.fertig?new Date(p.fertig).toLocaleString("de-DE"):""])}));
   z.sort((a,b)=>String(a[0]+a[1]+a[2]).localeCompare(String(b[0]+b[1]+b[2]),"de"));
   return"\uFEFF"+[kopf,...z].map(r=>r.map(q).join(";")).join("\r\n")}
 function notfallLaden(auto){const csv=notfallCsv();if(!csv)return;
@@ -588,7 +612,7 @@ function lehrerZeigen(){
   const zeile=k=>{const t=tierInfo(k.tier),s=d.staende[k.id]||{};
     const status=k.besetzt?`<span class="chip good">angemeldet</span> <button class="link" data-a="freigeben" data-id="${k.id}">abmelden</button>`:`<span class="muted small">–</span>`;
     const zellen=PFAD().map(st=>{const p=s[st.id];if(!p)return`<td class="muted c">·</td>`;const pz=prozent(st,p);
-      return`<td class="c" title="${esc(st.titel)}: ${pz} %${p.fertig?"":" · Teil "+((p.schritt||0)+1)}">${p.fertig?(()=>{const b=bewertung(st,p);return`<span class="chip ${zeichenKlasse(b.z)} gross-z">${b.note}${b.stern?"⭐":""}</span><span class="pzk">${pz} %</span>`})():`<span class="muted small">…${pz}%</span>`}</td>`}).join("");
+      return`<td class="c" title="${esc(st.titel)}: ${pz} %${p.fertig?"":" · Teil "+((p.schritt||0)+1)}">${p.fertig?(()=>{const b=bewertung(st,p);return`<button class="chip ${zeichenKlasse(b.z)} gross-z nchip${b.lehrer?" lehrer":""}" data-ln="${k.id}|${st.id}" title="${b.lehrer?"Von dir festgelegt. ":""}Klicken: Note selbst festlegen">${b.note}${b.stern?"⭐":""}${b.lehrer?" ✎":""}</button><span class="pzk">${pz} %</span>`})():`<button class="nchip offen muted small" data-ln="${k.id}|${st.id}" title="Noch nicht fertig. Klicken: Note selbst festlegen">…${pz}%</button>`}</td>`}).join("");
     return`<tr><td class="t"><span class="e">${t.emoji}</span>${esc(t.name)}</td>
       <td><input type="text" class="vn" data-id="${k.id}" value="${esc(namen[k.id]||"")}" placeholder="Wer ist das?" list="dl-${esc(kl)}"></td><td>${status}</td>${zellen}
       <td><button class="link" data-a="mehr" data-id="${k.id}" aria-label="Mehr">⋯</button></td></tr>`};
@@ -605,14 +629,14 @@ function lehrerZeigen(){
         const bw=bewertung(st,p),pz=bw.pz,z=bw.z,f=p.fehler||{},fGes=Object.values(f).reduce((a,b)=>a+b,0),fHier=f[p.schritt||0]||0,min=Math.round((p.aktiv||0)/60000);
         const sk=Object.keys(p.skip||{}).length;
         const hinweis=[!p.fertig&&fHier>=3?"hängt an diesem Teil":p.fertig&&min<15?"sehr schnell fertig":fGes>=12?"viele Fehlversuche":"",sk?`${sk} übersprungen`:""].filter(Boolean).join(" · ");
-        zeilen.push({name:namen[k.id]||`${t.emoji} ${t.name}`,z,note:bw.note,stern:bw.stern,kid:k.id,sid:st.id,erst:p.erst&&p.erst.pz!==pz?p.erst.pz:null,st:st.titel,pz,fertig:!!p.fertig,teil:`Teil ${(p.schritt||0)+1} von ${st.schritte.length}`,min,fGes,hinweis,da:k.besetzt})})});
+        zeilen.push({name:namen[k.id]||`${t.emoji} ${t.name}`,z,note:bw.note,stern:bw.stern,lehrer:bw.lehrer,kid:k.id,sid:st.id,erst:p.erst&&p.erst.pz!==pz?p.erst.pz:null,st:st.titel,pz,fertig:!!p.fertig,teil:`Teil ${(p.schritt||0)+1} von ${st.schritte.length}`,min,fGes,hinweis,da:k.besetzt})})});
     if(!zeilen.length)return`<div class="block"><h2 style="margin-bottom:4px">Heute</h2><p class="muted" style="margin:0">Heute hat in ${kl} noch niemand gearbeitet. Sobald Kinder anfangen, siehst du hier, wer wo ist und wer Hilfe braucht.</p></div>`;
     zeilen.sort((a,b)=>(b.hinweis?1:0)-(a.hinweis?1:0)||a.name.localeCompare(b.name,"de"));
     window._noten=zeilen.map(x=>`${x.name}\t${x.st}\t${x.z} (${x.note}${x.stern?" ⭐":""})${x.fertig?"":" nicht fertig"}`).join("\n");
     return`<div class="block" style="overflow-x:auto"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Heute</h2>${notenKreis(zeilen.filter(x=>x.fertig).map(x=>x.note))}<button class="btn ghost noprint" id="kopie" style="min-height:40px;padding:6px 14px">Noten kopieren</button></div>
       <p class="muted small" style="margin:4px 0 10px">Aktualisiert sich alle 20 Sekunden. Kinder mit Hinweis stehen oben. Wer nicht fertig wurde, bekommt das Zeichen für das, was geschafft ist.</p>
-      <table class="liste heute-t"><thead><tr><th>Kind</th><th>Station</th><th>Stand</th><th class="c">Minuten</th><th class="c">Fehlversuche</th><th>Hinweis</th><th class="c" title="Mühe-Stern: hebt die Note um eine Stufe">Mühe</th><th class="c" title="Erreichte Punkte in Prozent. „81 → 93“ heißt: nach dem Verbessern">%</th><th class="c">Note</th></tr></thead><tbody>
-      ${zeilen.map(x=>`<tr class="${x.hinweis?"auff":""}"><td class="t">${esc(x.name)}</td><td>${esc(x.st)}</td><td>${x.fertig?"fertig":x.teil}</td><td class="c">${x.min}</td><td class="c">${x.fGes}</td><td>${x.hinweis?`<b>${x.hinweis}</b>`:""}</td><td class="c"><button class="stern-btn${x.stern?" an":""}" data-stern="${x.kid}|${x.sid}" title="${x.stern?"Mühe-Stern wieder wegnehmen":"Mühe-Stern geben: Note eine Stufe besser"}">⭐</button></td><td class="c pz">${x.erst!=null?`<span class="muted">${x.erst} → </span>`:""}${x.pz} %</td><td class="c"><span class="chip ${zeichenKlasse(x.z)} gross-z" title="${x.z} · ${x.pz} %${x.stern?" · mit Mühe-Stern":""}">${x.note}</span></td></tr>`).join("")}</tbody></table></div>`})()}
+      <table class="liste heute-t"><thead><tr><th>Kind</th><th>Station</th><th>Stand</th><th class="c">Minuten</th><th class="c">Fehlversuche</th><th>Hinweis</th><th class="c" title="Mühe-Stern: hebt die Note um eine Stufe">Mühe</th><th class="c" title="Erreichte Punkte in Prozent. „81 → 93“ heißt: nach dem Verbessern">%</th><th class="c" title="Auf die Note klicken, um sie selbst festzulegen">Note</th></tr></thead><tbody>
+      ${zeilen.map(x=>`<tr class="${x.hinweis?"auff":""}"><td class="t">${esc(x.name)}</td><td>${esc(x.st)}</td><td>${x.fertig?"fertig":x.teil}</td><td class="c">${x.min}</td><td class="c">${x.fGes}</td><td>${x.hinweis?`<b>${x.hinweis}</b>`:""}</td><td class="c"><button class="stern-btn${x.stern?" an":""}" data-stern="${x.kid}|${x.sid}" title="${x.stern?"Mühe-Stern wieder wegnehmen":"Mühe-Stern geben: Note eine Stufe besser"}">⭐</button></td><td class="c pz">${x.erst!=null?`<span class="muted">${x.erst} → </span>`:""}${x.pz} %</td><td class="c"><button class="chip ${zeichenKlasse(x.z)} gross-z nchip${x.lehrer?" lehrer":""}" data-ln="${x.kid}|${x.sid}" title="${x.lehrer?"Von dir festgelegt. ":""}Klicken: Note selbst festlegen">${x.note}${x.lehrer?" ✎":""}</button></td></tr>`).join("")}</tbody></table></div>`})()}
   <div class="block" style="overflow-x:auto"><h2 style="margin-bottom:8px">Alle Stationen</h2>
     ${kinder.length?`<table class="liste"><thead><tr><th>Tier</th><th>Vorname <span class="muted small">(nur hier)</span></th><th>Status</th>${PFAD().map((st,i)=>`<th class="c" title="${esc(st.titel)}">${i+1}</th>`).join("")}<th></th></tr></thead><tbody>${kinder.map(zeile).join("")}</tbody></table>`
       :`<p style="margin:0">Noch keine Kinder in ${kl}. Trag unten die Klassenliste ein, dann bekommt jedes Kind ein Tier.</p>`}
@@ -663,6 +687,8 @@ function lehrerZeigen(){
         namen[id]=n}
       namenMerken();toast(neu.length?`${neu.length} Kinder haben ein Tier bekommen.`:"Liste gespeichert.");await lehrerLaden()}
     catch(e){namenMerken();toast("Hat nicht geklappt: "+(e.message||e));await lehrerLaden()}};
+  document.querySelectorAll("[data-ln]").forEach(b=>b.onclick=()=>{const [id,stid]=b.dataset.ln.split("|"),st=STATIONEN.find(x=>x.id===stid),k=kinder.find(x=>x.id===id);
+    if(!st||!k)return;const t=tierInfo(k.tier);noteDialog(id,st,(d.staende[id]||{})[stid]||{},namen[id]||`${t.emoji} ${t.name}`)});
   document.querySelectorAll("[data-stern]").forEach(b=>b.onclick=async()=>{const [id,stid]=b.dataset.stern.split("|"),an=!b.classList.contains("an");
     b.disabled=true;try{await db.lStern(id,stid,an);toast(an?"⭐ Mühe-Stern vergeben":"Mühe-Stern entfernt");await lehrerLaden()}catch(e){b.disabled=false;toast("Das hat nicht geklappt")}});
   if($("#kopie"))$("#kopie").onclick=async()=>{try{await navigator.clipboard.writeText(window._noten);toast("Noten kopiert. Du kannst sie in eine Tabelle einfügen.")}catch(e){toast("Kopieren hat nicht geklappt")}};
