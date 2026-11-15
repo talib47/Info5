@@ -7,14 +7,15 @@ const VEREIN={"Bilder":{"Verein":{"Sammelkarten":{"Saison 2026":{},"Saison 2025"
   "Musik":{"Kabine":{}},"Videos":{"Verein":{"Tore":{},"Training":{}},"Privat":{}}};
 
 /* Nachricht vom Trainer: ruhige Sprechblase, keine Farbe nötig */
-const vomTrainer=t=>`<div class="nachricht"><span class="nv">Nachricht vom Trainer</span><p>${t}</p></div>`;
+const ORD=sym("ordner",22);
+const vomTrainer=t=>nachricht("Nachricht vom Trainer","ball",t);
 
 /* ---------- Endungs-Probe: Endung ändern, „Öffnen“ drücken, sehen was passiert ----------
    Das Kind entdeckt selbst: Die Endung entscheidet, welches Programm die Datei öffnet. Der Inhalt bleibt gleich.
    Falsches Öffnen ist Ausprobieren und kostet nichts. Nur eine falsche Antwort auf die Frage kostet Punkte. */
-const ENDUNG={".mp4":["🎬","Video-Player"],".jpg":["🖼️","Fotos"],".mp3":["🎵","Musik-Player"],".docx":["📝","Word"]};
+const ENDUNG={".mp4":[dico("a.mp4",40),"Video-Player"],".jpg":[dico("a.jpg",40),"Fotos"],".mp3":[dico("a.mp3",40),"Musik-Player"],".docx":[dico("a.docx",40),"Word"]};
 const INHALT={".mp4":"Das Video läuft: der Fallrückzieher.",".docx":"Die Aufstellung für Samstag ist offen.",".mp3":"Das Lied läuft: der Torjubel aus der Kabine."};
-function endungProbe({titel,punkte=15,merke,text,runden}){return{titel,punkte,merke,zeige(el,ctx){
+function endungProbe({titel,punkte=15,merke,text,runden,art="Ausprobieren"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.r=d.r||0;
   const zeichne=()=>{
     if(d.r>=runden.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle ${runden.length} Dateien gehen wieder auf. Tippe auf „Weiter“.</div>`;return}
@@ -38,8 +39,8 @@ function endungProbe({titel,punkte=15,merke,text,runden}){return{titel,punkte,me
       else{ctx.fehler();b.classList.add("falsch");b.disabled=true;meldung(el,false,"Schau noch mal: Was war bei jedem Öffnen anders, was blieb gleich?")}});
   };
   const fenster=z=>{const [ico,prog]=ENDUNG[z.e];
-    return z.ok?`<div class="fenster ok"><div class="f-kopf">${ico} ${prog}</div><p>${INHALT[z.echt]}</p></div>`
-      :`<div class="fenster"><div class="f-kopf">${ico} ${prog}</div><p><b>Fehler:</b> ${prog} kann diese Datei nicht öffnen.</p></div>`};
+    const k=dico("a"+z.e,20);return z.ok?`<div class="fenster ok"><div class="f-kopf">${k} ${prog}</div><p>${INHALT[z.echt]}</p></div>`
+      :`<div class="fenster"><div class="f-kopf">${k} ${prog}</div><p><b>Fehler:</b> ${prog} kann diese Datei nicht öffnen.</p></div>`};
   const weiterRunde=t=>{d.r++;d.e=null;d.offen=false;d.zuletzt=null;d.opt=null;d.probiert=[];ctx.speichern();zeichne();
     if(d.r>=runden.length)ctx.geschafft(punkte);else meldung(el,true,t)};
   zeichne();
@@ -51,15 +52,15 @@ function endungProbe({titel,punkte=15,merke,text,runden}){return{titel,punkte,me
 /* ---------- Datei-Suche: Suchfeld über alle Dateien des Trainers, Fragen beantworten ---------- */
 const DATEIEN=["fallrueckzieher.mp4","freistoss-tor.mp4","elfmeter-finale.mp4","training-dribbeln.mp4","mannschaftsfoto-2026.jpg","torwart-nr1.jpg","sammelkarte-nr7.jpg","sammelkarte-nr10.jpg",
   "aufstellung-samstag.docx","aufstellung-pokal.docx","training-plan-november.docx","training-uebungen.pdf","turnier-mai.pdf","elternbrief-trikots.pdf","torjubel.mp3","kabinen-playlist.mp3","Neues Dokument (3).docx","bild.jpg"];
-function dateiSuche({titel,punkte=15,merke,text,fragen}){return{titel,punkte,merke,zeige(el,ctx){
+function dateiSuche({titel,punkte=15,merke,text,fragen,art="Ausprobieren"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.r=d.r||0;d.s=d.s||"";
   const zeichne=(fokus)=>{
     if(d.r>=fragen.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle ${fragen.length} Fragen gelöst. Tippe auf „Weiter“.</div>`;return}
     const F=fragen[d.r],q=d.s.trim().toLowerCase(),treffer=q?DATEIEN.filter(x=>x.toLowerCase().includes(q)):DATEIEN;
     el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Frage ${d.r+1} von ${fragen.length}</p><p class="frage">${F.frage}</p>
-      <div class="explorer"><div class="ex-leiste"><span aria-hidden="true">🔍</span><input type="text" id="such" placeholder="Suchen" autocomplete="off" spellcheck="false" value="${esc(d.s)}" aria-label="Dateien durchsuchen"></div>
+      <div class="explorer"><div class="ex-leiste">${sym("lupe",24)}<input type="text" id="such" placeholder="Suchen" autocomplete="off" spellcheck="false" value="${esc(d.s)}" aria-label="Dateien durchsuchen"></div>
         <p class="muted small" style="margin:8px 12px 0">${q?`${treffer.length} ${treffer.length===1?"Treffer":"Treffer"}`:`Alle ${DATEIEN.length} Dateien`}</p>
-        <ul class="treffer">${treffer.map(x=>`<li>${x}</li>`).join("")||`<li class="muted">Nichts gefunden. Probier ein kürzeres Wort.</li>`}</ul></div>
+        <ul class="treffer">${treffer.map(x=>`<li>${dico(x,20)} ${x}</li>`).join("")||`<li class="muted">Nichts gefunden. Probier ein kürzeres Wort.</li>`}</ul></div>
       <div class="eing" style="margin-top:14px"><input type="text" id="antw" ${F.zahl?'inputmode="numeric"':""} placeholder="${F.platz||"Deine Antwort"}" autocomplete="off" spellcheck="false" value="${esc(d.a||"")}"></div>${MLD}`;
     const s=el.querySelector("#such"),a=el.querySelector("#antw");
     s.oninput=()=>{d.s=s.value;ctx.speichern();zeichne("such")};
@@ -81,7 +82,7 @@ function dateiSuche({titel,punkte=15,merke,text,fragen}){return{titel,punkte,mer
 }}}
 
 /* ---------- Datei-Detektiv: Liste nach Name, Datum oder Größe sortieren, dann die gesuchte Datei antippen ---------- */
-function dateiListe({titel,punkte=15,merke,text,dateien,fragen}){return{titel,punkte,merke,zeige(el,ctx){
+function dateiListe({titel,punkte=15,merke,text,dateien,fragen,art="Ausprobieren"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.r=d.r||0;d.sp=d.sp||0;d.ab=!!d.ab;
   const SP=["Name","Geändert am","Größe"],wert=[x=>x[0],x=>x[2],x=>x[4]];
   const zeichne=()=>{
@@ -89,7 +90,7 @@ function dateiListe({titel,punkte=15,merke,text,dateien,fragen}){return{titel,pu
     const F=fragen[d.r],liste=dateien.slice().sort((a,b)=>{const x=wert[d.sp](a),y=wert[d.sp](b);return(x<y?-1:x>y?1:0)*(d.ab?-1:1)});
     el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Frage ${d.r+1} von ${fragen.length}</p><p class="frage">${F.frage}</p>
       <div class="explorer"><table class="liste dliste"><thead><tr>${SP.map((n,k)=>`<th><button class="sortk${d.sp===k?" an":""}" data-sk="${k}">${n} ${d.sp===k?(d.ab?"▼":"▲"):""}</button></th>`).join("")}</tr></thead>
-        <tbody>${liste.map(x=>`<tr><td><button class="dzeile" data-n="${esc(x[0])}">${esc(x[0])}</button></td><td>${x[1]}</td><td class="r">${x[3]}</td></tr>`).join("")}</tbody></table></div>${MLD}`;
+        <tbody>${liste.map(x=>`<tr><td><button class="dzeile" data-n="${esc(x[0])}">${dico(x[0],20)} ${esc(x[0])}</button></td><td>${x[1]}</td><td class="r">${x[3]}</td></tr>`).join("")}</tbody></table></div>${MLD}`;
     el.querySelectorAll("[data-sk]").forEach(b=>b.onclick=()=>{const k=+b.dataset.sk;if(d.sp===k)d.ab=!d.ab;else{d.sp=k;d.ab=false}ctx.speichern();zeichne()});
     el.querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>{
       if(b.dataset.n===F.antwort){d.r++;ctx.speichern();zeichne();if(d.r>=fragen.length)ctx.geschafft(punkte);else meldung(el,true,"Richtig. Hier kommt die nächste Frage.")}
@@ -101,7 +102,7 @@ function dateiListe({titel,punkte=15,merke,text,dateien,fragen}){return{titel,pu
 }}}
 
 /* ---------- Namen geben: Das Kind erfindet selbst einen guten Dateinamen. Geprüft wird: Stichwort drin? Endung richtig? ---------- */
-function namenGeben({titel,punkte=15,merke,text,runden}){return{titel,punkte,merke,zeige(el,ctx){
+function namenGeben({titel,punkte=15,merke,text,runden,art="Selbst schreiben"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.r=d.r||0;
   const pruef=(R,v)=>{v=v.trim().toLowerCase();return[[v.includes(R.wort),`Das Wort „${R.wort}“ kommt vor.`],[v.endsWith(R.endung)&&v.length>R.endung.length,"Die Endung passt zur Datei."]]};
   const zeichne=()=>{
@@ -132,9 +133,9 @@ function namenGeben({titel,punkte=15,merke,text,runden}){return{titel,punkte,mer
 }}}
 
 /* ---------- Kopier-Probe: Dateien zwischen Laptop, USB-Stick und Papierkorb bewegen. Ausprobieren kostet nichts. ---------- */
-function kopierProbe({titel,punkte=20,merke,text,start,missionen}){return{titel,punkte,merke,zeige(el,ctx){
+function kopierProbe({titel,punkte=20,merke,text,start,missionen,art="Ausprobieren"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.r=d.r||0;if(!d.o)d.o=JSON.parse(JSON.stringify(start));d.o.korb=d.o.korb||[];
-  const ORT={laptop:["💻","Laptop"],stick:["🔌","USB-Stick"],korb:["🗑️","Papierkorb"]};
+  const ORT={laptop:[sym("laptop",22),"Laptop"],stick:[sym("stick",22),"USB-Stick"],korb:[sym("korb",22),"Papierkorb"]};
   let wahl=null;   // {ort, n}
   const hat=(ort,n)=>ort==="korb"?d.o.korb.some(x=>x.n===n):d.o[ort].includes(n);
   const zeichne=()=>{
@@ -143,7 +144,7 @@ function kopierProbe({titel,punkte=20,merke,text,start,missionen}){return{titel,
     if(frage&&!d.opt)d.opt=mischen([M.richtig,...M.falsch]);
     const anderer=wahl&&wahl.ort!=="korb"?(wahl.ort==="laptop"?"stick":"laptop"):null;
     const kasten=ort=>{const liste=ort==="korb"?d.o.korb.map(x=>x.n):d.o[ort];
-      return`<div class="kp-ort"><div class="kp-kopf">${ORT[ort][0]} ${ORT[ort][1]}</div>${liste.map(n=>`<button class="karte${wahl&&wahl.ort===ort&&wahl.n===n?" an":""}" data-ort="${ort}" data-n="${esc(n)}" ${d.erledigt?"disabled":""}>${esc(n)}</button>`).join("")||`<p class="muted small" style="margin:0">leer</p>`}</div>`};
+      return`<div class="kp-ort"><div class="kp-kopf">${ORT[ort][0]} ${ORT[ort][1]}</div>${liste.map(n=>`<button class="karte${wahl&&wahl.ort===ort&&wahl.n===n?" an":""}" data-ort="${ort}" data-n="${esc(n)}" ${d.erledigt?"disabled":""}>${dico(n,20)}<span>${esc(n)}</span></button>`).join("")||`<p class="muted small" style="margin:0">leer</p>`}</div>`};
     el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Auftrag ${d.r+1} von ${missionen.length}</p><p class="frage">${M.auftrag}</p>
       <div class="kp">${kasten("laptop")}${kasten("stick")}${kasten("korb")}</div>
       ${d.erledigt?"":`<div class="kp-knoepfe"><span class="muted small">${wahl?`Ausgewählt: <b>${esc(wahl.n)}</b>`:"Tippe zuerst eine Datei an."}</span>
@@ -171,17 +172,17 @@ function kopierProbe({titel,punkte=20,merke,text,start,missionen}){return{titel,
 }}}
 
 /* ---------- Spurensuche: durch Ordner gehen, Textdateien öffnen, Hinweisen folgen, Codewort finden ---------- */
-function spurenSuche({titel,punkte=20,merke,text,baum,code}){return{titel,punkte,merke,zeige(el,ctx){
+function spurenSuche({titel,punkte=20,merke,text,baum,code,art="Rätsel"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.pfad=d.pfad||[];
   const ordner=p=>p.reduce((o,n)=>o[n],baum);
   const zeichne=()=>{
     if(ctx.geloest){el.innerHTML=kopfText(text)+`<div class="msg ok">Das Codewort stimmt. Der Pokal ist wieder da. Tippe auf „Weiter“.</div>`;return}
     const hier=ordner(d.pfad),namen=Object.keys(hier),auf=d.auf&&typeof hier[d.auf]==="string"?d.auf:null;
-    el.innerHTML=kopfText(text)+`<div class="explorer"><div class="ex-leiste"><button class="btn ghost klein-btn" id="hoch" ${d.pfad.length?"":"disabled"}>Eine Ebene zurück</button>
-      <div class="ex-pfad">Vereins-Laptop ${d.pfad.map(n=>`<span>›</span> 📁 ${n}`).join(" ")}</div></div>
-      <div class="ex-inhalt">${namen.map(n=>typeof hier[n]==="string"?`<button class="ex-ordner datei${auf===n?" an":""}" data-f="${esc(n)}"><span>📄</span>${n}</button>`:`<button class="ex-ordner" data-n="${esc(n)}"><span>📁</span>${n}</button>`).join("")||`<p class="muted" style="grid-column:1/-1">Dieser Ordner ist leer.</p>`}</div></div>
-      ${auf?`<div class="fenster"><div class="f-kopf">📄 ${esc(auf)}</div><p>${hier[auf]}</p></div>`:""}
-      <div class="eing" style="margin-top:14px"><input type="text" id="cw" placeholder="Codewort" autocomplete="off" spellcheck="false" maxlength="20" value="${esc(d.v||"")}"></div>${MLD}`;
+    el.innerHTML=kopfText(text)+`<div class="tafel"><div class="explorer"><div class="ex-leiste"><button class="btn ghost klein-btn" id="hoch" ${d.pfad.length?"":"disabled"}>Eine Ebene zurück</button>
+      <div class="ex-pfad">Vereins-Laptop ${d.pfad.map(n=>`<span>›</span> ${n}`).join(" ")}</div></div>
+      <div class="ex-inhalt">${namen.map(n=>typeof hier[n]==="string"?`<button class="ex-ordner datei${auf===n?" an":""}" data-f="${esc(n)}"><span>${dico(n,44)}</span>${n}</button>`:`<button class="ex-ordner" data-n="${esc(n)}"><span>${sym("ordner",44)}</span>${n}</button>`).join("")||`<p class="muted" style="grid-column:1/-1">Dieser Ordner ist leer.</p>`}</div></div>
+      ${auf?`<div class="fenster"><div class="f-kopf">${dico(auf,20)} ${esc(auf)}</div><p>${hier[auf]}</p></div>`:""}
+      <div class="eing" style="margin-top:14px"><input type="text" id="cw" placeholder="Codewort" autocomplete="off" spellcheck="false" maxlength="20" value="${esc(d.v||"")}"></div></div>${MLD}`;
     el.querySelector("#hoch").onclick=()=>{d.pfad.pop();d.auf=null;ctx.speichern();zeichne()};
     el.querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>{d.pfad.push(b.dataset.n);d.auf=null;ctx.speichern();zeichne()});
     el.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{d.auf=b.dataset.f;ctx.speichern();zeichne()});
@@ -210,8 +211,8 @@ station({
     sortieren({titel:"Chaos auf dem Laptop",punkte:10,
       text:vomTrainer("Hi, ich bin der Trainer der U11 vom FC Ruhrwiese. Auf meinem neuen Laptop liegt alles durcheinander. Kannst du aufräumen?")+
         `<p style="margin:12px 0 0">Sortiere die Dateien in die passenden Ordner.</p>`,
-      toepfe:[["b","Bilder","🖼️"],["v","Videos","🎬"],["m","Musik","🎵"],["d","Dokumente","📄"]],
-      karten:[["mannschaftsfoto.jpg","","b"],["sammelkarte-nr7.png","","b"],["fallrueckzieher.mp4","","v"],["elfmeter-finale.mp4","","v"],["torjubel.mp3","","m"],["kabinen-playlist.mp3","","m"],["aufstellung-samstag.docx","","d"],["turnier-mai.pdf","","d"]],
+      toepfe:[["b","Bilder",ORD],["v","Videos",ORD],["m","Musik",ORD],["d","Dokumente",ORD]],
+      karten:["mannschaftsfoto.jpg","sammelkarte-nr7.png","fallrueckzieher.mp4","elfmeter-finale.mp4","torjubel.mp3","kabinen-playlist.mp3","aufstellung-samstag.docx","turnier-mai.pdf"].map((n,i)=>[n,dico(n,24),"bbvvmmdd"[i]]),
       merke:"Das Ende nach dem Punkt heißt <b>Dateiendung</b>."}),
     endungProbe({titel:"Die Endungs-Probe",punkte:15,
       text:vomTrainer("Ich habe aus Versehen die Endungen geändert. Jetzt geht nichts mehr auf. Hilfe!"),
@@ -224,21 +225,21 @@ station({
       ],
       merke:"Die Endung sagt dem Computer, welches <b>Programm</b> die Datei öffnet. Der Inhalt bleibt gleich."}),
     paare({titel:"Endungen merken",punkte:10,text:"Welche Endung gehört zu welcher Datei?",
-      paare:[[".jpg / .png","🖼️ ein Bild"],[".mp4","🎬 ein Video"],[".mp3","🎵 ein Lied"],[".docx","📝 ein Text aus Word"],[".pdf","📄 ein Blatt zum Lesen und Drucken"],[".exe","⚙️ ein Programm"]],
+      paare:[[".jpg / .png","ein Bild"],[".mp4","ein Video"],[".mp3","ein Lied"],[".docx","ein Text aus Word"],[".pdf","ein Blatt zum Lesen und Drucken"],[".exe","ein Programm"]],
       merke:"Eine <b>.exe</b> startet ein Programm. Öffne nie eine .exe von Fremden."}),
     entscheidung({titel:"Eine passt nicht",punkte:10,text:"In jedem Ordner liegt eine Datei, die dort nicht hingehört. Finde sie.",frage:"Welche Datei gehört nicht in diesen Ordner?",
       szenen:[
-        {bild:"📁",text:"Ordner: Videos › Tore",optionen:[["torjubel.mp3",true,"Richtig. Das ist ein Lied, kein Video."],["freistoss-tor.mp4",false,"Diese Datei passt in den Ordner."],["elfmeter-finale.mp4",false,"Diese Datei passt in den Ordner."]]},
-        {bild:"📁",text:"Ordner: Bilder › Sammelkarten",optionen:[["aufstellung-pokal.docx",true,"Richtig. Das ist ein Text, kein Bild."],["sammelkarte-nr7.jpg",false,"Diese Datei passt in den Ordner."],["sammelkarte-nr10.png",false,"Auch .png ist ein Bild. Die Datei passt."]]},
-        {bild:"📁",text:"Ordner: Musik › Kabine",optionen:[["mannschaftsfoto.jpg",true,"Richtig. Ein Foto kann man nicht hören."],["kabinen-playlist.mp3",false,"Diese Datei passt in den Ordner."],["torjubel.mp3",false,"Diese Datei passt in den Ordner."]]},
-        {bild:"📁",text:"Ordner: Dokumente › Turniere",optionen:[["turnier-video.mp4",true,"Richtig. Das Video gehört zu den Videos."],["turnier-mai.pdf",false,"Diese Datei passt in den Ordner."],["turnier-juni.docx",false,"Diese Datei passt in den Ordner."]]},
+        {bild:sym("ordner",44),text:"Ordner: Videos › Tore",optionen:[["torjubel.mp3",true,"Richtig. Das ist ein Lied, kein Video."],["freistoss-tor.mp4",false,"Diese Datei passt in den Ordner."],["elfmeter-finale.mp4",false,"Diese Datei passt in den Ordner."]]},
+        {bild:sym("ordner",44),text:"Ordner: Bilder › Sammelkarten",optionen:[["aufstellung-pokal.docx",true,"Richtig. Das ist ein Text, kein Bild."],["sammelkarte-nr7.jpg",false,"Diese Datei passt in den Ordner."],["sammelkarte-nr10.png",false,"Auch .png ist ein Bild. Die Datei passt."]]},
+        {bild:sym("ordner",44),text:"Ordner: Musik › Kabine",optionen:[["mannschaftsfoto.jpg",true,"Richtig. Ein Foto kann man nicht hören."],["kabinen-playlist.mp3",false,"Diese Datei passt in den Ordner."],["torjubel.mp3",false,"Diese Datei passt in den Ordner."]]},
+        {bild:sym("ordner",44),text:"Ordner: Dokumente › Turniere",optionen:[["turnier-video.mp4",true,"Richtig. Das Video gehört zu den Videos."],["turnier-mai.pdf",false,"Diese Datei passt in den Ordner."],["turnier-juni.docx",false,"Diese Datei passt in den Ordner."]]},
       ]}),
-    ordnerPfad({titel:"Das Torvideo",punkte:10,datei:"🎬 freistoss-tor.mp4",baum:VEREIN,ziel:["Videos","Verein","Tore"],
+    ordnerPfad({titel:"Das Torvideo",punkte:10,datei:dico("a.mp4",22)+" freistoss-tor.mp4",baum:VEREIN,ziel:["Videos","Verein","Tore"],
       text:"Speichere das Video in Videos › Verein › <b>Tore</b>. Klick auf einen Ordner, um hineinzugehen.",
       merke:"Ein <b>Ordner</b> kann Dateien und weitere Ordner enthalten – wie Schubladen im Schrank."}),
-    ordnerPfad({titel:"Die Aufstellung",punkte:10,datei:"📝 aufstellung-pokal.docx",baum:VEREIN,ziel:["Dokumente","Verein","Aufstellungen"],
+    ordnerPfad({titel:"Die Aufstellung",punkte:10,datei:dico("a.docx",22)+" aufstellung-pokal.docx",baum:VEREIN,ziel:["Dokumente","Verein","Aufstellungen"],
       text:"Jetzt ohne Wegbeschreibung. Wo gehört die Aufstellung für das Pokalspiel hin?"}),
-    ordnerPfad({titel:"Die Sammelkarten",punkte:15,datei:"🖼️ sammelkarte-nr10.jpg",baum:VEREIN,ziel:["Bilder","Verein","Sammelkarten","Saison 2026"],
+    ordnerPfad({titel:"Die Sammelkarten",punkte:15,datei:dico("a.jpg",22)+" sammelkarte-nr10.jpg",baum:VEREIN,ziel:["Bilder","Verein","Sammelkarten","Saison 2026"],
       text:"Der Verein druckt Sammelkarten für diese Saison. Such den Ordner dafür. Er liegt tief."}),
     eingabe({titel:"Einen Pfad lesen",punkte:10,
       text:"Der Weg zu einer Datei heißt <b>Pfad</b>. Lies ihn von links nach rechts.",
@@ -276,9 +277,9 @@ station({
     namenGeben({titel:"Du gibst den Namen",punkte:15,
       text:"Jetzt erfindest du selbst gute Dateinamen. Schreib klein und ohne Leerzeichen, zum Beispiel <b>tor-im-finale.mp4</b>.",
       runden:[
-        {bild:"🖼️",was:"Ein Foto vom Torwart beim Training.",auftrag:"Gib dem Foto einen Namen. Das Wort „torwart“ muss vorkommen. Am Ende steht .jpg.",wort:"torwart",endung:".jpg"},
-        {bild:"🎬",was:"Ein Video vom Elfmeter im Finale.",auftrag:"Gib dem Video einen Namen. Das Wort „elfmeter“ muss vorkommen. Welche Endung hat ein Video?",wort:"elfmeter",endung:".mp4"},
-        {bild:"📝",was:"Die Einladung zum Sommerfest, geschrieben mit Word.",auftrag:"Gib dem Text einen Namen. Das Wort „sommerfest“ muss vorkommen. Welche Endung hat ein Text aus Word?",wort:"sommerfest",endung:".docx"},
+        {bild:dico("a.jpg",44),was:"Ein Foto vom Torwart beim Training.",auftrag:"Gib dem Foto einen Namen. Das Wort „torwart“ muss vorkommen. Am Ende steht .jpg.",wort:"torwart",endung:".jpg"},
+        {bild:dico("a.mp4",44),was:"Ein Video vom Elfmeter im Finale.",auftrag:"Gib dem Video einen Namen. Das Wort „elfmeter“ muss vorkommen. Welche Endung hat ein Video?",wort:"elfmeter",endung:".mp4"},
+        {bild:dico("a.docx",44),was:"Die Einladung zum Sommerfest, geschrieben mit Word.",auftrag:"Gib dem Text einen Namen. Das Wort „sommerfest“ muss vorkommen. Welche Endung hat ein Text aus Word?",wort:"sommerfest",endung:".docx"},
       ]}),
     reihenfolge({titel:"Eine Datei umbenennen",punkte:10,text:"Eine Datei heißt „Neues Dokument (3)“. So bekommt sie einen guten Namen. Bring die Schritte in die richtige Reihenfolge.",
       schritte:["Rechtsklick auf die Datei","„Umbenennen“ auswählen","Den alten Namen löschen","Den neuen Namen eintippen","Enter drücken"],
@@ -301,9 +302,9 @@ station({
       merke:"Erst wenn der Papierkorb <b>geleert</b> wird, sind die Dateien wirklich weg."}),
     entscheidung({titel:"Hilfe, die Datei ist weg!",punkte:15,text:"Der Trainer ruft dich an. Was rätst du ihm?",
       szenen:[
-        {bild:"🔍",text:"Er hat die Aufstellung gespeichert, findet sie aber nicht mehr.",optionen:[["Mit der Suche nach „aufstellung“ suchen",true,"Richtig. Die Suche schaut in alle Ordner."],["Die Aufstellung noch einmal schreiben",false,"Das kostet viel Zeit. Erst suchen."],["Den Laptop neu starten",false,"Davon taucht die Datei nicht auf."]]},
-        {bild:"🗑️",text:"Er hat aus Versehen das Mannschaftsfoto gelöscht.",optionen:[["Im Papierkorb nachschauen und es wiederherstellen",true,"Genau. Gelöschte Dateien liegen erst im Papierkorb."],["Nichts tun, es ist für immer weg",false,"Erst in den Papierkorb schauen."],["Den Papierkorb leeren",false,"Dann wäre das Foto wirklich weg."]]},
-        {bild:"🏟️",text:"Er braucht das Torvideo auf dem Laptop im Vereinsheim.",optionen:[["Das Video auf einen USB-Stick kopieren und mitnehmen",true,"Richtig. So nimmt man Dateien mit."],["Den Bildschirm abfotografieren",false,"Dann hat er nur ein Foto vom Bildschirm."],["Hoffen, dass es dort auch ist",false,"Dateien wandern nicht von allein auf andere Geräte."]]},
+        {bild:sym("lupe",44),text:"Er hat die Aufstellung gespeichert, findet sie aber nicht mehr.",optionen:[["Mit der Suche nach „aufstellung“ suchen",true,"Richtig. Die Suche schaut in alle Ordner."],["Die Aufstellung noch einmal schreiben",false,"Das kostet viel Zeit. Erst suchen."],["Den Laptop neu starten",false,"Davon taucht die Datei nicht auf."]]},
+        {bild:sym("korb",44),text:"Er hat aus Versehen das Mannschaftsfoto gelöscht.",optionen:[["Im Papierkorb nachschauen und es wiederherstellen",true,"Genau. Gelöschte Dateien liegen erst im Papierkorb."],["Nichts tun, es ist für immer weg",false,"Erst in den Papierkorb schauen."],["Den Papierkorb leeren",false,"Dann wäre das Foto wirklich weg."]]},
+        {bild:sym("stick",44),text:"Er braucht das Torvideo auf dem Laptop im Vereinsheim.",optionen:[["Das Video auf einen USB-Stick kopieren und mitnehmen",true,"Richtig. So nimmt man Dateien mit."],["Den Bildschirm abfotografieren",false,"Dann hat er nur ein Foto vom Bildschirm."],["Hoffen, dass es dort auch ist",false,"Dateien wandern nicht von allein auf andere Geräte."]]},
       ]}),
     reihenfolge({titel:"Einen neuen Ordner anlegen",punkte:10,text:"Der Trainer will einen Ordner „Sommerturnier“. Bring die Schritte in die richtige Reihenfolge.",
       schritte:["Rechtsklick auf eine freie Stelle","„Neu“ auswählen","„Ordner“ anklicken","Sommerturnier eintippen","Enter drücken"]}),

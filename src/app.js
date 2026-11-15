@@ -233,6 +233,7 @@ PIX.robobonus=PIX.robo;PIX.tipprennen=PIX.tippen;PIX.kimalen=PIX.ki;
 PIX.schlange=["0000000","1110000","0010000","0011100","0000100","0100111","0000000"];
 PIX.jagd=["0011100","0100010","1001001","1011101","1001001","0100010","0011100"];
 PIX.memory=["1110111","1010101","1110111","0000000","1110111","1010111","1110111"];
+PIX.ball=["0011100","0110110","1101011","1011101","1101011","0110110","0011100"];
 PIX.lampen=["0011100","0111110","0111110","0111110","0011100","0011100","0001000"];
 const pix=(id,px=28,kl="")=>{const m=PIX[id]||PIX.pixel;
   return`<svg class="pix ${kl}" width="${px}" height="${px}" viewBox="0 0 7 7" aria-hidden="true" shape-rendering="crispEdges">${m.map((r,y)=>[...r].map((c,x)=>c==="1"?`<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="currentColor"/>`:"").join("")).join("")}</svg>`};
@@ -381,7 +382,7 @@ function seiteStation(st){
   <div class="leiste noprint"><div class="wo">${pix(st.id,22)}<span>${esc(st.titel)}</span></div><span>Teil ${i+1} von ${st.schritte.length}${vb?` · <b>Note verbessern</b>`:""}</span>${st.spiel?`<span class="pts">Spielplatz, ohne Note</span>`:`<span class="pts">${summe(prog)} Punkte</span>`}</div>
   <div class="steps noprint springen">${st.schritte.map((_,k)=>{const darf=VS||(vb?vb.offen.includes(k):k in prog.punkte||k<=(prog.weitester||0));
     return`<i class="${k===i&&!erledigt(k)?"now":erledigt(k)?"ok":""}${k===i?" hier":""}${darf?"":" zu"}"${darf?` data-sp="${k}" title="Zu Teil ${k+1}"`:""}></i>`}).join("")}</div>
-  <h1>${esc(sch.titel)}</h1>
+  ${sch.art?`<p class="art"><i></i>${esc(sch.art)}</p>`:""}<h1>${esc(sch.titel)}</h1>
   ${sch.merke?`<div class="aha merke"><b>Merke</b> ${sch.merke}</div>`:""}
   <div id="body"></div>
   <div id="hilfe"></div>

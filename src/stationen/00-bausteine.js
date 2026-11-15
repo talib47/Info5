@@ -20,11 +20,28 @@ function bewerte(ctx,el,{leer,leerText,fehler,stand,punkte,okText,markiere}){
   else t+=" Schau noch mal genau hin.";
   meldung(el,false,t);return false;
 }
+
+/* ---------- Eigene Symbole (Strichzeichnungen in Textfarbe): ruhiger als Emojis, drucken in Schwarz-Weiß ---------- */
+const SVG=(inh,px=28)=>`<svg class="ic" width="${px}" height="${px}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inh}</svg>`;
+const IC={ordner:'<path d="M3 7.5V18a1.5 1.5 0 0 0 1.5 1.5h15A1.5 1.5 0 0 0 21 18V9a1.5 1.5 0 0 0-1.5-1.5H12L10 5H4.5A1.5 1.5 0 0 0 3 6.5z"/>',
+  blatt:'<path d="M6 2.5h8l4.5 4.5v13.5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-17a1 1 0 0 1 1-1z"/><path d="M14 2.5V7h4.5"/>',
+  laptop:'<rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19.5h20"/>',pc:'<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8.5 20h7M12 16v4"/>',
+  stick:'<rect x="8" y="9" width="8" height="12" rx="1.5"/><path d="M10 9V3.5h4V9"/>',korb:'<path d="M4 7h16M9.5 7V4h5v3M6 7l1 13.5h10L18 7M10 11v6M14 11v6"/>',
+  lupe:'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>',telefon:'<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/>',
+  stecker:'<path d="M9 2.5v5M15 2.5v5M6.5 7.5h11v4a5.5 5.5 0 0 1-11 0zM12 17v4.5"/>',platte:'<rect x="4" y="5" width="16" height="14" rx="2"/><circle cx="12" cy="12" r="3.2"/><path d="M16.5 16.5h.01"/>',
+  chip:'<rect x="7" y="7" width="10" height="10" rx="1"/><path d="M10 4v3M14 4v3M10 17v3M14 17v3M4 10h3M4 14h3M17 10h3M17 14h3"/>',schloss:'<rect x="5" y="10.5" width="14" height="10" rx="1.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>'};
+const GL={bild:'<path d="M8 18l3-4 2 2.5 1.2-1.2L16 18z"/><circle cx="9.7" cy="11.5" r=".8"/>',video:'<path d="M10 11.5v6l5-3z"/>',musik:'<path d="M11 17.5v-6l4-1v6"/><circle cx="9.8" cy="17.5" r="1.2"/><circle cx="13.8" cy="16.5" r="1.2"/>',
+  text:'<path d="M8.5 11.5h7M8.5 14.5h7M8.5 17.5h4"/>',prog:'<circle cx="12" cy="14.5" r="2.6"/><path d="M12 10.4v1.5M12 17.1v1.5"/>'};
+const dateiArt=n=>/\.(jpe?g|png)\b/i.test(n)?"bild":/\.mp4\b/i.test(n)?"video":/\.mp3\b/i.test(n)?"musik":/\.exe\b/i.test(n)?"prog":"text";
+const dico=(name,px=28)=>SVG(IC.blatt+GL[dateiArt(name)],px);
+const sym=(n,px=28)=>SVG(IC[n],px);
+/* Nachricht einer Figur (Rahmengeschichte): Pixelbild + ruhige Sprechblase */
+const nachricht=(wer,bild,t)=>`<div class="figur"><span class="nb">${pix(bild,34)}</span><div><span class="nv">${wer}</span><p>${t}</p></div></div>`;
 const kopfText=t=>t?`<div class="regel">${t}</div>`:"";
 
 /* ---------- Sortieren: Karten in Kästen verteilen (antippen oder ziehen) ----------
    sortieren({titel,punkte,merke,text,toepfe:[["id","Name","🙂"]],karten:[["Text","🙂","zielId"]],warum:"Erklärung nach dem Lösen"}) */
-function sortieren({titel,punkte=10,merke,text,toepfe,karten,warum,breit}){return{titel,punkte,merke,zeige(el,ctx){
+function sortieren({titel,punkte=10,merke,text,toepfe,karten,warum,breit,art="Sortieren"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.wo=d.wo||{};if(!d.reihe){d.reihe=mischen(karten.map((_,i)=>i));ctx.speichern()}
   let wahl=null,falsch=new Set();
   const karte=i=>{const [t,ico]=karten[i];return`<button class="karte${wahl===i?" an":""}${falsch.has(i)?" falsch":""}" data-i="${i}" draggable="true">${ico?`<span class="kico">${ico}</span>`:""}<span>${t}</span></button>`};
@@ -51,7 +68,7 @@ function sortieren({titel,punkte=10,merke,text,toepfe,karten,warum,breit}){retur
 
 /* ---------- Reihenfolge: Schritte in die richtige Reihenfolge bringen ----------
    reihenfolge({titel,punkte,merke,text,schritte:["erst","dann",…]})  (in richtiger Reihenfolge angeben) */
-function reihenfolge({titel,punkte=10,merke,text,schritte}){return{titel,punkte,merke,zeige(el,ctx){
+function reihenfolge({titel,punkte=10,merke,text,schritte,art="Reihenfolge"}){return{titel,punkte,merke,art,zeige(el,ctx){
   /* Schritt für Schritt: Das Kind wählt immer nur den NÄCHSTEN Schritt und erfährt sofort, ob er stimmt.
      (Früher: erst alles einordnen, dann prüfen – das war für viele zu schwer.) */
   const d=ctx.daten;if(!d.reihe){d.reihe=mischenAnders(schritte.map((_,i)=>i));ctx.speichern()}
@@ -80,7 +97,7 @@ function reihenfolge({titel,punkte=10,merke,text,schritte}){return{titel,punkte,
 
 /* ---------- Tempo-Runde: einen kurzen Satz auf Zeit tippen (Stoppuhr, eigener Rekord) ----------
    tippTempo({titel,punkte,text,satz}) – volle Punkte fürs Schaffen; die Zeit ist nur Ansporn */
-function tippTempo({titel,punkte=10,merke,text,satz}){return{titel,punkte,merke,zeige(el,ctx){
+function tippTempo({titel,punkte=10,merke,text,satz,art="Tippen"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;let p=0,f=0,start=0,ende=0,timer=null,neuRekord=false;
   const mmss=ms=>{const t=Math.floor(ms/1000);return`${Math.floor(t/60)}:${String(t%60).padStart(2,"0")}`};
   const uhr=()=>{const u=el.querySelector(".tempo-uhr");if(u)u.textContent="⏱ "+mmss(start?(ende||Date.now())-start:0)};
@@ -118,7 +135,7 @@ const vorlage=(t,label="So steht es da")=>`<div class="vorlage"><span class="vl"
 /* ---------- Lückentext mit Wortkasten (Merk-Check am Ende einer Station) ----------
    luecken({titel,punkte,text,saetze:["Die {Maus} ist ein {Eingabegerät}."],extra:["Drucker"]})
    Wort antippen → es springt in die nächste freie Lücke. Lücke antippen → Wort geht zurück. */
-function luecken({titel,punkte=15,merke,text,saetze,extra=[]}){return{titel,punkte,merke,zeige(el,ctx){
+function luecken({titel,punkte=15,merke,text,saetze,extra=[],art="Merk-Check"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;const teile=[],soll=[];
   saetze.forEach(z=>{const t=[];z.split(/(\{[^}]+\})/).forEach(x=>{if(/^\{.*\}$/.test(x)){t.push(soll.length);soll.push(x.slice(1,-1))}else if(x)t.push(x)});teile.push(t)});
   const woerter=[...soll,...extra];
@@ -147,40 +164,154 @@ function luecken({titel,punkte=15,merke,text,saetze,extra=[]}){return{titel,punk
 /* ---------- Die geheime Maschine: EVA zum Ausprobieren ----------
    maschine({titel,punkte,text,runden:[{f:x=>x*2,regel:"mal 2",falsch:["plus 2","plus 4"]}]})
    Das Kind gibt Zahlen ein, sieht die Ausgabe und findet heraus, was die Verarbeitung macht. */
-function maschine({titel,punkte=15,merke,text,runden}){return{titel,punkte,merke,zeige(el,ctx){
+function maschine({titel,punkte=15,merke,text,runden,wort,art="Ausprobieren"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.r=d.r||0;d.v=d.v||[];
   const zeichne=()=>{
     if(d.r>=runden.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle ${runden.length} Maschinen durchschaut. Tippe auf „Weiter“.</div>`;return}
     const R=runden[d.r];if(!d.opt||d.opt.length!==R.falsch.length+1){d.opt=mischen([R.regel,...R.falsch])}
     const genug=d.v.length>=3;
     el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Maschine ${d.r+1} von ${runden.length}</p>
-      <div class="eva-m"><div class="eva-k"><span>Eingabe</span><input type="text" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="Zahl" id="mz"></div>
-        <i>→</i><div class="eva-k mitte"><span>Verarbeitung</span><b>⚙️ ?</b></div><i>→</i>
+      <div class="eva-m"><div class="eva-k"><span>Eingabe</span><input type="text" ${wort?'maxlength="12" autocapitalize="off" spellcheck="false" placeholder="Wort"':'inputmode="numeric" maxlength="3" placeholder="Zahl"'} autocomplete="off" id="mz"></div>
+        <i>→</i><div class="eva-k mitte"><span>Verarbeitung</span><b class="zahnrad">${sym("chip",34)}</b></div><i>→</i>
         <div class="eva-k"><span>Ausgabe</span><b id="ma">${d.v.length?R.f(d.v[d.v.length-1]):"…"}</b></div>
         <button class="btn" id="ml">Los</button></div>
       ${d.v.length?`<table class="liste eva-t"><thead><tr><th>Eingabe</th>${d.v.map(x=>`<td>${x}</td>`).join("")}</tr></thead><tbody><tr><th>Ausgabe</th>${d.v.map(x=>`<td><b>${R.f(x)}</b></td>`).join("")}</tr></tbody></table>`:""}
-      <p class="frage" style="margin-top:16px">Was macht die Maschine mit der Zahl?</p>
-      ${genug?`<div class="karten">${d.opt.map((o,i)=>`<button class="karte" data-o="${i}">Sie rechnet <b>${o}</b></button>`).join("")}</div>`
-        :`<p class="muted">Probier zuerst <b>${3-d.v.length}</b> ${d.v.length===2?"weitere Zahl":d.v.length?"weitere Zahlen":"verschiedene Zahlen"} aus. Dann kannst du antworten.</p>`}${MLD}`;
-    const inp=el.querySelector("#mz"),los=()=>{const x=parseInt(inp.value,10);
-      if(isNaN(x)||x<0||x>999){meldung(el,false,"Tippe eine Zahl von 0 bis 999 ins Feld <b>Eingabe</b>.");inp.focus();return}
+      <p class="frage" style="margin-top:16px">Was macht die Maschine mit ${wort?"dem Wort":"der Zahl"}?</p>
+      ${genug?`<div class="karten">${d.opt.map((o,i)=>`<button class="karte" data-o="${i}">${wort?"Sie":"Sie rechnet"} <b>${o}</b></button>`).join("")}</div>`
+        :`<p class="muted">Probier zuerst <b>${3-d.v.length}</b> ${wort?(d.v.length===2?"weiteres Wort":d.v.length?"weitere Wörter":"verschiedene Wörter"):(d.v.length===2?"weitere Zahl":d.v.length?"weitere Zahlen":"verschiedene Zahlen")} aus. Dann kannst du antworten.</p>`}${MLD}`;
+    const inp=el.querySelector("#mz"),los=()=>{const x=wort?inp.value.trim():parseInt(inp.value,10);
+      if(wort?!/^[a-zäöüßA-ZÄÖÜ]{2,12}$/.test(x):(isNaN(x)||x<0||x>999)){meldung(el,false,wort?"Tippe ein Wort ins Feld <b>Eingabe</b>. Nur Buchstaben.":"Tippe eine Zahl von 0 bis 999 ins Feld <b>Eingabe</b>.");inp.focus();return}
       if(!d.v.includes(x))d.v.push(x);else{d.v=d.v.filter(y=>y!==x);d.v.push(x)}
       if(d.v.length>8)d.v.shift();ctx.speichern();zeichne();el.querySelector("#mz").focus()};
     el.querySelector("#ml").onclick=los;inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();los()}};
     el.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{
       if(d.opt[+b.dataset.o]===R.regel){d.r++;d.v=[];d.opt=null;ctx.speichern();zeichne();
-        if(d.r>=runden.length)ctx.geschafft(punkte);else meldung(el,true,`Richtig: Die Maschine rechnete <b>${R.regel}</b>. Hier kommt die nächste.`)}
-      else{ctx.fehler();b.classList.add("falsch");meldung(el,false,"Das passt nicht zu allen Zahlen. Schau in die Tabelle und probier noch eine Zahl aus.")}});
+        if(d.r>=runden.length)ctx.geschafft(punkte);else meldung(el,true,`Richtig: Die Maschine ${wort?"":"rechnete "}<b>${R.regel}</b>. Hier kommt die nächste.`)}
+      else{ctx.fehler();b.classList.add("falsch");meldung(el,false,wort?"Das passt nicht zu allen Wörtern. Schau in die Tabelle und probier noch ein Wort aus.":"Das passt nicht zu allen Zahlen. Schau in die Tabelle und probier noch eine Zahl aus.")}});
   };
   zeichne();
   ctx.pruefer=()=>{if(d.r>=runden.length){ctx.geschafft(punkte);return true}meldung(el,false,"Finde zuerst bei allen Maschinen heraus, was sie rechnen.");return false};
   ctx.loesung=()=>{d.r=runden.length;zeichne()};
 }}}
 
+
+/* ---------- Was bin ich? Rätsel mit Hinweisen, die man nach und nach aufdeckt (auf dunkler Tafel) ----------
+   raetsel({titel,punkte,text,runden:[{hinweise:["…","…","…"],antwort:["Maus"]}]})  Mehr Hinweise kosten nichts, nur falsche Antworten. */
+function raetsel({titel,punkte=10,merke,text,runden,art="Rätsel"}){return{titel,punkte,merke,art,zeige(el,ctx){
+  const d=ctx.daten;d.r=d.r||0;d.h=d.h||1;
+  const norm=v=>String(v||"").trim().toLowerCase().replace(/^(der|die|das|eine?)\s+/,"").replace(/[\s+-]+/g,"");
+  const zeichne=()=>{
+    if(d.r>=runden.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle ${runden.length} Rätsel gelöst. Tippe auf „Weiter“.</div>`;return}
+    const R=runden[d.r],n=Math.min(d.h,R.hinweise.length);
+    el.innerHTML=kopfText(text)+`<div class="tafel"><p class="eyebrow">Rätsel ${d.r+1} von ${runden.length}</p>
+      <ol class="hinweise">${R.hinweise.slice(0,n).map(h=>`<li>${h}</li>`).join("")}</ol>
+      ${n<R.hinweise.length?`<button class="btn ghost" id="mehr">Noch ein Hinweis</button>`:""}
+      <div class="eing" style="margin-top:14px"><input type="text" id="ra" placeholder="Was bin ich?" autocomplete="off" spellcheck="false" maxlength="30" value="${esc(d.v||"")}"></div></div>${MLD}`;
+    const m=el.querySelector("#mehr");if(m)m.onclick=()=>{d.h++;ctx.speichern();zeichne()};
+    const inp=el.querySelector("#ra");inp.oninput=()=>{d.v=inp.value;ctx.speichern()};
+    inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();document.getElementById("weiter")?.click()}};
+  };
+  zeichne();
+  ctx.pruefer=()=>{if(d.r>=runden.length){ctx.geschafft(punkte);return true}
+    const R=runden[d.r],v=norm(d.v);
+    if(!v){meldung(el,false,"Schreib deine Antwort ins Feld.");return false}
+    if(R.antwort.map(norm).includes(v)){const w=R.antwort[0];d.r++;d.h=1;d.v="";ctx.speichern();
+      if(d.r>=runden.length){zeichne();ctx.geschafft(punkte);return true}
+      zeichne();meldung(el,true,`Richtig: <b>${esc(w)}</b>. Hier kommt das nächste Rätsel.`);return false}
+    if(d.falsch!==v){ctx.fehler();d.falsch=v}
+    if(d.h<R.hinweise.length){d.h++;ctx.speichern();zeichne();meldung(el,false,"Noch nicht. Du bekommst einen Hinweis mehr.")}
+    else{ctx.speichern();meldung(el,false,"Noch nicht. Lies alle Hinweise noch einmal. Achte auf die Schreibweise.")}
+    return false};
+  ctx.loesung=()=>{d.r=runden.length;zeichne()};
+}}}
+
+/* ---------- Kette bauen: aus fünf Karten die drei richtigen in die Kette Eingabe → Verarbeitung → Ausgabe legen ---------- */
+function evaKette({titel,punkte=15,merke,text,runden,art="Kette bauen"}){return{titel,punkte,merke,art,zeige(el,ctx){
+  const d=ctx.daten;d.r=d.r||0;const NAME=["Eingabe","Verarbeitung","Ausgabe"];let falsch=new Set();
+  const zeichne=()=>{
+    if(d.r>=runden.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle ${runden.length} Ketten stimmen. Tippe auf „Weiter“.</div>`;return}
+    const R=runden[d.r],karten=[...R.kette,...R.extra];
+    if(!d.reihe||d.reihe.length!==karten.length){d.reihe=mischen(karten.map((_,i)=>i));d.s=[null,null,null]}
+    const weg=new Set(d.s.filter(x=>x!=null));
+    el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Gerät ${d.r+1} von ${runden.length}</p><p class="frage">${R.geraet}</p>
+      <div class="kette">${NAME.map((n,k)=>`<button class="glied${d.s[k]!=null?" voll":""}${falsch.has(k)?" falsch":""}" data-k="${k}"><span>${n}</span><b>${d.s[k]!=null?karten[d.s[k]]:"&nbsp;"}</b></button>`).join(`<i aria-hidden="true">→</i>`)}</div>
+      <p class="muted small" style="margin:12px 0 6px">Tippe eine Karte an. Sie springt in das nächste freie Feld. Zwei Karten bleiben übrig.</p>
+      <div class="karten">${d.reihe.map(i=>`<button class="karte" data-i="${i}" ${weg.has(i)?"disabled style='opacity:.35'":""}>${karten[i]}</button>`).join("")}</div>${MLD}`;
+    el.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{const k=d.s.indexOf(null);if(k<0)return toast("Die Kette ist voll. Tippe ein Feld an, um es zu leeren.");d.s[k]=+b.dataset.i;falsch.clear();ctx.speichern();zeichne()});
+    el.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{d.s[+b.dataset.k]=null;falsch.clear();ctx.speichern();zeichne()});
+  };
+  zeichne();
+  ctx.pruefer=()=>{if(d.r>=runden.length){ctx.geschafft(punkte);return true}
+    if(d.s.includes(null)){meldung(el,false,"Füll zuerst alle drei Felder der Kette.");return false}
+    const fs=[0,1,2].filter(k=>d.s[k]!==k);
+    if(!fs.length){d.r++;d.reihe=null;ctx.speichern();
+      if(d.r>=runden.length){zeichne();ctx.geschafft(punkte);return true}
+      zeichne();meldung(el,true,"Die Kette stimmt. Hier kommt das nächste Gerät.");return false}
+    const st=d.s.join();if(d.falsch!==st){ctx.fehler();d.falsch=st;ctx.speichern()}
+    falsch=new Set(fs);zeichne();meldung(el,false,fs.length===1?"Ein Feld stimmt noch nicht. Es ist markiert.":`${fs.length} Felder stimmen noch nicht. Sie sind markiert.`);return false};
+  ctx.loesung=()=>{d.r=runden.length;zeichne()};
+}}}
+
+/* ---------- Strom-Probe: schreiben, speichern oder nicht, Stecker ziehen – und sehen, was bleibt ---------- */
+function stromProbe({titel,punkte=20,merke,text,missionen,art="Ausprobieren"}){return{titel,punkte,merke,art,zeige(el,ctx){
+  const d=ctx.daten;d.r=d.r||0;if(d.an==null)d.an=true;d.ram=d.ram||"";d.platte=d.platte||"";
+  const zeichne=()=>{
+    if(d.r>=missionen.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle ${missionen.length} Versuche gemacht. Tippe auf „Weiter“.</div>`;return}
+    const M=missionen[d.r],frage=d.erledigt&&M.frage;if(frage&&!d.opt)d.opt=mischen([M.richtig,...M.falsch]);
+    el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Versuch ${d.r+1} von ${missionen.length}</p><p class="frage">${M.auftrag}</p>
+      <div class="strom"><div class="st-pc${d.an?"":" aus"}"><div class="st-kopf">${sym("pc",22)} Bildschirm <span class="muted small">zeigt, was im Arbeitsspeicher ist</span></div>
+          ${d.an?`<input type="text" id="sr" maxlength="24" placeholder="Schreib hier ein Wort" autocomplete="off" spellcheck="false" value="${esc(d.ram)}" ${d.erledigt?"disabled":""}>`:`<p class="st-aus">Kein Strom.</p>`}</div>
+        <div class="st-platte"><div class="st-kopf">${sym("platte",22)} Festplatte</div><p>${d.platte?`${dico("wort.txt",22)} <b>${esc(d.platte)}</b>`:`<span class="muted">leer</span>`}</p></div></div>
+      ${d.erledigt?"":`<div class="kp-knoepfe">${d.an?`<button class="btn" data-a="sp">Speichern</button><button class="btn ghost" data-a="auf" ${d.platte?"":"disabled"}>Datei öffnen</button><button class="btn ghost" data-a="aus">${sym("stecker",20)} Stecker ziehen</button>`:`<button class="btn" data-a="an">Wieder einschalten</button>`}</div>`}
+      ${frage?`<p class="frage" style="margin-top:18px">${M.frage}</p><div class="antworten">${d.opt.map((o,i)=>`<button class="antwort" data-o="${i}">${o}</button>`).join("")}</div>`:""}${MLD}`;
+    const inp=el.querySelector("#sr");if(inp)inp.oninput=()=>{d.ram=inp.value;ctx.speichern()};
+    el.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{const a=b.dataset.a,vor={ram:d.ram.trim(),platte:d.platte};
+      if(a==="sp"){if(!vor.ram)return meldung(el,false,"Schreib zuerst ein Wort.");d.platte=vor.ram}
+      else if(a==="auf")d.ram=d.platte;
+      else if(a==="aus"){d.an=false;d.ram=""}
+      else if(a==="an")d.an=true;
+      if(M.test(a,vor)){d.erledigt=!!M.frage;ctx.speichern();
+        if(M.frage){zeichne();meldung(el,true,M.ok||"Geschafft. Beantworte noch die Frage.")}else naechste(M.ok||"Geschafft.")}
+      else{ctx.speichern();zeichne();if(M.fast){const t=M.fast(a,vor);if(t)meldung(el,null,t)}}});
+    el.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{
+      if(d.opt[+b.dataset.o]===M.richtig)naechste("Richtig.");
+      else{ctx.fehler();b.classList.add("falsch");b.disabled=true;meldung(el,false,"Schau noch mal oben: Wo steht dein Wort, wo nicht?")}});
+  };
+  const naechste=t=>{d.r++;d.erledigt=false;d.opt=null;ctx.speichern();zeichne();
+    if(d.r>=missionen.length)ctx.geschafft(punkte);else meldung(el,true,t+" Hier kommt der nächste Versuch.")};
+  zeichne();
+  ctx.pruefer=()=>{if(d.r>=missionen.length){ctx.geschafft(punkte);return true}meldung(el,false,d.erledigt?"Beantworte zuerst die Frage.":"Mach zuerst den Versuch.");return false};
+  ctx.loesung=()=>{d.r=missionen.length;zeichne()};
+}}}
+
+/* ---------- Laser-Gang: den Zeiger durch einen Gang führen, ohne den Rand zu berühren (Maus-Kontrolle; mit dem Finger: ziehen) ---------- */
+function mausGang({titel,punkte=15,merke,text,gaenge,art="Ruhige Hand"}){return{titel,punkte,merke,art,zeige(el,ctx){
+  const d=ctx.daten;d.r=d.r||0;let aktiv=false;
+  const zeichne=(hinweis)=>{
+    if(d.r>=gaenge.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle ${gaenge.length} Gänge geschafft. Tippe auf „Weiter“.</div>`;return}
+    const G=gaenge[d.r];aktiv=false;
+    el.innerHTML=kopfText(text)+`<div class="tafel gang"><p class="eyebrow">Gang ${d.r+1} von ${gaenge.length}</p>
+      <svg viewBox="0 0 600 300" id="gsvg"><path class="g-weg" d="${G.d}" stroke-width="${G.b}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle class="g-ziel" cx="${G.ziel[0]}" cy="${G.ziel[1]}" r="${G.b/2+4}"/><text x="${G.ziel[0]}" y="${G.ziel[1]+5}" text-anchor="middle" class="g-t">Ziel</text>
+        <circle class="g-start" cx="${G.start[0]}" cy="${G.start[1]}" r="${G.b/2+4}"/><text x="${G.start[0]}" y="${G.start[1]+5}" text-anchor="middle" class="g-t s">Start</text></svg>
+      <p class="g-stand" id="gst">${hinweis||"Klick auf Start. Führ dann den Zeiger langsam bis zum Ziel."}</p></div>${MLD}`;
+    const svg=el.querySelector("#gsvg"),st=el.querySelector("#gst");
+    const art=e=>{const t=document.elementFromPoint(e.clientX,e.clientY);return!t?"":t.classList.contains("g-ziel")||(t.classList.contains("g-t")&&!t.classList.contains("s"))?"ziel":t.classList.contains("g-weg")||t.classList.contains("g-start")||t.classList.contains("g-t")?"weg":""};
+    svg.addEventListener("pointerdown",e=>{const t=e.target;if(t.classList.contains("g-start")||t.classList.contains("s")){e.preventDefault();aktiv=true;svg.classList.add("an");st.textContent="Los. Bleib auf dem hellen Weg."}});
+    svg.addEventListener("pointermove",e=>{if(!aktiv)return;const a=art(e);
+      if(a==="ziel"){aktiv=false;d.r++;ctx.speichern();zeichne();if(d.r>=gaenge.length)ctx.geschafft(punkte);else meldung(el,true,"Geschafft. Der nächste Gang ist schmaler.")}
+      else if(a!=="weg"){d.raus=(d.raus||0)+1;ctx.speichern();zeichne("Rand berührt. Klick wieder auf Start und versuch es langsamer.")}});
+    svg.addEventListener("pointerup",e=>{if(aktiv&&e.pointerType!=="mouse"){zeichne("Finger abgehoben. Tippe auf Start und zieh ohne abzusetzen.")}});
+  };
+  zeichne();
+  ctx.pruefer=()=>{if(d.r>=gaenge.length){ctx.geschafft(punkte);return true}meldung(el,false,"Bring den Zeiger zuerst durch alle Gänge.");return false};
+  ctx.loesung=()=>{d.r=gaenge.length;zeichne()};
+}}}
+
 /* ---------- Paare: Links und rechts verbinden ----------
    paare({titel,punkte,merke,text,paare:[["links","rechts"],…]}) */
 const PAAR_FARBEN=["#4338CA","#E5383B","#2DA44E","#F08A24","#8E5BD6","#0EA5B7","#C2185B","#8B5A2B"];
-function paare({titel,punkte=10,merke,text,paare:liste}){return{titel,punkte,merke,zeige(el,ctx){
+function paare({titel,punkte=10,merke,text,paare:liste,art="Verbinden"}){return{titel,punkte,merke,art,zeige(el,ctx){
   /* Häppchenweise: höchstens 3 bis 4 Paare auf einmal, dann die nächsten */
   const gruppen=[];for(let k=0;k<liste.length;k+=3)gruppen.push(liste.map((_,i)=>i).slice(k,k+3));
   if(gruppen.length>1&&gruppen[gruppen.length-1].length===1)gruppen[gruppen.length-2].push(...gruppen.pop());
@@ -217,7 +348,7 @@ function paare({titel,punkte=10,merke,text,paare:liste}){return{titel,punkte,mer
 
 /* ---------- Fehler-Suche: verdächtige Stellen in einer Nachricht antippen ----------
    fehlerSuche({titel,punkte,merke,text,kopf:"Von: … Betreff: …",teile:[["Text",true,"warum verdächtig"],["normaler Text"]]}) */
-function fehlerSuche({titel,punkte=10,merke,text,kopf,teile,art="📩 Nachricht"}){return{titel,punkte,merke,zeige(el,ctx){
+function fehlerSuche({titel,punkte=10,merke,text,kopf,teile,art="📩 Nachricht"}){return{titel,punkte,merke,art:"Fehler finden",zeige(el,ctx){
   const d=ctx.daten;d.an=d.an||[];
   const anzahl=teile.filter(t=>t[1]).length;let falsch=new Set();
   const zeichne=()=>{
@@ -238,7 +369,7 @@ function fehlerSuche({titel,punkte=10,merke,text,kopf,teile,art="📩 Nachricht"
 
 /* ---------- Entscheidung: Situationen, in denen das Kind entscheidet, was es tun würde ----------
    entscheidung({titel,punkte,merke,szenen:[{bild:"💬",text:"…",optionen:[["Antwort",true,"Rückmeldung"],…]}]}) */
-function entscheidung({titel,punkte=10,merke,text,szenen,frage:frage0}){return{titel,punkte,merke,zeige(el,ctx){
+function entscheidung({titel,punkte=10,merke,text,szenen,frage:frage0,art="Entscheiden"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.s=d.s||0;d.ok=d.ok||{};if(!d.reihen){d.reihen=szenen.map(s=>mischen(s.optionen.map((_,i)=>i)));ctx.speichern()}
   let weg=new Set();
   const zeichne=()=>{
@@ -265,14 +396,14 @@ function entscheidung({titel,punkte=10,merke,text,szenen,frage:frage0}){return{t
 
 /* ---------- Ordner-Explorer: durch Ordner klicken und an der richtigen Stelle speichern ----------
    ordnerPfad({titel,punkte,merke,text,datei:"🖼️ urlaub.jpg",baum:{"Bilder":{"Urlaub":{}},…},ziel:["Bilder","Urlaub"]}) */
-function ordnerPfad({titel,punkte=10,merke,text,datei,baum,ziel}){return{titel,punkte,merke,zeige(el,ctx){
+function ordnerPfad({titel,punkte=10,merke,text,datei,baum,ziel,art="Speichern"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.pfad=d.pfad||[];
   const ordner=p=>p.reduce((o,n)=>o[n],baum);
   const zeichne=()=>{
     const hier=ordner(d.pfad),kinder=Object.keys(hier);
     el.innerHTML=kopfText(text)+`<div class="explorer"><div class="ex-leiste"><button class="btn ghost klein-btn" id="hoch" ${d.pfad.length?"":"disabled"}>Eine Ebene zurück</button>
-      <div class="ex-pfad">💻 Dieser PC ${d.pfad.map(n=>`<span>›</span> 📁 ${n}`).join(" ")}</div></div>
-      <div class="ex-inhalt">${kinder.map(n=>`<button class="ex-ordner" data-n="${esc(n)}"><span>📁</span>${n}</button>`).join("")||`<p class="muted" style="grid-column:1/-1">Dieser Ordner ist leer.</p>`}
+      <div class="ex-pfad">Dieser PC ${d.pfad.map(n=>`<span>›</span> ${n}`).join(" ")}</div></div>
+      <div class="ex-inhalt">${kinder.map(n=>`<button class="ex-ordner" data-n="${esc(n)}"><span>${sym("ordner",44)}</span>${n}</button>`).join("")||`<p class="muted" style="grid-column:1/-1">Dieser Ordner ist leer.</p>`}
       ${d.gespeichert&&d.gespeichert.join("/")===d.pfad.join("/")?`<div class="ex-datei">${datei}</div>`:""}</div>
       <div class="ex-speichern"><span>Datei: <b>${datei}</b></span><button class="btn" id="spei">Hier speichern</button></div></div>${MLD}`;
     el.querySelector("#hoch").onclick=()=>{d.pfad.pop();ctx.speichern();zeichne()};
@@ -288,7 +419,7 @@ function ordnerPfad({titel,punkte=10,merke,text,datei,baum,ziel}){return{titel,p
 
 /* ---------- Eingabe: ein Wort oder eine Zahl eintippen ----------
    eingabe({titel,punkte,merke,text,html,antwort:"HALLO" oder ["…","…"],gross:true,zahl:false,platz:"?"}) */
-function eingabe({titel,punkte=10,merke,text,html="",antwort,zahl,platz="Deine Antwort",laenge,egal}){return{titel,punkte,merke,zeige(el,ctx){
+function eingabe({titel,punkte=10,merke,text,html="",antwort,zahl,platz="Deine Antwort",laenge,egal,art="Antwort tippen"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;const norm=v=>{v=String(v).trim();return egal==="nichts"?v:v.toUpperCase().replace(/\s+/g," ")};
   const gut=(Array.isArray(antwort)?antwort:[antwort]).map(norm);
   el.innerHTML=kopfText(text)+html+`<div class="eing"><input type="text" ${zahl?'inputmode="numeric"':""} autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${platz}" ${laenge?`maxlength="${laenge}"`:""} value="${esc(d.v||"")}"></div>${MLD}`;
@@ -308,7 +439,7 @@ function tastaturBild(naechst){
   return`<div class="tastatur">${TAST_REIHEN.map((r,ri)=>`<div class="t-reihe" style="padding-left:${ri*14}px">${ri===3?`<span class="taste breit${gross?" naechst":""}">⇧</span>`:""}${[...r].map(c=>`<span class="taste f${FINGER[c]}${c===k?" naechst":""}${c==="f"||c==="j"?" huegel":""}">${c==="ß"?"ß":c.toUpperCase()}</span>`).join("")}</div>`).join("")}
     <div class="t-reihe"><span class="taste leer${naechst===" "?" naechst":""}">Leertaste</span></div></div>`;
 }
-function tippen({titel,punkte=15,merke,text,zeilen,zeigeTastatur=true,rennen}){return{titel,punkte,merke,zeige(el,ctx){
+function tippen({titel,punkte=15,merke,text,zeilen,zeigeTastatur=true,rennen,art="Tippen"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.z=d.z||0;d.p=d.p||0;d.f=d.f||0;
   const fertig=()=>d.z>=zeilen.length;
   const zeichne=(blitz)=>{
@@ -342,13 +473,13 @@ function tippen({titel,punkte=15,merke,text,zeilen,zeigeTastatur=true,rennen}){r
 
 /* ---------- Tasten-Missionen: echte Tasten und Tastenkürzel in einem Übungsfeld ausprobieren ----------
    tastenMissionen({titel,punkte,merke,text,start:"Text im Feld",missionen:[{text:"…",tasten:["Strg","C"],test:e=>…}]}) */
-function tastenMissionen({titel,punkte=15,merke,text,start="",missionen}){return{titel,punkte,merke,zeige(el,ctx){
+function tastenMissionen({titel,punkte=15,merke,text,start="",missionen,art="Tasten"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.m=d.m||0;let pause=false;
   const zeichne=()=>{
     const fertig=d.m>=missionen.length,ms=missionen[d.m];
     el.innerHTML=kopfText(text)+(fertig?`<div class="msg ok">Alle ${missionen.length} Aufgaben geschafft. Tippe auf „Weiter“.</div>`
       :`<div class="tastaufgabe"><p class="eyebrow">Aufgabe ${d.m+1} von ${missionen.length}</p><p class="was">${ms.text}</p>
-        <p class="wie"><b>So geht es:</b> ${ms.wie||""}</p><p class="kappen">${ms.tasten.map(t=>`<kbd>${t}</kbd>`).join("<i>+</i>")}</p></div>`)+`
+        <p class="wie"><b>${ms.tasten.length?"So geht es:":"Tipp:"}</b> ${ms.wie||""}</p><p class="kappen">${ms.tasten.map(t=>`<kbd>${t}</kbd>`).join("<i>+</i>")}</p></div>`)+`
       <p class="eyebrow" style="margin-top:14px">Dein Übungsfeld – klick hinein und probier es aus</p>
       <textarea class="uebfeld" spellcheck="false">${esc(d.feld??start)}</textarea>${MLD}`;
     const f=el.querySelector(".uebfeld");
@@ -393,7 +524,7 @@ const FINGER_AUF={tipp:{ico:"⭐",t:"<b>Tippe</b> einmal kurz auf den Stern ⭐"
   ziehen:{ico:"🍎",t:"<b>Zieh</b> den Apfel 🍎 mit dem Finger in den Korb 🧺"},
   wischen:{ico:"🏞️",t:"<b>Wische</b> das Foto mit dem Finger zur Seite – wie in der Foto-Galerie"},
   zoom:{ico:"🐞",t:"<b>Zoomen</b>: Leg zwei Finger auf den Käfer 🐞 und zieh sie auseinander, bis er ganz groß ist"}};
-function touchParcours({titel,punkte=10,merke,text,aufgaben}){return{titel,punkte,merke,zeige(el,ctx){
+function touchParcours({titel,punkte=10,merke,text,aufgaben,art="Finger"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.n=d.n||0;let tipp=0,timer=null;
   ctx.beimVerlassen(()=>clearTimeout(timer));
   const zeichne=()=>{clearTimeout(timer);
@@ -445,7 +576,7 @@ function touchParcours({titel,punkte=10,merke,text,aufgaben}){return{titel,punkt
 
 const MAUS={klick:{ico:"⭐",t:"<b>Klick</b> einmal auf den Stern ⭐ (linke Maustaste)"},doppel:{ico:"📦",t:"<b>Doppelklick</b> auf die Kiste 📦 (zweimal ganz schnell links klicken)"},
   rechts:{ico:"🎁",t:"<b>Rechtsklick</b> auf das Geschenk 🎁 (rechte Maustaste)"},ziehen:{ico:"🍎",t:"<b>Zieh</b> den Apfel 🍎 in den Korb 🧺 (Taste gedrückt halten und schieben)"}};
-function mausParcours({titel,punkte=10,merke,text,aufgaben}){return{titel,punkte,merke,zeige(el,ctx){
+function mausParcours({titel,punkte=10,merke,text,aufgaben,art="Maus"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.n=d.n||0;let tipp=0;
   const zeichne=()=>{
     if(d.n>=aufgaben.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Parcours geschafft! Tippe auf „Weiter“.</div>`;return}

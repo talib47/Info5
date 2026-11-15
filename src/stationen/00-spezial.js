@@ -4,7 +4,7 @@
 
 /* ---------- Auswählen: alle passenden Karten antippen (Mehrfachauswahl) ----------
    auswaehlen({titel,punkte,merke,text,karten:[["Text/HTML",true,"warum"],…]}) */
-function auswaehlen({titel,punkte=10,merke,text,karten,spalten}){return{titel,punkte,merke,zeige(el,ctx){
+function auswaehlen({titel,punkte=10,merke,text,karten,spalten,art="Auswählen"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.an=d.an||[];if(!d.reihe){d.reihe=mischen(karten.map((_,i)=>i));ctx.speichern()}
   const n=karten.filter(k=>k[1]).length;let falsch=new Set();
   const zeichne=()=>{

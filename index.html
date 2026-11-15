@@ -904,10 +904,12 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
 .pal button span{font-size:.75rem;font-weight:700;color:#000;background:rgba(255,255,255,.8);border-radius:5px;padding:0 4px}
 .pal button.an{box-shadow:0 0 0 3px var(--accent);transform:scale(1.06)}
 /* Station 3: Nachricht der Rahmenfigur, Endungs-Probe, Datei-Suche */
-.nachricht{border:1.5px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px 14px;max-width:560px}
-.nachricht .nv{display:block;font-size:.8125rem;color:var(--muted);font-weight:600}
-.nachricht p{margin:2px 0 0;font-size:1.0625rem}
-.regel .nachricht{background:var(--surface)}
+.figur{display:flex;gap:12px;align-items:flex-start;max-width:600px}
+.figur .nb{flex:none;width:46px;height:46px;border-radius:8px;background:var(--ink);color:var(--surface);display:grid;place-items:center}
+.figur>div{position:relative;border:1.5px solid var(--line);border-radius:4px 12px 12px 12px;background:var(--surface);padding:8px 14px 10px}
+.figur .nv{display:block;font-size:.8125rem;color:var(--muted);font-weight:600}
+.figur p{margin:2px 0 0;font-size:1.0625rem}
+.regel:has(.figur){background:none;border:0;padding:0}
 .probe{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;border:1.5px solid var(--line);border-radius:var(--r);background:var(--surface);padding:14px 16px}
 .probe-datei{display:grid;grid-template-columns:auto 1fr;column-gap:12px;align-items:center;flex:1 1 100%}
 .probe-datei .pd-ico{grid-row:span 2;font-size:2.25rem;line-height:1}
@@ -935,6 +937,48 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
 .kp-knoepfe{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px}.kp-knoepfe span{flex:1 1 100%}
 .ex-ordner.datei.an{border-color:var(--accent)}
 @media (max-width:640px){.kp{grid-template-columns:1fr}.kp-ort{min-height:0}}
+/* Symbole, Art-Zeile, Tafel (Rätsel und Gänge auf dunklem Grund), neue Bausteine */
+.ic{flex:none;vertical-align:-.22em}
+.art{display:flex;align-items:center;gap:8px;margin:0 0 4px;font-size:.875rem;font-weight:650;color:var(--accent)}
+.art i{width:9px;height:9px;background:var(--accent);border-radius:2px}
+.karte .kico{display:inline-flex}
+.topf-kopf{display:flex;align-items:center;gap:8px}
+.sz-bild{display:grid;place-items:center}
+.ex-ordner span{line-height:0;color:var(--accent)}
+.ex-ordner.datei span{color:var(--ink)}
+.ex-pfad{align-items:center}
+.probe-datei .pd-ico{line-height:0}
+.fenster .f-kopf{display:flex;align-items:center;gap:8px;background:var(--fill)}
+.fenster .f-kopf::after{content:"";margin-left:auto;width:34px;height:8px;background:radial-gradient(circle,var(--muted) 3px,transparent 3.5px) 0 0/12px 8px}
+.treffer li,.dzeile{display:flex;align-items:center;gap:8px}
+.kp-ort .karte{gap:8px}
+.kp-kopf,.st-kopf{display:flex;align-items:center;gap:8px;font-weight:700}
+.tafel{--surface:#1E2A44;--ink:#EEF2FA;--muted:#A9B5CC;--line:#3A4865;--fill:#16203A;--tint:#2A3A5E;--accent:#A9BCFF;--accent-ink:#0E1530;--good:#7FD6A0;--bad:#F5A0AA;--bad-soft:#402530;
+  background:#16203F;color:var(--ink);border-radius:12px;padding:16px;margin-top:12px}
+.tafel .explorer{margin-top:0}.tafel .fenster{max-width:none}
+.tafel input[type=text]{background:#101830;color:var(--ink);border-color:var(--line);font-family:var(--mono);letter-spacing:.06em}
+.tafel .eyebrow{color:var(--muted)}
+.hinweise{margin:6px 0 14px;padding-left:1.4em;font-size:1.125rem;display:grid;gap:8px}
+.hinweise li::marker{color:var(--muted);font-weight:700}
+.kette{display:flex;align-items:stretch;gap:8px}
+.kette>i{align-self:center;font-style:normal;font-weight:700;color:var(--muted)}
+.glied{flex:1;display:flex;flex-direction:column;gap:4px;text-align:left;border:2px dashed var(--line);border-radius:var(--r);background:var(--surface);padding:10px 12px;min-height:96px}
+.glied span{font-size:.8125rem;font-weight:700;color:var(--muted)}.glied b{font-weight:600}
+.glied.voll{border-style:solid;border-color:var(--ink)}.glied.falsch{border-color:var(--bad);background:var(--bad-soft)}
+.strom{display:grid;grid-template-columns:3fr 2fr;gap:12px}
+.st-pc,.st-platte{border:1.5px solid var(--line);border-radius:var(--r);background:var(--surface);padding:12px 14px;min-height:118px}
+.st-pc.aus{background:#16203F;color:#A9B5CC;border-color:#16203F}.st-pc.aus .muted{color:#A9B5CC}
+.st-aus{margin:18px 0 0;font:600 1rem var(--mono)}
+.st-pc input{margin-top:10px}.st-platte p{margin:14px 0 0;display:flex;align-items:center;gap:8px;font-family:var(--mono)}
+.gang svg{display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none;border-radius:8px;background:#101830}
+.g-weg{stroke:#3A4865}.gang svg.an .g-weg{stroke:#EEF2FA}
+.g-start{fill:#A9BCFF}.g-ziel{fill:#7FD6A0}.g-t{font:700 13px var(--sans);fill:#0E1530;pointer-events:none}
+.gang svg .g-t{pointer-events:auto}
+.g-stand{margin:10px 0 0;font-weight:600}
+.zahnrad{line-height:0}
+@media (max-width:640px){.kette{flex-direction:column}.kette>i{transform:rotate(90deg)}.strom{grid-template-columns:1fr}}
+@media print{.tafel,.st-pc.aus{background:#fff;color:#000;border:1.5px solid #000}}
+.figur .nb .pix{color:#fff}
 </style>
 </head>
 <body>
@@ -949,7 +993,7 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="dbd2a0ed22";
+const VERSION="23b2473cb7";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -1366,6 +1410,7 @@ PIX.robobonus=PIX.robo;PIX.tipprennen=PIX.tippen;PIX.kimalen=PIX.ki;
 PIX.schlange=["0000000","1110000","0010000","0011100","0000100","0100111","0000000"];
 PIX.jagd=["0011100","0100010","1001001","1011101","1001001","0100010","0011100"];
 PIX.memory=["1110111","1010101","1110111","0000000","1110111","1010111","1110111"];
+PIX.ball=["0011100","0110110","1101011","1011101","1101011","0110110","0011100"];
 PIX.lampen=["0011100","0111110","0111110","0111110","0011100","0011100","0001000"];
 const pix=(id,px=28,kl="")=>{const m=PIX[id]||PIX.pixel;
   return`<svg class="pix ${kl}" width="${px}" height="${px}" viewBox="0 0 7 7" aria-hidden="true" shape-rendering="crispEdges">${m.map((r,y)=>[...r].map((c,x)=>c==="1"?`<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="currentColor"/>`:"").join("")).join("")}</svg>`};
@@ -1514,7 +1559,7 @@ function seiteStation(st){
   <div class="leiste noprint"><div class="wo">${pix(st.id,22)}<span>${esc(st.titel)}</span></div><span>Teil ${i+1} von ${st.schritte.length}${vb?` · <b>Note verbessern</b>`:""}</span>${st.spiel?`<span class="pts">Spielplatz, ohne Note</span>`:`<span class="pts">${summe(prog)} Punkte</span>`}</div>
   <div class="steps noprint springen">${st.schritte.map((_,k)=>{const darf=VS||(vb?vb.offen.includes(k):k in prog.punkte||k<=(prog.weitester||0));
     return`<i class="${k===i&&!erledigt(k)?"now":erledigt(k)?"ok":""}${k===i?" hier":""}${darf?"":" zu"}"${darf?` data-sp="${k}" title="Zu Teil ${k+1}"`:""}></i>`}).join("")}</div>
-  <h1>${esc(sch.titel)}</h1>
+  ${sch.art?`<p class="art"><i></i>${esc(sch.art)}</p>`:""}<h1>${esc(sch.titel)}</h1>
   ${sch.merke?`<div class="aha merke"><b>Merke</b> ${sch.merke}</div>`:""}
   <div id="body"></div>
   <div id="hilfe"></div>
@@ -1923,11 +1968,28 @@ function bewerte(ctx,el,{leer,leerText,fehler,stand,punkte,okText,markiere}){
   else t+=" Schau noch mal genau hin.";
   meldung(el,false,t);return false;
 }
+
+/* ---------- Eigene Symbole (Strichzeichnungen in Textfarbe): ruhiger als Emojis, drucken in Schwarz-Weiß ---------- */
+const SVG=(inh,px=28)=>`<svg class="ic" width="${px}" height="${px}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inh}</svg>`;
+const IC={ordner:'<path d="M3 7.5V18a1.5 1.5 0 0 0 1.5 1.5h15A1.5 1.5 0 0 0 21 18V9a1.5 1.5 0 0 0-1.5-1.5H12L10 5H4.5A1.5 1.5 0 0 0 3 6.5z"/>',
+  blatt:'<path d="M6 2.5h8l4.5 4.5v13.5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-17a1 1 0 0 1 1-1z"/><path d="M14 2.5V7h4.5"/>',
+  laptop:'<rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19.5h20"/>',pc:'<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8.5 20h7M12 16v4"/>',
+  stick:'<rect x="8" y="9" width="8" height="12" rx="1.5"/><path d="M10 9V3.5h4V9"/>',korb:'<path d="M4 7h16M9.5 7V4h5v3M6 7l1 13.5h10L18 7M10 11v6M14 11v6"/>',
+  lupe:'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>',telefon:'<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/>',
+  stecker:'<path d="M9 2.5v5M15 2.5v5M6.5 7.5h11v4a5.5 5.5 0 0 1-11 0zM12 17v4.5"/>',platte:'<rect x="4" y="5" width="16" height="14" rx="2"/><circle cx="12" cy="12" r="3.2"/><path d="M16.5 16.5h.01"/>',
+  chip:'<rect x="7" y="7" width="10" height="10" rx="1"/><path d="M10 4v3M14 4v3M10 17v3M14 17v3M4 10h3M4 14h3M17 10h3M17 14h3"/>',schloss:'<rect x="5" y="10.5" width="14" height="10" rx="1.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>'};
+const GL={bild:'<path d="M8 18l3-4 2 2.5 1.2-1.2L16 18z"/><circle cx="9.7" cy="11.5" r=".8"/>',video:'<path d="M10 11.5v6l5-3z"/>',musik:'<path d="M11 17.5v-6l4-1v6"/><circle cx="9.8" cy="17.5" r="1.2"/><circle cx="13.8" cy="16.5" r="1.2"/>',
+  text:'<path d="M8.5 11.5h7M8.5 14.5h7M8.5 17.5h4"/>',prog:'<circle cx="12" cy="14.5" r="2.6"/><path d="M12 10.4v1.5M12 17.1v1.5"/>'};
+const dateiArt=n=>/\.(jpe?g|png)\b/i.test(n)?"bild":/\.mp4\b/i.test(n)?"video":/\.mp3\b/i.test(n)?"musik":/\.exe\b/i.test(n)?"prog":"text";
+const dico=(name,px=28)=>SVG(IC.blatt+GL[dateiArt(name)],px);
+const sym=(n,px=28)=>SVG(IC[n],px);
+/* Nachricht einer Figur (Rahmengeschichte): Pixelbild + ruhige Sprechblase */
+const nachricht=(wer,bild,t)=>`<div class="figur"><span class="nb">${pix(bild,34)}</span><div><span class="nv">${wer}</span><p>${t}</p></div></div>`;
 const kopfText=t=>t?`<div class="regel">${t}</div>`:"";
 
 /* ---------- Sortieren: Karten in Kästen verteilen (antippen oder ziehen) ----------
    sortieren({titel,punkte,merke,text,toepfe:[["id","Name","🙂"]],karten:[["Text","🙂","zielId"]],warum:"Erklärung nach dem Lösen"}) */
-function sortieren({titel,punkte=10,merke,text,toepfe,karten,warum,breit}){return{titel,punkte,merke,zeige(el,ctx){
+function sortieren({titel,punkte=10,merke,text,toepfe,karten,warum,breit,art="Sortieren"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.wo=d.wo||{};if(!d.reihe){d.reihe=mischen(karten.map((_,i)=>i));ctx.speichern()}
   let wahl=null,falsch=new Set();
   const karte=i=>{const [t,ico]=karten[i];return`<button class="karte${wahl===i?" an":""}${falsch.has(i)?" falsch":""}" data-i="${i}" draggable="true">${ico?`<span class="kico">${ico}</span>`:""}<span>${t}</span></button>`};
@@ -1954,7 +2016,7 @@ function sortieren({titel,punkte=10,merke,text,toepfe,karten,warum,breit}){retur
 
 /* ---------- Reihenfolge: Schritte in die richtige Reihenfolge bringen ----------
    reihenfolge({titel,punkte,merke,text,schritte:["erst","dann",…]})  (in richtiger Reihenfolge angeben) */
-function reihenfolge({titel,punkte=10,merke,text,schritte}){return{titel,punkte,merke,zeige(el,ctx){
+function reihenfolge({titel,punkte=10,merke,text,schritte,art="Reihenfolge"}){return{titel,punkte,merke,art,zeige(el,ctx){
   /* Schritt für Schritt: Das Kind wählt immer nur den NÄCHSTEN Schritt und erfährt sofort, ob er stimmt.
      (Früher: erst alles einordnen, dann prüfen – das war für viele zu schwer.) */
   const d=ctx.daten;if(!d.reihe){d.reihe=mischenAnders(schritte.map((_,i)=>i));ctx.speichern()}
@@ -1983,7 +2045,7 @@ function reihenfolge({titel,punkte=10,merke,text,schritte}){return{titel,punkte,
 
 /* ---------- Tempo-Runde: einen kurzen Satz auf Zeit tippen (Stoppuhr, eigener Rekord) ----------
    tippTempo({titel,punkte,text,satz}) – volle Punkte fürs Schaffen; die Zeit ist nur Ansporn */
-function tippTempo({titel,punkte=10,merke,text,satz}){return{titel,punkte,merke,zeige(el,ctx){
+function tippTempo({titel,punkte=10,merke,text,satz,art="Tippen"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;let p=0,f=0,start=0,ende=0,timer=null,neuRekord=false;
   const mmss=ms=>{const t=Math.floor(ms/1000);return`${Math.floor(t/60)}:${String(t%60).padStart(2,"0")}`};
   const uhr=()=>{const u=el.querySelector(".tempo-uhr");if(u)u.textContent="⏱ "+mmss(start?(ende||Date.now())-start:0)};
@@ -2021,7 +2083,7 @@ const vorlage=(t,label="So steht es da")=>`<div class="vorlage"><span class="vl"
 /* ---------- Lückentext mit Wortkasten (Merk-Check am Ende einer Station) ----------
    luecken({titel,punkte,text,saetze:["Die {Maus} ist ein {Eingabegerät}."],extra:["Drucker"]})
    Wort antippen → es springt in die nächste freie Lücke. Lücke antippen → Wort geht zurück. */
-function luecken({titel,punkte=15,merke,text,saetze,extra=[]}){return{titel,punkte,merke,zeige(el,ctx){
+function luecken({titel,punkte=15,merke,text,saetze,extra=[],art="Merk-Check"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;const teile=[],soll=[];
   saetze.forEach(z=>{const t=[];z.split(/(\{[^}]+\})/).forEach(x=>{if(/^\{.*\}$/.test(x)){t.push(soll.length);soll.push(x.slice(1,-1))}else if(x)t.push(x)});teile.push(t)});
   const woerter=[...soll,...extra];
@@ -2050,40 +2112,154 @@ function luecken({titel,punkte=15,merke,text,saetze,extra=[]}){return{titel,punk
 /* ---------- Die geheime Maschine: EVA zum Ausprobieren ----------
    maschine({titel,punkte,text,runden:[{f:x=>x*2,regel:"mal 2",falsch:["plus 2","plus 4"]}]})
    Das Kind gibt Zahlen ein, sieht die Ausgabe und findet heraus, was die Verarbeitung macht. */
-function maschine({titel,punkte=15,merke,text,runden}){return{titel,punkte,merke,zeige(el,ctx){
+function maschine({titel,punkte=15,merke,text,runden,wort,art="Ausprobieren"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.r=d.r||0;d.v=d.v||[];
   const zeichne=()=>{
     if(d.r>=runden.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle ${runden.length} Maschinen durchschaut. Tippe auf „Weiter“.</div>`;return}
     const R=runden[d.r];if(!d.opt||d.opt.length!==R.falsch.length+1){d.opt=mischen([R.regel,...R.falsch])}
     const genug=d.v.length>=3;
     el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Maschine ${d.r+1} von ${runden.length}</p>
-      <div class="eva-m"><div class="eva-k"><span>Eingabe</span><input type="text" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="Zahl" id="mz"></div>
-        <i>→</i><div class="eva-k mitte"><span>Verarbeitung</span><b>⚙️ ?</b></div><i>→</i>
+      <div class="eva-m"><div class="eva-k"><span>Eingabe</span><input type="text" ${wort?'maxlength="12" autocapitalize="off" spellcheck="false" placeholder="Wort"':'inputmode="numeric" maxlength="3" placeholder="Zahl"'} autocomplete="off" id="mz"></div>
+        <i>→</i><div class="eva-k mitte"><span>Verarbeitung</span><b class="zahnrad">${sym("chip",34)}</b></div><i>→</i>
         <div class="eva-k"><span>Ausgabe</span><b id="ma">${d.v.length?R.f(d.v[d.v.length-1]):"…"}</b></div>
         <button class="btn" id="ml">Los</button></div>
       ${d.v.length?`<table class="liste eva-t"><thead><tr><th>Eingabe</th>${d.v.map(x=>`<td>${x}</td>`).join("")}</tr></thead><tbody><tr><th>Ausgabe</th>${d.v.map(x=>`<td><b>${R.f(x)}</b></td>`).join("")}</tr></tbody></table>`:""}
-      <p class="frage" style="margin-top:16px">Was macht die Maschine mit der Zahl?</p>
-      ${genug?`<div class="karten">${d.opt.map((o,i)=>`<button class="karte" data-o="${i}">Sie rechnet <b>${o}</b></button>`).join("")}</div>`
-        :`<p class="muted">Probier zuerst <b>${3-d.v.length}</b> ${d.v.length===2?"weitere Zahl":d.v.length?"weitere Zahlen":"verschiedene Zahlen"} aus. Dann kannst du antworten.</p>`}${MLD}`;
-    const inp=el.querySelector("#mz"),los=()=>{const x=parseInt(inp.value,10);
-      if(isNaN(x)||x<0||x>999){meldung(el,false,"Tippe eine Zahl von 0 bis 999 ins Feld <b>Eingabe</b>.");inp.focus();return}
+      <p class="frage" style="margin-top:16px">Was macht die Maschine mit ${wort?"dem Wort":"der Zahl"}?</p>
+      ${genug?`<div class="karten">${d.opt.map((o,i)=>`<button class="karte" data-o="${i}">${wort?"Sie":"Sie rechnet"} <b>${o}</b></button>`).join("")}</div>`
+        :`<p class="muted">Probier zuerst <b>${3-d.v.length}</b> ${wort?(d.v.length===2?"weiteres Wort":d.v.length?"weitere Wörter":"verschiedene Wörter"):(d.v.length===2?"weitere Zahl":d.v.length?"weitere Zahlen":"verschiedene Zahlen")} aus. Dann kannst du antworten.</p>`}${MLD}`;
+    const inp=el.querySelector("#mz"),los=()=>{const x=wort?inp.value.trim():parseInt(inp.value,10);
+      if(wort?!/^[a-zäöüßA-ZÄÖÜ]{2,12}$/.test(x):(isNaN(x)||x<0||x>999)){meldung(el,false,wort?"Tippe ein Wort ins Feld <b>Eingabe</b>. Nur Buchstaben.":"Tippe eine Zahl von 0 bis 999 ins Feld <b>Eingabe</b>.");inp.focus();return}
       if(!d.v.includes(x))d.v.push(x);else{d.v=d.v.filter(y=>y!==x);d.v.push(x)}
       if(d.v.length>8)d.v.shift();ctx.speichern();zeichne();el.querySelector("#mz").focus()};
     el.querySelector("#ml").onclick=los;inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();los()}};
     el.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{
       if(d.opt[+b.dataset.o]===R.regel){d.r++;d.v=[];d.opt=null;ctx.speichern();zeichne();
-        if(d.r>=runden.length)ctx.geschafft(punkte);else meldung(el,true,`Richtig: Die Maschine rechnete <b>${R.regel}</b>. Hier kommt die nächste.`)}
-      else{ctx.fehler();b.classList.add("falsch");meldung(el,false,"Das passt nicht zu allen Zahlen. Schau in die Tabelle und probier noch eine Zahl aus.")}});
+        if(d.r>=runden.length)ctx.geschafft(punkte);else meldung(el,true,`Richtig: Die Maschine ${wort?"":"rechnete "}<b>${R.regel}</b>. Hier kommt die nächste.`)}
+      else{ctx.fehler();b.classList.add("falsch");meldung(el,false,wort?"Das passt nicht zu allen Wörtern. Schau in die Tabelle und probier noch ein Wort aus.":"Das passt nicht zu allen Zahlen. Schau in die Tabelle und probier noch eine Zahl aus.")}});
   };
   zeichne();
   ctx.pruefer=()=>{if(d.r>=runden.length){ctx.geschafft(punkte);return true}meldung(el,false,"Finde zuerst bei allen Maschinen heraus, was sie rechnen.");return false};
   ctx.loesung=()=>{d.r=runden.length;zeichne()};
 }}}
 
+
+/* ---------- Was bin ich? Rätsel mit Hinweisen, die man nach und nach aufdeckt (auf dunkler Tafel) ----------
+   raetsel({titel,punkte,text,runden:[{hinweise:["…","…","…"],antwort:["Maus"]}]})  Mehr Hinweise kosten nichts, nur falsche Antworten. */
+function raetsel({titel,punkte=10,merke,text,runden,art="Rätsel"}){return{titel,punkte,merke,art,zeige(el,ctx){
+  const d=ctx.daten;d.r=d.r||0;d.h=d.h||1;
+  const norm=v=>String(v||"").trim().toLowerCase().replace(/^(der|die|das|eine?)\s+/,"").replace(/[\s+-]+/g,"");
+  const zeichne=()=>{
+    if(d.r>=runden.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle ${runden.length} Rätsel gelöst. Tippe auf „Weiter“.</div>`;return}
+    const R=runden[d.r],n=Math.min(d.h,R.hinweise.length);
+    el.innerHTML=kopfText(text)+`<div class="tafel"><p class="eyebrow">Rätsel ${d.r+1} von ${runden.length}</p>
+      <ol class="hinweise">${R.hinweise.slice(0,n).map(h=>`<li>${h}</li>`).join("")}</ol>
+      ${n<R.hinweise.length?`<button class="btn ghost" id="mehr">Noch ein Hinweis</button>`:""}
+      <div class="eing" style="margin-top:14px"><input type="text" id="ra" placeholder="Was bin ich?" autocomplete="off" spellcheck="false" maxlength="30" value="${esc(d.v||"")}"></div></div>${MLD}`;
+    const m=el.querySelector("#mehr");if(m)m.onclick=()=>{d.h++;ctx.speichern();zeichne()};
+    const inp=el.querySelector("#ra");inp.oninput=()=>{d.v=inp.value;ctx.speichern()};
+    inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();document.getElementById("weiter")?.click()}};
+  };
+  zeichne();
+  ctx.pruefer=()=>{if(d.r>=runden.length){ctx.geschafft(punkte);return true}
+    const R=runden[d.r],v=norm(d.v);
+    if(!v){meldung(el,false,"Schreib deine Antwort ins Feld.");return false}
+    if(R.antwort.map(norm).includes(v)){const w=R.antwort[0];d.r++;d.h=1;d.v="";ctx.speichern();
+      if(d.r>=runden.length){zeichne();ctx.geschafft(punkte);return true}
+      zeichne();meldung(el,true,`Richtig: <b>${esc(w)}</b>. Hier kommt das nächste Rätsel.`);return false}
+    if(d.falsch!==v){ctx.fehler();d.falsch=v}
+    if(d.h<R.hinweise.length){d.h++;ctx.speichern();zeichne();meldung(el,false,"Noch nicht. Du bekommst einen Hinweis mehr.")}
+    else{ctx.speichern();meldung(el,false,"Noch nicht. Lies alle Hinweise noch einmal. Achte auf die Schreibweise.")}
+    return false};
+  ctx.loesung=()=>{d.r=runden.length;zeichne()};
+}}}
+
+/* ---------- Kette bauen: aus fünf Karten die drei richtigen in die Kette Eingabe → Verarbeitung → Ausgabe legen ---------- */
+function evaKette({titel,punkte=15,merke,text,runden,art="Kette bauen"}){return{titel,punkte,merke,art,zeige(el,ctx){
+  const d=ctx.daten;d.r=d.r||0;const NAME=["Eingabe","Verarbeitung","Ausgabe"];let falsch=new Set();
+  const zeichne=()=>{
+    if(d.r>=runden.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle ${runden.length} Ketten stimmen. Tippe auf „Weiter“.</div>`;return}
+    const R=runden[d.r],karten=[...R.kette,...R.extra];
+    if(!d.reihe||d.reihe.length!==karten.length){d.reihe=mischen(karten.map((_,i)=>i));d.s=[null,null,null]}
+    const weg=new Set(d.s.filter(x=>x!=null));
+    el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Gerät ${d.r+1} von ${runden.length}</p><p class="frage">${R.geraet}</p>
+      <div class="kette">${NAME.map((n,k)=>`<button class="glied${d.s[k]!=null?" voll":""}${falsch.has(k)?" falsch":""}" data-k="${k}"><span>${n}</span><b>${d.s[k]!=null?karten[d.s[k]]:"&nbsp;"}</b></button>`).join(`<i aria-hidden="true">→</i>`)}</div>
+      <p class="muted small" style="margin:12px 0 6px">Tippe eine Karte an. Sie springt in das nächste freie Feld. Zwei Karten bleiben übrig.</p>
+      <div class="karten">${d.reihe.map(i=>`<button class="karte" data-i="${i}" ${weg.has(i)?"disabled style='opacity:.35'":""}>${karten[i]}</button>`).join("")}</div>${MLD}`;
+    el.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{const k=d.s.indexOf(null);if(k<0)return toast("Die Kette ist voll. Tippe ein Feld an, um es zu leeren.");d.s[k]=+b.dataset.i;falsch.clear();ctx.speichern();zeichne()});
+    el.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{d.s[+b.dataset.k]=null;falsch.clear();ctx.speichern();zeichne()});
+  };
+  zeichne();
+  ctx.pruefer=()=>{if(d.r>=runden.length){ctx.geschafft(punkte);return true}
+    if(d.s.includes(null)){meldung(el,false,"Füll zuerst alle drei Felder der Kette.");return false}
+    const fs=[0,1,2].filter(k=>d.s[k]!==k);
+    if(!fs.length){d.r++;d.reihe=null;ctx.speichern();
+      if(d.r>=runden.length){zeichne();ctx.geschafft(punkte);return true}
+      zeichne();meldung(el,true,"Die Kette stimmt. Hier kommt das nächste Gerät.");return false}
+    const st=d.s.join();if(d.falsch!==st){ctx.fehler();d.falsch=st;ctx.speichern()}
+    falsch=new Set(fs);zeichne();meldung(el,false,fs.length===1?"Ein Feld stimmt noch nicht. Es ist markiert.":`${fs.length} Felder stimmen noch nicht. Sie sind markiert.`);return false};
+  ctx.loesung=()=>{d.r=runden.length;zeichne()};
+}}}
+
+/* ---------- Strom-Probe: schreiben, speichern oder nicht, Stecker ziehen – und sehen, was bleibt ---------- */
+function stromProbe({titel,punkte=20,merke,text,missionen,art="Ausprobieren"}){return{titel,punkte,merke,art,zeige(el,ctx){
+  const d=ctx.daten;d.r=d.r||0;if(d.an==null)d.an=true;d.ram=d.ram||"";d.platte=d.platte||"";
+  const zeichne=()=>{
+    if(d.r>=missionen.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle ${missionen.length} Versuche gemacht. Tippe auf „Weiter“.</div>`;return}
+    const M=missionen[d.r],frage=d.erledigt&&M.frage;if(frage&&!d.opt)d.opt=mischen([M.richtig,...M.falsch]);
+    el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Versuch ${d.r+1} von ${missionen.length}</p><p class="frage">${M.auftrag}</p>
+      <div class="strom"><div class="st-pc${d.an?"":" aus"}"><div class="st-kopf">${sym("pc",22)} Bildschirm <span class="muted small">zeigt, was im Arbeitsspeicher ist</span></div>
+          ${d.an?`<input type="text" id="sr" maxlength="24" placeholder="Schreib hier ein Wort" autocomplete="off" spellcheck="false" value="${esc(d.ram)}" ${d.erledigt?"disabled":""}>`:`<p class="st-aus">Kein Strom.</p>`}</div>
+        <div class="st-platte"><div class="st-kopf">${sym("platte",22)} Festplatte</div><p>${d.platte?`${dico("wort.txt",22)} <b>${esc(d.platte)}</b>`:`<span class="muted">leer</span>`}</p></div></div>
+      ${d.erledigt?"":`<div class="kp-knoepfe">${d.an?`<button class="btn" data-a="sp">Speichern</button><button class="btn ghost" data-a="auf" ${d.platte?"":"disabled"}>Datei öffnen</button><button class="btn ghost" data-a="aus">${sym("stecker",20)} Stecker ziehen</button>`:`<button class="btn" data-a="an">Wieder einschalten</button>`}</div>`}
+      ${frage?`<p class="frage" style="margin-top:18px">${M.frage}</p><div class="antworten">${d.opt.map((o,i)=>`<button class="antwort" data-o="${i}">${o}</button>`).join("")}</div>`:""}${MLD}`;
+    const inp=el.querySelector("#sr");if(inp)inp.oninput=()=>{d.ram=inp.value;ctx.speichern()};
+    el.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{const a=b.dataset.a,vor={ram:d.ram.trim(),platte:d.platte};
+      if(a==="sp"){if(!vor.ram)return meldung(el,false,"Schreib zuerst ein Wort.");d.platte=vor.ram}
+      else if(a==="auf")d.ram=d.platte;
+      else if(a==="aus"){d.an=false;d.ram=""}
+      else if(a==="an")d.an=true;
+      if(M.test(a,vor)){d.erledigt=!!M.frage;ctx.speichern();
+        if(M.frage){zeichne();meldung(el,true,M.ok||"Geschafft. Beantworte noch die Frage.")}else naechste(M.ok||"Geschafft.")}
+      else{ctx.speichern();zeichne();if(M.fast){const t=M.fast(a,vor);if(t)meldung(el,null,t)}}});
+    el.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{
+      if(d.opt[+b.dataset.o]===M.richtig)naechste("Richtig.");
+      else{ctx.fehler();b.classList.add("falsch");b.disabled=true;meldung(el,false,"Schau noch mal oben: Wo steht dein Wort, wo nicht?")}});
+  };
+  const naechste=t=>{d.r++;d.erledigt=false;d.opt=null;ctx.speichern();zeichne();
+    if(d.r>=missionen.length)ctx.geschafft(punkte);else meldung(el,true,t+" Hier kommt der nächste Versuch.")};
+  zeichne();
+  ctx.pruefer=()=>{if(d.r>=missionen.length){ctx.geschafft(punkte);return true}meldung(el,false,d.erledigt?"Beantworte zuerst die Frage.":"Mach zuerst den Versuch.");return false};
+  ctx.loesung=()=>{d.r=missionen.length;zeichne()};
+}}}
+
+/* ---------- Laser-Gang: den Zeiger durch einen Gang führen, ohne den Rand zu berühren (Maus-Kontrolle; mit dem Finger: ziehen) ---------- */
+function mausGang({titel,punkte=15,merke,text,gaenge,art="Ruhige Hand"}){return{titel,punkte,merke,art,zeige(el,ctx){
+  const d=ctx.daten;d.r=d.r||0;let aktiv=false;
+  const zeichne=(hinweis)=>{
+    if(d.r>=gaenge.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle ${gaenge.length} Gänge geschafft. Tippe auf „Weiter“.</div>`;return}
+    const G=gaenge[d.r];aktiv=false;
+    el.innerHTML=kopfText(text)+`<div class="tafel gang"><p class="eyebrow">Gang ${d.r+1} von ${gaenge.length}</p>
+      <svg viewBox="0 0 600 300" id="gsvg"><path class="g-weg" d="${G.d}" stroke-width="${G.b}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle class="g-ziel" cx="${G.ziel[0]}" cy="${G.ziel[1]}" r="${G.b/2+4}"/><text x="${G.ziel[0]}" y="${G.ziel[1]+5}" text-anchor="middle" class="g-t">Ziel</text>
+        <circle class="g-start" cx="${G.start[0]}" cy="${G.start[1]}" r="${G.b/2+4}"/><text x="${G.start[0]}" y="${G.start[1]+5}" text-anchor="middle" class="g-t s">Start</text></svg>
+      <p class="g-stand" id="gst">${hinweis||"Klick auf Start. Führ dann den Zeiger langsam bis zum Ziel."}</p></div>${MLD}`;
+    const svg=el.querySelector("#gsvg"),st=el.querySelector("#gst");
+    const art=e=>{const t=document.elementFromPoint(e.clientX,e.clientY);return!t?"":t.classList.contains("g-ziel")||(t.classList.contains("g-t")&&!t.classList.contains("s"))?"ziel":t.classList.contains("g-weg")||t.classList.contains("g-start")||t.classList.contains("g-t")?"weg":""};
+    svg.addEventListener("pointerdown",e=>{const t=e.target;if(t.classList.contains("g-start")||t.classList.contains("s")){e.preventDefault();aktiv=true;svg.classList.add("an");st.textContent="Los. Bleib auf dem hellen Weg."}});
+    svg.addEventListener("pointermove",e=>{if(!aktiv)return;const a=art(e);
+      if(a==="ziel"){aktiv=false;d.r++;ctx.speichern();zeichne();if(d.r>=gaenge.length)ctx.geschafft(punkte);else meldung(el,true,"Geschafft. Der nächste Gang ist schmaler.")}
+      else if(a!=="weg"){d.raus=(d.raus||0)+1;ctx.speichern();zeichne("Rand berührt. Klick wieder auf Start und versuch es langsamer.")}});
+    svg.addEventListener("pointerup",e=>{if(aktiv&&e.pointerType!=="mouse"){zeichne("Finger abgehoben. Tippe auf Start und zieh ohne abzusetzen.")}});
+  };
+  zeichne();
+  ctx.pruefer=()=>{if(d.r>=gaenge.length){ctx.geschafft(punkte);return true}meldung(el,false,"Bring den Zeiger zuerst durch alle Gänge.");return false};
+  ctx.loesung=()=>{d.r=gaenge.length;zeichne()};
+}}}
+
 /* ---------- Paare: Links und rechts verbinden ----------
    paare({titel,punkte,merke,text,paare:[["links","rechts"],…]}) */
 const PAAR_FARBEN=["#4338CA","#E5383B","#2DA44E","#F08A24","#8E5BD6","#0EA5B7","#C2185B","#8B5A2B"];
-function paare({titel,punkte=10,merke,text,paare:liste}){return{titel,punkte,merke,zeige(el,ctx){
+function paare({titel,punkte=10,merke,text,paare:liste,art="Verbinden"}){return{titel,punkte,merke,art,zeige(el,ctx){
   /* Häppchenweise: höchstens 3 bis 4 Paare auf einmal, dann die nächsten */
   const gruppen=[];for(let k=0;k<liste.length;k+=3)gruppen.push(liste.map((_,i)=>i).slice(k,k+3));
   if(gruppen.length>1&&gruppen[gruppen.length-1].length===1)gruppen[gruppen.length-2].push(...gruppen.pop());
@@ -2120,7 +2296,7 @@ function paare({titel,punkte=10,merke,text,paare:liste}){return{titel,punkte,mer
 
 /* ---------- Fehler-Suche: verdächtige Stellen in einer Nachricht antippen ----------
    fehlerSuche({titel,punkte,merke,text,kopf:"Von: … Betreff: …",teile:[["Text",true,"warum verdächtig"],["normaler Text"]]}) */
-function fehlerSuche({titel,punkte=10,merke,text,kopf,teile,art="📩 Nachricht"}){return{titel,punkte,merke,zeige(el,ctx){
+function fehlerSuche({titel,punkte=10,merke,text,kopf,teile,art="📩 Nachricht"}){return{titel,punkte,merke,art:"Fehler finden",zeige(el,ctx){
   const d=ctx.daten;d.an=d.an||[];
   const anzahl=teile.filter(t=>t[1]).length;let falsch=new Set();
   const zeichne=()=>{
@@ -2141,7 +2317,7 @@ function fehlerSuche({titel,punkte=10,merke,text,kopf,teile,art="📩 Nachricht"
 
 /* ---------- Entscheidung: Situationen, in denen das Kind entscheidet, was es tun würde ----------
    entscheidung({titel,punkte,merke,szenen:[{bild:"💬",text:"…",optionen:[["Antwort",true,"Rückmeldung"],…]}]}) */
-function entscheidung({titel,punkte=10,merke,text,szenen,frage:frage0}){return{titel,punkte,merke,zeige(el,ctx){
+function entscheidung({titel,punkte=10,merke,text,szenen,frage:frage0,art="Entscheiden"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.s=d.s||0;d.ok=d.ok||{};if(!d.reihen){d.reihen=szenen.map(s=>mischen(s.optionen.map((_,i)=>i)));ctx.speichern()}
   let weg=new Set();
   const zeichne=()=>{
@@ -2168,14 +2344,14 @@ function entscheidung({titel,punkte=10,merke,text,szenen,frage:frage0}){return{t
 
 /* ---------- Ordner-Explorer: durch Ordner klicken und an der richtigen Stelle speichern ----------
    ordnerPfad({titel,punkte,merke,text,datei:"🖼️ urlaub.jpg",baum:{"Bilder":{"Urlaub":{}},…},ziel:["Bilder","Urlaub"]}) */
-function ordnerPfad({titel,punkte=10,merke,text,datei,baum,ziel}){return{titel,punkte,merke,zeige(el,ctx){
+function ordnerPfad({titel,punkte=10,merke,text,datei,baum,ziel,art="Speichern"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.pfad=d.pfad||[];
   const ordner=p=>p.reduce((o,n)=>o[n],baum);
   const zeichne=()=>{
     const hier=ordner(d.pfad),kinder=Object.keys(hier);
     el.innerHTML=kopfText(text)+`<div class="explorer"><div class="ex-leiste"><button class="btn ghost klein-btn" id="hoch" ${d.pfad.length?"":"disabled"}>Eine Ebene zurück</button>
-      <div class="ex-pfad">💻 Dieser PC ${d.pfad.map(n=>`<span>›</span> 📁 ${n}`).join(" ")}</div></div>
-      <div class="ex-inhalt">${kinder.map(n=>`<button class="ex-ordner" data-n="${esc(n)}"><span>📁</span>${n}</button>`).join("")||`<p class="muted" style="grid-column:1/-1">Dieser Ordner ist leer.</p>`}
+      <div class="ex-pfad">Dieser PC ${d.pfad.map(n=>`<span>›</span> ${n}`).join(" ")}</div></div>
+      <div class="ex-inhalt">${kinder.map(n=>`<button class="ex-ordner" data-n="${esc(n)}"><span>${sym("ordner",44)}</span>${n}</button>`).join("")||`<p class="muted" style="grid-column:1/-1">Dieser Ordner ist leer.</p>`}
       ${d.gespeichert&&d.gespeichert.join("/")===d.pfad.join("/")?`<div class="ex-datei">${datei}</div>`:""}</div>
       <div class="ex-speichern"><span>Datei: <b>${datei}</b></span><button class="btn" id="spei">Hier speichern</button></div></div>${MLD}`;
     el.querySelector("#hoch").onclick=()=>{d.pfad.pop();ctx.speichern();zeichne()};
@@ -2191,7 +2367,7 @@ function ordnerPfad({titel,punkte=10,merke,text,datei,baum,ziel}){return{titel,p
 
 /* ---------- Eingabe: ein Wort oder eine Zahl eintippen ----------
    eingabe({titel,punkte,merke,text,html,antwort:"HALLO" oder ["…","…"],gross:true,zahl:false,platz:"?"}) */
-function eingabe({titel,punkte=10,merke,text,html="",antwort,zahl,platz="Deine Antwort",laenge,egal}){return{titel,punkte,merke,zeige(el,ctx){
+function eingabe({titel,punkte=10,merke,text,html="",antwort,zahl,platz="Deine Antwort",laenge,egal,art="Antwort tippen"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;const norm=v=>{v=String(v).trim();return egal==="nichts"?v:v.toUpperCase().replace(/\s+/g," ")};
   const gut=(Array.isArray(antwort)?antwort:[antwort]).map(norm);
   el.innerHTML=kopfText(text)+html+`<div class="eing"><input type="text" ${zahl?'inputmode="numeric"':""} autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${platz}" ${laenge?`maxlength="${laenge}"`:""} value="${esc(d.v||"")}"></div>${MLD}`;
@@ -2211,7 +2387,7 @@ function tastaturBild(naechst){
   return`<div class="tastatur">${TAST_REIHEN.map((r,ri)=>`<div class="t-reihe" style="padding-left:${ri*14}px">${ri===3?`<span class="taste breit${gross?" naechst":""}">⇧</span>`:""}${[...r].map(c=>`<span class="taste f${FINGER[c]}${c===k?" naechst":""}${c==="f"||c==="j"?" huegel":""}">${c==="ß"?"ß":c.toUpperCase()}</span>`).join("")}</div>`).join("")}
     <div class="t-reihe"><span class="taste leer${naechst===" "?" naechst":""}">Leertaste</span></div></div>`;
 }
-function tippen({titel,punkte=15,merke,text,zeilen,zeigeTastatur=true,rennen}){return{titel,punkte,merke,zeige(el,ctx){
+function tippen({titel,punkte=15,merke,text,zeilen,zeigeTastatur=true,rennen,art="Tippen"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.z=d.z||0;d.p=d.p||0;d.f=d.f||0;
   const fertig=()=>d.z>=zeilen.length;
   const zeichne=(blitz)=>{
@@ -2245,13 +2421,13 @@ function tippen({titel,punkte=15,merke,text,zeilen,zeigeTastatur=true,rennen}){r
 
 /* ---------- Tasten-Missionen: echte Tasten und Tastenkürzel in einem Übungsfeld ausprobieren ----------
    tastenMissionen({titel,punkte,merke,text,start:"Text im Feld",missionen:[{text:"…",tasten:["Strg","C"],test:e=>…}]}) */
-function tastenMissionen({titel,punkte=15,merke,text,start="",missionen}){return{titel,punkte,merke,zeige(el,ctx){
+function tastenMissionen({titel,punkte=15,merke,text,start="",missionen,art="Tasten"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.m=d.m||0;let pause=false;
   const zeichne=()=>{
     const fertig=d.m>=missionen.length,ms=missionen[d.m];
     el.innerHTML=kopfText(text)+(fertig?`<div class="msg ok">Alle ${missionen.length} Aufgaben geschafft. Tippe auf „Weiter“.</div>`
       :`<div class="tastaufgabe"><p class="eyebrow">Aufgabe ${d.m+1} von ${missionen.length}</p><p class="was">${ms.text}</p>
-        <p class="wie"><b>So geht es:</b> ${ms.wie||""}</p><p class="kappen">${ms.tasten.map(t=>`<kbd>${t}</kbd>`).join("<i>+</i>")}</p></div>`)+`
+        <p class="wie"><b>${ms.tasten.length?"So geht es:":"Tipp:"}</b> ${ms.wie||""}</p><p class="kappen">${ms.tasten.map(t=>`<kbd>${t}</kbd>`).join("<i>+</i>")}</p></div>`)+`
       <p class="eyebrow" style="margin-top:14px">Dein Übungsfeld – klick hinein und probier es aus</p>
       <textarea class="uebfeld" spellcheck="false">${esc(d.feld??start)}</textarea>${MLD}`;
     const f=el.querySelector(".uebfeld");
@@ -2296,7 +2472,7 @@ const FINGER_AUF={tipp:{ico:"⭐",t:"<b>Tippe</b> einmal kurz auf den Stern ⭐"
   ziehen:{ico:"🍎",t:"<b>Zieh</b> den Apfel 🍎 mit dem Finger in den Korb 🧺"},
   wischen:{ico:"🏞️",t:"<b>Wische</b> das Foto mit dem Finger zur Seite – wie in der Foto-Galerie"},
   zoom:{ico:"🐞",t:"<b>Zoomen</b>: Leg zwei Finger auf den Käfer 🐞 und zieh sie auseinander, bis er ganz groß ist"}};
-function touchParcours({titel,punkte=10,merke,text,aufgaben}){return{titel,punkte,merke,zeige(el,ctx){
+function touchParcours({titel,punkte=10,merke,text,aufgaben,art="Finger"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.n=d.n||0;let tipp=0,timer=null;
   ctx.beimVerlassen(()=>clearTimeout(timer));
   const zeichne=()=>{clearTimeout(timer);
@@ -2348,7 +2524,7 @@ function touchParcours({titel,punkte=10,merke,text,aufgaben}){return{titel,punkt
 
 const MAUS={klick:{ico:"⭐",t:"<b>Klick</b> einmal auf den Stern ⭐ (linke Maustaste)"},doppel:{ico:"📦",t:"<b>Doppelklick</b> auf die Kiste 📦 (zweimal ganz schnell links klicken)"},
   rechts:{ico:"🎁",t:"<b>Rechtsklick</b> auf das Geschenk 🎁 (rechte Maustaste)"},ziehen:{ico:"🍎",t:"<b>Zieh</b> den Apfel 🍎 in den Korb 🧺 (Taste gedrückt halten und schieben)"}};
-function mausParcours({titel,punkte=10,merke,text,aufgaben}){return{titel,punkte,merke,zeige(el,ctx){
+function mausParcours({titel,punkte=10,merke,text,aufgaben,art="Maus"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.n=d.n||0;let tipp=0;
   const zeichne=()=>{
     if(d.n>=aufgaben.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Parcours geschafft! Tippe auf „Weiter“.</div>`;return}
@@ -2406,7 +2582,7 @@ function info({titel,html,merke}){return{titel,punkte:0,merke,zeige(el,ctx){el.i
 
 /* ---------- Auswählen: alle passenden Karten antippen (Mehrfachauswahl) ----------
    auswaehlen({titel,punkte,merke,text,karten:[["Text/HTML",true,"warum"],…]}) */
-function auswaehlen({titel,punkte=10,merke,text,karten,spalten}){return{titel,punkte,merke,zeige(el,ctx){
+function auswaehlen({titel,punkte=10,merke,text,karten,spalten,art="Auswählen"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.an=d.an||[];if(!d.reihe){d.reihe=mischen(karten.map((_,i)=>i));ctx.speichern()}
   const n=karten.filter(k=>k[1]).length;let falsch=new Set();
   const zeichne=()=>{
@@ -2952,7 +3128,38 @@ station({
         aufgaben:["doppel","ziehen","lang","tipp","wischen","zoom","lang","doppel","ziehen","wischen"]})),
     paare({titel:"Alles gelernt?",punkte:15,text:"Zum Schluss alles gemischt. Was gehört zusammen?",
       paare:[["⇪ Feststelltaste","ALLES GROSS"],["⇥ Tab","ins nächste Feld springen"],["Rechtsklick","Menü mit mehr Möglichkeiten"],["Strg + X","ausschneiden"],["Doppelklick","Ordner öffnen"],["Strg + Z","rückgängig machen"]],
-      merke:"Geschafft. Ab jetzt kannst du alle Tasten, die du in Informatik brauchst."}),
+      merke:"Stark. Jetzt kommt das Finale: der Tresor-Raum."}),
+    /* ---- Finale (Nov. 2026 angehängt: mehr Umfang für schnelle Kinder; fertige Kinder behalten ihre Note, weil ihr Maximum gespeichert ist) ---- */
+    mausGang({titel:"Der Laser-Gang",punkte:15,
+      text:"Vor dem Tresor-Raum liegt ein Gang mit Lasern. Führ den Zeiger vom Start zum Ziel. Berühr nicht den <b>Rand</b>.",
+      gaenge:[{d:"M70 220 C220 220 200 80 320 80 S440 220 530 220",b:56,start:[70,220],ziel:[530,220]},
+        {d:"M70 60 H300 V240 H530",b:44,start:[70,60],ziel:[530,240]},
+        {d:"M70 240 V70 H220 V230 H380 V70 H530",b:34,start:[70,240],ziel:[530,70]}]}),
+    tastenMissionen({titel:"Der Tresor",punkte:15,art:"Rätsel",text:"Der Tresor öffnet sich nur mit den richtigen Tasten. Klick ins Feld. Lies jedes Rätsel und drück die passende Taste.",
+      start:"",missionen:[
+        {text:"Halte mich fest und drück T. Dann wird das T groß.",wie:"Ich habe einen Pfeil nach oben.",tasten:[],test:e=>e.key==="T"},
+        {text:"Ich bin die längste Taste.",wie:"Ich liege ganz unten in der Mitte.",tasten:[],test:e=>e.key===" "},
+        {text:"Ich lösche, was links vom Strich steht.",wie:"Ich liege oben rechts und habe einen Pfeil nach links.",tasten:[],test:e=>e.key==="Backspace"},
+        {text:"Ich stehe in jeder E-Mail-Adresse.",wie:"AltGr halten und Q drücken.",tasten:[],test:e=>e.key==="@"},
+        {text:"Zusammen mit Strg mache ich alles rückgängig.",wie:"Ich bin ein Buchstabe. Denk an „zurück“.",tasten:[],test:strg("z"),verzoegert:true},
+        {text:"Ich bestätige. Mit mir geht der Tresor auf.",wie:"Ich bin die große Taste rechts.",tasten:[],test:e=>e.key==="Enter"},
+      ]}),
+    tippen({titel:"Die geheime Nachricht",punkte:15,zeilen:["Treffen um 4 am Tor.","Bring den Ball mit!","Das Codewort ist Tor7."],
+      text:"Im Tresor liegt ein Zettel. Tippe die Nachricht genau ab."}),
+    raetsel({titel:"Was bin ich?",punkte:10,text:"Lies den Hinweis und schreib, was gemeint ist. Du darfst dir mehr Hinweise holen.",
+      runden:[
+        {hinweise:["Ich habe zwei Tasten und ein Rad.","Du schiebst mich über den Tisch.","Mit mir bewegst du den Zeiger."],antwort:["Maus","Computermaus"]},
+        {hinweise:["Ich bin die längste Taste.","Ich mache keinen Buchstaben.","Ich mache den Abstand zwischen zwei Wörtern."],antwort:["Leertaste","Leerzeichen"]},
+        {hinweise:["Du drückst zweimal ganz schnell.","So öffnest du einen Ordner.","Mein Name beginnt mit „Doppel“."],antwort:["Doppelklick"]},
+        {hinweise:["Ich bestehe aus zwei Tasten.","Ich hole zurück, was du gerade gelöscht hast.","Die zweite Taste ist ein Z."],antwort:["Strg + Z","Steuerung Z","Strg und Z"]},
+      ]}),
+    eingabe({titel:"Satz reparieren 3",punkte:10,egal:"nichts",
+      text:"Hier fehlen <b>4 Dinge</b>: drei Großbuchstaben und das Fragezeichen. Schreib den Satz richtig ins Feld.",
+      html:vorlage("hast du roblox auf dem handy","Dieser Satz ist falsch geschrieben"),antwort:["Hast du Roblox auf dem Handy?"],platz:"Der richtige Satz"}),
+    luecken({titel:"Merk-Check",punkte:15,
+      saetze:["Ein {Klick} wählt etwas aus.","Ein {Doppelklick} öffnet einen Ordner.","Der {Rechtsklick} öffnet ein Menü.","Die {Umschalt}-Taste macht Großbuchstaben.","Strg + C heißt {kopieren}.","Strg + V heißt {einfügen}.","Strg + Z macht etwas {rückgängig}."],
+      extra:["drucken","löschen"],
+      merke:"Geschafft. Diese sieben Sätze sind das Wichtigste aus der Station."}),
   ],
 });
 
@@ -2976,10 +3183,20 @@ station({
       merke:"<b>EVA</b>: Eingabe → Verarbeitung → Ausgabe. So arbeitet jeder Computer – vom Taschenrechner bis zur Spielkonsole."}),
     reihenfolge({titel:"EVA beim Musikhören",punkte:10,text:"Du willst ein Lied auf dem Handy hören. Bring die Schritte in die richtige Reihenfolge.",
       schritte:["Du tippst auf ▶️ (Eingabe)","Das Handy lädt das Lied aus dem Internet","Das Handy macht aus den Daten Töne (Verarbeitung)","Du hörst das Lied im Kopfhörer (Ausgabe)"]}),
+    evaKette({titel:"EVA-Kette bauen",punkte:15,
+      text:"Bau für jedes Gerät die Kette aus <b>Eingabe</b>, Verarbeitung und Ausgabe.",
+      runden:[
+        {geraet:"Der Getränkeautomat in der Pausenhalle",kette:["Du drückst die Taste für Wasser","Der Automat prüft, ob das Geld reicht","Die Flasche fällt ins Fach"],extra:["Du trinkst die Flasche aus","Der Automat ist blau"]},
+        {geraet:"Die Ampel mit Knopf",kette:["Du drückst den Knopf","Die Ampel zählt die Wartezeit","Das grüne Licht geht an"],extra:["Du gehst über die Straße","Ein Auto hupt"]},
+        {geraet:"Das Handy mit Fingerabdruck",kette:["Du legst den Finger auf den Sensor","Das Handy vergleicht den Fingerabdruck","Der Startbildschirm erscheint"],extra:["Du steckst das Handy ein","Der Akku ist halb voll"]},
+      ]}),
     maschine({titel:"Die geheime Maschine",punkte:15,
       text:"Diese Maschine arbeitet nach dem EVA-Prinzip: Du gibst eine Zahl ein, sie <b>verarbeitet</b> die Zahl und gibt ein Ergebnis aus. Finde heraus, was sie rechnet!",
       runden:[{f:x=>x+3,regel:"plus 3",falsch:["mal 3","plus 2"]},{f:x=>x*2,regel:"mal 2",falsch:["plus 2","plus 4"]},{f:x=>x*2+1,regel:"mal 2 und dann plus 1",falsch:["plus 3","mal 3"]}],
       merke:"Die <b>Verarbeitung</b> sieht man nicht. Man sieht nur, was hineingeht und was herauskommt."}),
+    maschine({titel:"Die Wort-Maschine",punkte:15,wort:true,
+      text:"Diese Maschine verarbeitet Wörter. Gib ein Wort ein und schau, was herauskommt. Finde heraus, was sie macht.",
+      runden:[{f:w=>w.length,regel:"zählt die Buchstaben",falsch:["zählt die Wörter","macht alles groß"]},{f:w=>w.toUpperCase(),regel:"macht alle Buchstaben groß",falsch:["zählt die Buchstaben","dreht das Wort um"]},{f:w=>[...w].reverse().join(""),regel:"dreht das Wort um",falsch:["mischt die Buchstaben","löscht den ersten Buchstaben"]}]}),
     paare({titel:"Ein Blick ins Gehäuse",punkte:15,text:"Im Computer arbeiten viele Teile zusammen – wie ein Team. Wer macht was?",
       paare:[["🧠 Prozessor (CPU)","rechnet alles aus – das Gehirn"],["⚡ Arbeitsspeicher (RAM)","merkt sich kurz, was gerade läuft"],["💾 Festplatte (SSD)","speichert Dateien für immer"],["🔌 Netzteil","versorgt alles mit Strom"],["🎮 Grafikkarte","berechnet die Bilder für den Bildschirm"],["📶 WLAN-Chip","verbindet mit dem Internet"]],
       merke:"Der <b>Prozessor</b> ist das Gehirn: Er schafft Milliarden Rechenschritte pro Sekunde."}),
@@ -2988,6 +3205,18 @@ station({
       toepfe:[["h","Hardware – zum Anfassen","🔧"],["s","Software – Programme","💿"]],
       karten:[["Maus","🖱️","h"],["Firefox (Browser)","🌐","s"],["Minecraft","🎮","s"],["Prozessor","🧠","h"],["Windows","🪟","s"],["Drucker","🖨️","h"],["Word","📝","s"],["USB-Stick","🔌","h"]],
       merke:"Ohne Software ist Hardware nur ein teurer Kasten. Ohne Hardware läuft keine Software. Beide brauchen sich."}),
+    stromProbe({titel:"Der Stecker-Test",punkte:20,
+      text:"Was passiert mit deinem Wort, wenn der Strom weg ist? Probier es aus.",
+      missionen:[
+        {auftrag:"Schreib ein Wort. Zieh dann den Stecker, <b>ohne</b> zu speichern.",test:(a,v)=>a==="aus"&&v.ram&&v.platte!==v.ram,
+          fast:(a,v)=>a==="sp"?"Du hast gespeichert. Schreib ein anderes Wort und zieh den Stecker ohne Speichern.":a==="aus"?"Schalte wieder ein und schreib zuerst ein Wort.":"",
+          ok:"Der Strom ist weg.",frage:"Wo ist dein Wort jetzt?",richtig:"Weg. Es war nur im Arbeitsspeicher.",falsch:["Auf der Festplatte","Im Bildschirm versteckt"]},
+        {auftrag:"Schalte wieder ein. Schreib ein Wort und speichere es. Zieh dann den Stecker.",test:(a,v)=>a==="aus"&&v.ram&&v.platte===v.ram,
+          fast:(a,v)=>a==="aus"?"Das Wort war nicht gespeichert. Schalte ein und versuch es noch einmal.":"",ok:"Der Strom ist weg, aber auf der Festplatte steht dein Wort."},
+        {auftrag:"Schalte wieder ein und öffne deine Datei.",test:(a,v)=>a==="auf"&&!!v.platte,ok:"Dein Wort ist wieder da.",
+          frage:"Warum ist das Wort noch da?",richtig:"Die Festplatte behält alles, auch ohne Strom.",falsch:["Der Arbeitsspeicher hat es behalten","Der Bildschirm hat es sich gemerkt"]},
+      ],
+      merke:"Der <b>Arbeitsspeicher</b> vergisst alles, wenn der Strom weg ist."}),
     sortieren({titel:"Was bleibt nach dem Ausschalten?",punkte:10,
       text:"Der <b>Arbeitsspeicher</b> vergisst alles, wenn der Strom weg ist. Die <b>Festplatte</b> behält alles. Was ist nach dem Ausschalten noch da?",
       toepfe:[["weg","Weg! (war nur im Arbeitsspeicher)","💨"],["da","Noch da (auf der Festplatte)","💾"]],
@@ -3022,6 +3251,15 @@ station({
         {bild:"🎮",text:"Ein Spiel ruckelt, weil die Bilder zu langsam berechnet werden.",optionen:[["Eine bessere Grafikkarte",true,"Richtig. Die Grafikkarte berechnet die Bilder."],["Eine neue Tastatur",false,"Die Tastatur hat damit nichts zu tun."],["Ein USB-Stick",false,"Der speichert nur Dateien."]]},
         {bild:"📶",text:"Der Computer findet kein WLAN.",optionen:[["Den WLAN-Chip prüfen",true,"Genau. Er verbindet den PC mit dem Internet."],["Den Drucker ausschalten",false,"Der Drucker ist nicht schuld."],["Die Festplatte leeren",false,"Das hilft beim Internet nicht."]]},
       ]}),
+    reihenfolge({titel:"Der Weg eines Klicks",punkte:10,text:"Du klickst im Spiel auf „Springen“. Welchen Weg nimmt dein Klick durch den Computer?",
+      schritte:["Du drückst die Maustaste","Das Signal läuft durch das Kabel","Der Prozessor rechnet den Sprung aus","Die Grafikkarte berechnet das neue Bild","Der Bildschirm zeigt die Figur in der Luft"]}),
+    raetsel({titel:"Was bin ich?",punkte:15,text:"Vier Teile vom Computer stellen sich vor. Schreib, wer gemeint ist. Du darfst dir mehr Hinweise holen.",
+      runden:[
+        {hinweise:["Ich rechne Milliarden Schritte in einer Sekunde.","Man nennt mich das Gehirn des Computers.","Meine Abkürzung hat drei Buchstaben und beginnt mit C."],antwort:["Prozessor","CPU"]},
+        {hinweise:["Ohne mich siehst du nichts.","Ich bin ein Ausgabegerät.","Auf mir erscheinen Bilder und Text."],antwort:["Bildschirm","Monitor","Display"]},
+        {hinweise:["Ich behalte alles, auch ohne Strom.","Auf mir liegen deine Fotos und Spiele.","Mein Name beginnt mit „Fest“."],antwort:["Festplatte","SSD"]},
+        {hinweise:["Ich habe über hundert Tasten.","Ich bin ein Eingabegerät.","Mit mir schreibst du Buchstaben."],antwort:["Tastatur"]},
+      ]}),
     eingabe({titel:"Das Gehirn des Computers",punkte:10,text:"Wie heißt das Teil, das im Computer alles ausrechnet? Schreib die Abkürzung mit <b>3 Buchstaben</b>.",
       antwort:["CPU"],platz:"Abkürzung",merke:"<b>CPU</b> heißt Central Processing Unit. Auf Deutsch: <b>Prozessor</b>."}),
     luecken({titel:"Merk-Check",punkte:15,
@@ -3040,14 +3278,15 @@ const VEREIN={"Bilder":{"Verein":{"Sammelkarten":{"Saison 2026":{},"Saison 2025"
   "Musik":{"Kabine":{}},"Videos":{"Verein":{"Tore":{},"Training":{}},"Privat":{}}};
 
 /* Nachricht vom Trainer: ruhige Sprechblase, keine Farbe nötig */
-const vomTrainer=t=>`<div class="nachricht"><span class="nv">Nachricht vom Trainer</span><p>${t}</p></div>`;
+const ORD=sym("ordner",22);
+const vomTrainer=t=>nachricht("Nachricht vom Trainer","ball",t);
 
 /* ---------- Endungs-Probe: Endung ändern, „Öffnen“ drücken, sehen was passiert ----------
    Das Kind entdeckt selbst: Die Endung entscheidet, welches Programm die Datei öffnet. Der Inhalt bleibt gleich.
    Falsches Öffnen ist Ausprobieren und kostet nichts. Nur eine falsche Antwort auf die Frage kostet Punkte. */
-const ENDUNG={".mp4":["🎬","Video-Player"],".jpg":["🖼️","Fotos"],".mp3":["🎵","Musik-Player"],".docx":["📝","Word"]};
+const ENDUNG={".mp4":[dico("a.mp4",40),"Video-Player"],".jpg":[dico("a.jpg",40),"Fotos"],".mp3":[dico("a.mp3",40),"Musik-Player"],".docx":[dico("a.docx",40),"Word"]};
 const INHALT={".mp4":"Das Video läuft: der Fallrückzieher.",".docx":"Die Aufstellung für Samstag ist offen.",".mp3":"Das Lied läuft: der Torjubel aus der Kabine."};
-function endungProbe({titel,punkte=15,merke,text,runden}){return{titel,punkte,merke,zeige(el,ctx){
+function endungProbe({titel,punkte=15,merke,text,runden,art="Ausprobieren"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.r=d.r||0;
   const zeichne=()=>{
     if(d.r>=runden.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle ${runden.length} Dateien gehen wieder auf. Tippe auf „Weiter“.</div>`;return}
@@ -3071,8 +3310,8 @@ function endungProbe({titel,punkte=15,merke,text,runden}){return{titel,punkte,me
       else{ctx.fehler();b.classList.add("falsch");b.disabled=true;meldung(el,false,"Schau noch mal: Was war bei jedem Öffnen anders, was blieb gleich?")}});
   };
   const fenster=z=>{const [ico,prog]=ENDUNG[z.e];
-    return z.ok?`<div class="fenster ok"><div class="f-kopf">${ico} ${prog}</div><p>${INHALT[z.echt]}</p></div>`
-      :`<div class="fenster"><div class="f-kopf">${ico} ${prog}</div><p><b>Fehler:</b> ${prog} kann diese Datei nicht öffnen.</p></div>`};
+    const k=dico("a"+z.e,20);return z.ok?`<div class="fenster ok"><div class="f-kopf">${k} ${prog}</div><p>${INHALT[z.echt]}</p></div>`
+      :`<div class="fenster"><div class="f-kopf">${k} ${prog}</div><p><b>Fehler:</b> ${prog} kann diese Datei nicht öffnen.</p></div>`};
   const weiterRunde=t=>{d.r++;d.e=null;d.offen=false;d.zuletzt=null;d.opt=null;d.probiert=[];ctx.speichern();zeichne();
     if(d.r>=runden.length)ctx.geschafft(punkte);else meldung(el,true,t)};
   zeichne();
@@ -3084,15 +3323,15 @@ function endungProbe({titel,punkte=15,merke,text,runden}){return{titel,punkte,me
 /* ---------- Datei-Suche: Suchfeld über alle Dateien des Trainers, Fragen beantworten ---------- */
 const DATEIEN=["fallrueckzieher.mp4","freistoss-tor.mp4","elfmeter-finale.mp4","training-dribbeln.mp4","mannschaftsfoto-2026.jpg","torwart-nr1.jpg","sammelkarte-nr7.jpg","sammelkarte-nr10.jpg",
   "aufstellung-samstag.docx","aufstellung-pokal.docx","training-plan-november.docx","training-uebungen.pdf","turnier-mai.pdf","elternbrief-trikots.pdf","torjubel.mp3","kabinen-playlist.mp3","Neues Dokument (3).docx","bild.jpg"];
-function dateiSuche({titel,punkte=15,merke,text,fragen}){return{titel,punkte,merke,zeige(el,ctx){
+function dateiSuche({titel,punkte=15,merke,text,fragen,art="Ausprobieren"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.r=d.r||0;d.s=d.s||"";
   const zeichne=(fokus)=>{
     if(d.r>=fragen.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle ${fragen.length} Fragen gelöst. Tippe auf „Weiter“.</div>`;return}
     const F=fragen[d.r],q=d.s.trim().toLowerCase(),treffer=q?DATEIEN.filter(x=>x.toLowerCase().includes(q)):DATEIEN;
     el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Frage ${d.r+1} von ${fragen.length}</p><p class="frage">${F.frage}</p>
-      <div class="explorer"><div class="ex-leiste"><span aria-hidden="true">🔍</span><input type="text" id="such" placeholder="Suchen" autocomplete="off" spellcheck="false" value="${esc(d.s)}" aria-label="Dateien durchsuchen"></div>
+      <div class="explorer"><div class="ex-leiste">${sym("lupe",24)}<input type="text" id="such" placeholder="Suchen" autocomplete="off" spellcheck="false" value="${esc(d.s)}" aria-label="Dateien durchsuchen"></div>
         <p class="muted small" style="margin:8px 12px 0">${q?`${treffer.length} ${treffer.length===1?"Treffer":"Treffer"}`:`Alle ${DATEIEN.length} Dateien`}</p>
-        <ul class="treffer">${treffer.map(x=>`<li>${x}</li>`).join("")||`<li class="muted">Nichts gefunden. Probier ein kürzeres Wort.</li>`}</ul></div>
+        <ul class="treffer">${treffer.map(x=>`<li>${dico(x,20)} ${x}</li>`).join("")||`<li class="muted">Nichts gefunden. Probier ein kürzeres Wort.</li>`}</ul></div>
       <div class="eing" style="margin-top:14px"><input type="text" id="antw" ${F.zahl?'inputmode="numeric"':""} placeholder="${F.platz||"Deine Antwort"}" autocomplete="off" spellcheck="false" value="${esc(d.a||"")}"></div>${MLD}`;
     const s=el.querySelector("#such"),a=el.querySelector("#antw");
     s.oninput=()=>{d.s=s.value;ctx.speichern();zeichne("such")};
@@ -3114,7 +3353,7 @@ function dateiSuche({titel,punkte=15,merke,text,fragen}){return{titel,punkte,mer
 }}}
 
 /* ---------- Datei-Detektiv: Liste nach Name, Datum oder Größe sortieren, dann die gesuchte Datei antippen ---------- */
-function dateiListe({titel,punkte=15,merke,text,dateien,fragen}){return{titel,punkte,merke,zeige(el,ctx){
+function dateiListe({titel,punkte=15,merke,text,dateien,fragen,art="Ausprobieren"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.r=d.r||0;d.sp=d.sp||0;d.ab=!!d.ab;
   const SP=["Name","Geändert am","Größe"],wert=[x=>x[0],x=>x[2],x=>x[4]];
   const zeichne=()=>{
@@ -3122,7 +3361,7 @@ function dateiListe({titel,punkte=15,merke,text,dateien,fragen}){return{titel,pu
     const F=fragen[d.r],liste=dateien.slice().sort((a,b)=>{const x=wert[d.sp](a),y=wert[d.sp](b);return(x<y?-1:x>y?1:0)*(d.ab?-1:1)});
     el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Frage ${d.r+1} von ${fragen.length}</p><p class="frage">${F.frage}</p>
       <div class="explorer"><table class="liste dliste"><thead><tr>${SP.map((n,k)=>`<th><button class="sortk${d.sp===k?" an":""}" data-sk="${k}">${n} ${d.sp===k?(d.ab?"▼":"▲"):""}</button></th>`).join("")}</tr></thead>
-        <tbody>${liste.map(x=>`<tr><td><button class="dzeile" data-n="${esc(x[0])}">${esc(x[0])}</button></td><td>${x[1]}</td><td class="r">${x[3]}</td></tr>`).join("")}</tbody></table></div>${MLD}`;
+        <tbody>${liste.map(x=>`<tr><td><button class="dzeile" data-n="${esc(x[0])}">${dico(x[0],20)} ${esc(x[0])}</button></td><td>${x[1]}</td><td class="r">${x[3]}</td></tr>`).join("")}</tbody></table></div>${MLD}`;
     el.querySelectorAll("[data-sk]").forEach(b=>b.onclick=()=>{const k=+b.dataset.sk;if(d.sp===k)d.ab=!d.ab;else{d.sp=k;d.ab=false}ctx.speichern();zeichne()});
     el.querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>{
       if(b.dataset.n===F.antwort){d.r++;ctx.speichern();zeichne();if(d.r>=fragen.length)ctx.geschafft(punkte);else meldung(el,true,"Richtig. Hier kommt die nächste Frage.")}
@@ -3134,7 +3373,7 @@ function dateiListe({titel,punkte=15,merke,text,dateien,fragen}){return{titel,pu
 }}}
 
 /* ---------- Namen geben: Das Kind erfindet selbst einen guten Dateinamen. Geprüft wird: Stichwort drin? Endung richtig? ---------- */
-function namenGeben({titel,punkte=15,merke,text,runden}){return{titel,punkte,merke,zeige(el,ctx){
+function namenGeben({titel,punkte=15,merke,text,runden,art="Selbst schreiben"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.r=d.r||0;
   const pruef=(R,v)=>{v=v.trim().toLowerCase();return[[v.includes(R.wort),`Das Wort „${R.wort}“ kommt vor.`],[v.endsWith(R.endung)&&v.length>R.endung.length,"Die Endung passt zur Datei."]]};
   const zeichne=()=>{
@@ -3165,9 +3404,9 @@ function namenGeben({titel,punkte=15,merke,text,runden}){return{titel,punkte,mer
 }}}
 
 /* ---------- Kopier-Probe: Dateien zwischen Laptop, USB-Stick und Papierkorb bewegen. Ausprobieren kostet nichts. ---------- */
-function kopierProbe({titel,punkte=20,merke,text,start,missionen}){return{titel,punkte,merke,zeige(el,ctx){
+function kopierProbe({titel,punkte=20,merke,text,start,missionen,art="Ausprobieren"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.r=d.r||0;if(!d.o)d.o=JSON.parse(JSON.stringify(start));d.o.korb=d.o.korb||[];
-  const ORT={laptop:["💻","Laptop"],stick:["🔌","USB-Stick"],korb:["🗑️","Papierkorb"]};
+  const ORT={laptop:[sym("laptop",22),"Laptop"],stick:[sym("stick",22),"USB-Stick"],korb:[sym("korb",22),"Papierkorb"]};
   let wahl=null;   // {ort, n}
   const hat=(ort,n)=>ort==="korb"?d.o.korb.some(x=>x.n===n):d.o[ort].includes(n);
   const zeichne=()=>{
@@ -3176,7 +3415,7 @@ function kopierProbe({titel,punkte=20,merke,text,start,missionen}){return{titel,
     if(frage&&!d.opt)d.opt=mischen([M.richtig,...M.falsch]);
     const anderer=wahl&&wahl.ort!=="korb"?(wahl.ort==="laptop"?"stick":"laptop"):null;
     const kasten=ort=>{const liste=ort==="korb"?d.o.korb.map(x=>x.n):d.o[ort];
-      return`<div class="kp-ort"><div class="kp-kopf">${ORT[ort][0]} ${ORT[ort][1]}</div>${liste.map(n=>`<button class="karte${wahl&&wahl.ort===ort&&wahl.n===n?" an":""}" data-ort="${ort}" data-n="${esc(n)}" ${d.erledigt?"disabled":""}>${esc(n)}</button>`).join("")||`<p class="muted small" style="margin:0">leer</p>`}</div>`};
+      return`<div class="kp-ort"><div class="kp-kopf">${ORT[ort][0]} ${ORT[ort][1]}</div>${liste.map(n=>`<button class="karte${wahl&&wahl.ort===ort&&wahl.n===n?" an":""}" data-ort="${ort}" data-n="${esc(n)}" ${d.erledigt?"disabled":""}>${dico(n,20)}<span>${esc(n)}</span></button>`).join("")||`<p class="muted small" style="margin:0">leer</p>`}</div>`};
     el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Auftrag ${d.r+1} von ${missionen.length}</p><p class="frage">${M.auftrag}</p>
       <div class="kp">${kasten("laptop")}${kasten("stick")}${kasten("korb")}</div>
       ${d.erledigt?"":`<div class="kp-knoepfe"><span class="muted small">${wahl?`Ausgewählt: <b>${esc(wahl.n)}</b>`:"Tippe zuerst eine Datei an."}</span>
@@ -3204,17 +3443,17 @@ function kopierProbe({titel,punkte=20,merke,text,start,missionen}){return{titel,
 }}}
 
 /* ---------- Spurensuche: durch Ordner gehen, Textdateien öffnen, Hinweisen folgen, Codewort finden ---------- */
-function spurenSuche({titel,punkte=20,merke,text,baum,code}){return{titel,punkte,merke,zeige(el,ctx){
+function spurenSuche({titel,punkte=20,merke,text,baum,code,art="Rätsel"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.pfad=d.pfad||[];
   const ordner=p=>p.reduce((o,n)=>o[n],baum);
   const zeichne=()=>{
     if(ctx.geloest){el.innerHTML=kopfText(text)+`<div class="msg ok">Das Codewort stimmt. Der Pokal ist wieder da. Tippe auf „Weiter“.</div>`;return}
     const hier=ordner(d.pfad),namen=Object.keys(hier),auf=d.auf&&typeof hier[d.auf]==="string"?d.auf:null;
-    el.innerHTML=kopfText(text)+`<div class="explorer"><div class="ex-leiste"><button class="btn ghost klein-btn" id="hoch" ${d.pfad.length?"":"disabled"}>Eine Ebene zurück</button>
-      <div class="ex-pfad">Vereins-Laptop ${d.pfad.map(n=>`<span>›</span> 📁 ${n}`).join(" ")}</div></div>
-      <div class="ex-inhalt">${namen.map(n=>typeof hier[n]==="string"?`<button class="ex-ordner datei${auf===n?" an":""}" data-f="${esc(n)}"><span>📄</span>${n}</button>`:`<button class="ex-ordner" data-n="${esc(n)}"><span>📁</span>${n}</button>`).join("")||`<p class="muted" style="grid-column:1/-1">Dieser Ordner ist leer.</p>`}</div></div>
-      ${auf?`<div class="fenster"><div class="f-kopf">📄 ${esc(auf)}</div><p>${hier[auf]}</p></div>`:""}
-      <div class="eing" style="margin-top:14px"><input type="text" id="cw" placeholder="Codewort" autocomplete="off" spellcheck="false" maxlength="20" value="${esc(d.v||"")}"></div>${MLD}`;
+    el.innerHTML=kopfText(text)+`<div class="tafel"><div class="explorer"><div class="ex-leiste"><button class="btn ghost klein-btn" id="hoch" ${d.pfad.length?"":"disabled"}>Eine Ebene zurück</button>
+      <div class="ex-pfad">Vereins-Laptop ${d.pfad.map(n=>`<span>›</span> ${n}`).join(" ")}</div></div>
+      <div class="ex-inhalt">${namen.map(n=>typeof hier[n]==="string"?`<button class="ex-ordner datei${auf===n?" an":""}" data-f="${esc(n)}"><span>${dico(n,44)}</span>${n}</button>`:`<button class="ex-ordner" data-n="${esc(n)}"><span>${sym("ordner",44)}</span>${n}</button>`).join("")||`<p class="muted" style="grid-column:1/-1">Dieser Ordner ist leer.</p>`}</div></div>
+      ${auf?`<div class="fenster"><div class="f-kopf">${dico(auf,20)} ${esc(auf)}</div><p>${hier[auf]}</p></div>`:""}
+      <div class="eing" style="margin-top:14px"><input type="text" id="cw" placeholder="Codewort" autocomplete="off" spellcheck="false" maxlength="20" value="${esc(d.v||"")}"></div></div>${MLD}`;
     el.querySelector("#hoch").onclick=()=>{d.pfad.pop();d.auf=null;ctx.speichern();zeichne()};
     el.querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>{d.pfad.push(b.dataset.n);d.auf=null;ctx.speichern();zeichne()});
     el.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{d.auf=b.dataset.f;ctx.speichern();zeichne()});
@@ -3243,8 +3482,8 @@ station({
     sortieren({titel:"Chaos auf dem Laptop",punkte:10,
       text:vomTrainer("Hi, ich bin der Trainer der U11 vom FC Ruhrwiese. Auf meinem neuen Laptop liegt alles durcheinander. Kannst du aufräumen?")+
         `<p style="margin:12px 0 0">Sortiere die Dateien in die passenden Ordner.</p>`,
-      toepfe:[["b","Bilder","🖼️"],["v","Videos","🎬"],["m","Musik","🎵"],["d","Dokumente","📄"]],
-      karten:[["mannschaftsfoto.jpg","","b"],["sammelkarte-nr7.png","","b"],["fallrueckzieher.mp4","","v"],["elfmeter-finale.mp4","","v"],["torjubel.mp3","","m"],["kabinen-playlist.mp3","","m"],["aufstellung-samstag.docx","","d"],["turnier-mai.pdf","","d"]],
+      toepfe:[["b","Bilder",ORD],["v","Videos",ORD],["m","Musik",ORD],["d","Dokumente",ORD]],
+      karten:["mannschaftsfoto.jpg","sammelkarte-nr7.png","fallrueckzieher.mp4","elfmeter-finale.mp4","torjubel.mp3","kabinen-playlist.mp3","aufstellung-samstag.docx","turnier-mai.pdf"].map((n,i)=>[n,dico(n,24),"bbvvmmdd"[i]]),
       merke:"Das Ende nach dem Punkt heißt <b>Dateiendung</b>."}),
     endungProbe({titel:"Die Endungs-Probe",punkte:15,
       text:vomTrainer("Ich habe aus Versehen die Endungen geändert. Jetzt geht nichts mehr auf. Hilfe!"),
@@ -3257,21 +3496,21 @@ station({
       ],
       merke:"Die Endung sagt dem Computer, welches <b>Programm</b> die Datei öffnet. Der Inhalt bleibt gleich."}),
     paare({titel:"Endungen merken",punkte:10,text:"Welche Endung gehört zu welcher Datei?",
-      paare:[[".jpg / .png","🖼️ ein Bild"],[".mp4","🎬 ein Video"],[".mp3","🎵 ein Lied"],[".docx","📝 ein Text aus Word"],[".pdf","📄 ein Blatt zum Lesen und Drucken"],[".exe","⚙️ ein Programm"]],
+      paare:[[".jpg / .png","ein Bild"],[".mp4","ein Video"],[".mp3","ein Lied"],[".docx","ein Text aus Word"],[".pdf","ein Blatt zum Lesen und Drucken"],[".exe","ein Programm"]],
       merke:"Eine <b>.exe</b> startet ein Programm. Öffne nie eine .exe von Fremden."}),
     entscheidung({titel:"Eine passt nicht",punkte:10,text:"In jedem Ordner liegt eine Datei, die dort nicht hingehört. Finde sie.",frage:"Welche Datei gehört nicht in diesen Ordner?",
       szenen:[
-        {bild:"📁",text:"Ordner: Videos › Tore",optionen:[["torjubel.mp3",true,"Richtig. Das ist ein Lied, kein Video."],["freistoss-tor.mp4",false,"Diese Datei passt in den Ordner."],["elfmeter-finale.mp4",false,"Diese Datei passt in den Ordner."]]},
-        {bild:"📁",text:"Ordner: Bilder › Sammelkarten",optionen:[["aufstellung-pokal.docx",true,"Richtig. Das ist ein Text, kein Bild."],["sammelkarte-nr7.jpg",false,"Diese Datei passt in den Ordner."],["sammelkarte-nr10.png",false,"Auch .png ist ein Bild. Die Datei passt."]]},
-        {bild:"📁",text:"Ordner: Musik › Kabine",optionen:[["mannschaftsfoto.jpg",true,"Richtig. Ein Foto kann man nicht hören."],["kabinen-playlist.mp3",false,"Diese Datei passt in den Ordner."],["torjubel.mp3",false,"Diese Datei passt in den Ordner."]]},
-        {bild:"📁",text:"Ordner: Dokumente › Turniere",optionen:[["turnier-video.mp4",true,"Richtig. Das Video gehört zu den Videos."],["turnier-mai.pdf",false,"Diese Datei passt in den Ordner."],["turnier-juni.docx",false,"Diese Datei passt in den Ordner."]]},
+        {bild:sym("ordner",44),text:"Ordner: Videos › Tore",optionen:[["torjubel.mp3",true,"Richtig. Das ist ein Lied, kein Video."],["freistoss-tor.mp4",false,"Diese Datei passt in den Ordner."],["elfmeter-finale.mp4",false,"Diese Datei passt in den Ordner."]]},
+        {bild:sym("ordner",44),text:"Ordner: Bilder › Sammelkarten",optionen:[["aufstellung-pokal.docx",true,"Richtig. Das ist ein Text, kein Bild."],["sammelkarte-nr7.jpg",false,"Diese Datei passt in den Ordner."],["sammelkarte-nr10.png",false,"Auch .png ist ein Bild. Die Datei passt."]]},
+        {bild:sym("ordner",44),text:"Ordner: Musik › Kabine",optionen:[["mannschaftsfoto.jpg",true,"Richtig. Ein Foto kann man nicht hören."],["kabinen-playlist.mp3",false,"Diese Datei passt in den Ordner."],["torjubel.mp3",false,"Diese Datei passt in den Ordner."]]},
+        {bild:sym("ordner",44),text:"Ordner: Dokumente › Turniere",optionen:[["turnier-video.mp4",true,"Richtig. Das Video gehört zu den Videos."],["turnier-mai.pdf",false,"Diese Datei passt in den Ordner."],["turnier-juni.docx",false,"Diese Datei passt in den Ordner."]]},
       ]}),
-    ordnerPfad({titel:"Das Torvideo",punkte:10,datei:"🎬 freistoss-tor.mp4",baum:VEREIN,ziel:["Videos","Verein","Tore"],
+    ordnerPfad({titel:"Das Torvideo",punkte:10,datei:dico("a.mp4",22)+" freistoss-tor.mp4",baum:VEREIN,ziel:["Videos","Verein","Tore"],
       text:"Speichere das Video in Videos › Verein › <b>Tore</b>. Klick auf einen Ordner, um hineinzugehen.",
       merke:"Ein <b>Ordner</b> kann Dateien und weitere Ordner enthalten – wie Schubladen im Schrank."}),
-    ordnerPfad({titel:"Die Aufstellung",punkte:10,datei:"📝 aufstellung-pokal.docx",baum:VEREIN,ziel:["Dokumente","Verein","Aufstellungen"],
+    ordnerPfad({titel:"Die Aufstellung",punkte:10,datei:dico("a.docx",22)+" aufstellung-pokal.docx",baum:VEREIN,ziel:["Dokumente","Verein","Aufstellungen"],
       text:"Jetzt ohne Wegbeschreibung. Wo gehört die Aufstellung für das Pokalspiel hin?"}),
-    ordnerPfad({titel:"Die Sammelkarten",punkte:15,datei:"🖼️ sammelkarte-nr10.jpg",baum:VEREIN,ziel:["Bilder","Verein","Sammelkarten","Saison 2026"],
+    ordnerPfad({titel:"Die Sammelkarten",punkte:15,datei:dico("a.jpg",22)+" sammelkarte-nr10.jpg",baum:VEREIN,ziel:["Bilder","Verein","Sammelkarten","Saison 2026"],
       text:"Der Verein druckt Sammelkarten für diese Saison. Such den Ordner dafür. Er liegt tief."}),
     eingabe({titel:"Einen Pfad lesen",punkte:10,
       text:"Der Weg zu einer Datei heißt <b>Pfad</b>. Lies ihn von links nach rechts.",
@@ -3309,9 +3548,9 @@ station({
     namenGeben({titel:"Du gibst den Namen",punkte:15,
       text:"Jetzt erfindest du selbst gute Dateinamen. Schreib klein und ohne Leerzeichen, zum Beispiel <b>tor-im-finale.mp4</b>.",
       runden:[
-        {bild:"🖼️",was:"Ein Foto vom Torwart beim Training.",auftrag:"Gib dem Foto einen Namen. Das Wort „torwart“ muss vorkommen. Am Ende steht .jpg.",wort:"torwart",endung:".jpg"},
-        {bild:"🎬",was:"Ein Video vom Elfmeter im Finale.",auftrag:"Gib dem Video einen Namen. Das Wort „elfmeter“ muss vorkommen. Welche Endung hat ein Video?",wort:"elfmeter",endung:".mp4"},
-        {bild:"📝",was:"Die Einladung zum Sommerfest, geschrieben mit Word.",auftrag:"Gib dem Text einen Namen. Das Wort „sommerfest“ muss vorkommen. Welche Endung hat ein Text aus Word?",wort:"sommerfest",endung:".docx"},
+        {bild:dico("a.jpg",44),was:"Ein Foto vom Torwart beim Training.",auftrag:"Gib dem Foto einen Namen. Das Wort „torwart“ muss vorkommen. Am Ende steht .jpg.",wort:"torwart",endung:".jpg"},
+        {bild:dico("a.mp4",44),was:"Ein Video vom Elfmeter im Finale.",auftrag:"Gib dem Video einen Namen. Das Wort „elfmeter“ muss vorkommen. Welche Endung hat ein Video?",wort:"elfmeter",endung:".mp4"},
+        {bild:dico("a.docx",44),was:"Die Einladung zum Sommerfest, geschrieben mit Word.",auftrag:"Gib dem Text einen Namen. Das Wort „sommerfest“ muss vorkommen. Welche Endung hat ein Text aus Word?",wort:"sommerfest",endung:".docx"},
       ]}),
     reihenfolge({titel:"Eine Datei umbenennen",punkte:10,text:"Eine Datei heißt „Neues Dokument (3)“. So bekommt sie einen guten Namen. Bring die Schritte in die richtige Reihenfolge.",
       schritte:["Rechtsklick auf die Datei","„Umbenennen“ auswählen","Den alten Namen löschen","Den neuen Namen eintippen","Enter drücken"],
@@ -3334,9 +3573,9 @@ station({
       merke:"Erst wenn der Papierkorb <b>geleert</b> wird, sind die Dateien wirklich weg."}),
     entscheidung({titel:"Hilfe, die Datei ist weg!",punkte:15,text:"Der Trainer ruft dich an. Was rätst du ihm?",
       szenen:[
-        {bild:"🔍",text:"Er hat die Aufstellung gespeichert, findet sie aber nicht mehr.",optionen:[["Mit der Suche nach „aufstellung“ suchen",true,"Richtig. Die Suche schaut in alle Ordner."],["Die Aufstellung noch einmal schreiben",false,"Das kostet viel Zeit. Erst suchen."],["Den Laptop neu starten",false,"Davon taucht die Datei nicht auf."]]},
-        {bild:"🗑️",text:"Er hat aus Versehen das Mannschaftsfoto gelöscht.",optionen:[["Im Papierkorb nachschauen und es wiederherstellen",true,"Genau. Gelöschte Dateien liegen erst im Papierkorb."],["Nichts tun, es ist für immer weg",false,"Erst in den Papierkorb schauen."],["Den Papierkorb leeren",false,"Dann wäre das Foto wirklich weg."]]},
-        {bild:"🏟️",text:"Er braucht das Torvideo auf dem Laptop im Vereinsheim.",optionen:[["Das Video auf einen USB-Stick kopieren und mitnehmen",true,"Richtig. So nimmt man Dateien mit."],["Den Bildschirm abfotografieren",false,"Dann hat er nur ein Foto vom Bildschirm."],["Hoffen, dass es dort auch ist",false,"Dateien wandern nicht von allein auf andere Geräte."]]},
+        {bild:sym("lupe",44),text:"Er hat die Aufstellung gespeichert, findet sie aber nicht mehr.",optionen:[["Mit der Suche nach „aufstellung“ suchen",true,"Richtig. Die Suche schaut in alle Ordner."],["Die Aufstellung noch einmal schreiben",false,"Das kostet viel Zeit. Erst suchen."],["Den Laptop neu starten",false,"Davon taucht die Datei nicht auf."]]},
+        {bild:sym("korb",44),text:"Er hat aus Versehen das Mannschaftsfoto gelöscht.",optionen:[["Im Papierkorb nachschauen und es wiederherstellen",true,"Genau. Gelöschte Dateien liegen erst im Papierkorb."],["Nichts tun, es ist für immer weg",false,"Erst in den Papierkorb schauen."],["Den Papierkorb leeren",false,"Dann wäre das Foto wirklich weg."]]},
+        {bild:sym("stick",44),text:"Er braucht das Torvideo auf dem Laptop im Vereinsheim.",optionen:[["Das Video auf einen USB-Stick kopieren und mitnehmen",true,"Richtig. So nimmt man Dateien mit."],["Den Bildschirm abfotografieren",false,"Dann hat er nur ein Foto vom Bildschirm."],["Hoffen, dass es dort auch ist",false,"Dateien wandern nicht von allein auf andere Geräte."]]},
       ]}),
     reihenfolge({titel:"Einen neuen Ordner anlegen",punkte:10,text:"Der Trainer will einen Ordner „Sommerturnier“. Bring die Schritte in die richtige Reihenfolge.",
       schritte:["Rechtsklick auf eine freie Stelle","„Neu“ auswählen","„Ordner“ anklicken","Sommerturnier eintippen","Enter drücken"]}),

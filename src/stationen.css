@@ -20,10 +20,12 @@
 .pal button span{font-size:.75rem;font-weight:700;color:#000;background:rgba(255,255,255,.8);border-radius:5px;padding:0 4px}
 .pal button.an{box-shadow:0 0 0 3px var(--accent);transform:scale(1.06)}
 /* Station 3: Nachricht der Rahmenfigur, Endungs-Probe, Datei-Suche */
-.nachricht{border:1.5px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px 14px;max-width:560px}
-.nachricht .nv{display:block;font-size:.8125rem;color:var(--muted);font-weight:600}
-.nachricht p{margin:2px 0 0;font-size:1.0625rem}
-.regel .nachricht{background:var(--surface)}
+.figur{display:flex;gap:12px;align-items:flex-start;max-width:600px}
+.figur .nb{flex:none;width:46px;height:46px;border-radius:8px;background:var(--ink);color:var(--surface);display:grid;place-items:center}
+.figur>div{position:relative;border:1.5px solid var(--line);border-radius:4px 12px 12px 12px;background:var(--surface);padding:8px 14px 10px}
+.figur .nv{display:block;font-size:.8125rem;color:var(--muted);font-weight:600}
+.figur p{margin:2px 0 0;font-size:1.0625rem}
+.regel:has(.figur){background:none;border:0;padding:0}
 .probe{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;border:1.5px solid var(--line);border-radius:var(--r);background:var(--surface);padding:14px 16px}
 .probe-datei{display:grid;grid-template-columns:auto 1fr;column-gap:12px;align-items:center;flex:1 1 100%}
 .probe-datei .pd-ico{grid-row:span 2;font-size:2.25rem;line-height:1}
@@ -51,3 +53,45 @@
 .kp-knoepfe{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px}.kp-knoepfe span{flex:1 1 100%}
 .ex-ordner.datei.an{border-color:var(--accent)}
 @media (max-width:640px){.kp{grid-template-columns:1fr}.kp-ort{min-height:0}}
+/* Symbole, Art-Zeile, Tafel (Rätsel und Gänge auf dunklem Grund), neue Bausteine */
+.ic{flex:none;vertical-align:-.22em}
+.art{display:flex;align-items:center;gap:8px;margin:0 0 4px;font-size:.875rem;font-weight:650;color:var(--accent)}
+.art i{width:9px;height:9px;background:var(--accent);border-radius:2px}
+.karte .kico{display:inline-flex}
+.topf-kopf{display:flex;align-items:center;gap:8px}
+.sz-bild{display:grid;place-items:center}
+.ex-ordner span{line-height:0;color:var(--accent)}
+.ex-ordner.datei span{color:var(--ink)}
+.ex-pfad{align-items:center}
+.probe-datei .pd-ico{line-height:0}
+.fenster .f-kopf{display:flex;align-items:center;gap:8px;background:var(--fill)}
+.fenster .f-kopf::after{content:"";margin-left:auto;width:34px;height:8px;background:radial-gradient(circle,var(--muted) 3px,transparent 3.5px) 0 0/12px 8px}
+.treffer li,.dzeile{display:flex;align-items:center;gap:8px}
+.kp-ort .karte{gap:8px}
+.kp-kopf,.st-kopf{display:flex;align-items:center;gap:8px;font-weight:700}
+.tafel{--surface:#1E2A44;--ink:#EEF2FA;--muted:#A9B5CC;--line:#3A4865;--fill:#16203A;--tint:#2A3A5E;--accent:#A9BCFF;--accent-ink:#0E1530;--good:#7FD6A0;--bad:#F5A0AA;--bad-soft:#402530;
+  background:#16203F;color:var(--ink);border-radius:12px;padding:16px;margin-top:12px}
+.tafel .explorer{margin-top:0}.tafel .fenster{max-width:none}
+.tafel input[type=text]{background:#101830;color:var(--ink);border-color:var(--line);font-family:var(--mono);letter-spacing:.06em}
+.tafel .eyebrow{color:var(--muted)}
+.hinweise{margin:6px 0 14px;padding-left:1.4em;font-size:1.125rem;display:grid;gap:8px}
+.hinweise li::marker{color:var(--muted);font-weight:700}
+.kette{display:flex;align-items:stretch;gap:8px}
+.kette>i{align-self:center;font-style:normal;font-weight:700;color:var(--muted)}
+.glied{flex:1;display:flex;flex-direction:column;gap:4px;text-align:left;border:2px dashed var(--line);border-radius:var(--r);background:var(--surface);padding:10px 12px;min-height:96px}
+.glied span{font-size:.8125rem;font-weight:700;color:var(--muted)}.glied b{font-weight:600}
+.glied.voll{border-style:solid;border-color:var(--ink)}.glied.falsch{border-color:var(--bad);background:var(--bad-soft)}
+.strom{display:grid;grid-template-columns:3fr 2fr;gap:12px}
+.st-pc,.st-platte{border:1.5px solid var(--line);border-radius:var(--r);background:var(--surface);padding:12px 14px;min-height:118px}
+.st-pc.aus{background:#16203F;color:#A9B5CC;border-color:#16203F}.st-pc.aus .muted{color:#A9B5CC}
+.st-aus{margin:18px 0 0;font:600 1rem var(--mono)}
+.st-pc input{margin-top:10px}.st-platte p{margin:14px 0 0;display:flex;align-items:center;gap:8px;font-family:var(--mono)}
+.gang svg{display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none;border-radius:8px;background:#101830}
+.g-weg{stroke:#3A4865}.gang svg.an .g-weg{stroke:#EEF2FA}
+.g-start{fill:#A9BCFF}.g-ziel{fill:#7FD6A0}.g-t{font:700 13px var(--sans);fill:#0E1530;pointer-events:none}
+.gang svg .g-t{pointer-events:auto}
+.g-stand{margin:10px 0 0;font-weight:600}
+.zahnrad{line-height:0}
+@media (max-width:640px){.kette{flex-direction:column}.kette>i{transform:rotate(90deg)}.strom{grid-template-columns:1fr}}
+@media print{.tafel,.st-pc.aus{background:#fff;color:#000;border:1.5px solid #000}}
+.figur .nb .pix{color:#fff}
