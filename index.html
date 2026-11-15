@@ -979,6 +979,17 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
 @media (max-width:640px){.kette{flex-direction:column}.kette>i{transform:rotate(90deg)}.strom{grid-template-columns:1fr}}
 @media print{.tafel,.st-pc.aus{background:#fff;color:#000;border:1.5px solid #000}}
 .figur .nb .pix{color:#fff}
+/* Lernzeit-Abgabe auf der Startseite: ruhig, unter der Station von heute */
+.lz-block{border:1.5px solid var(--line);border-radius:var(--r);background:var(--surface);padding:16px 18px;margin:18px 0 22px}
+.lz-kopf{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:8px 16px}
+.lz-kopf h2{font-size:1.125rem}
+.lz-fertig{margin:0}
+.lz-chip{display:inline-block;border:1.5px solid var(--line);border-radius:6px;padding:1px 7px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.lz-form{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 14px;margin-top:12px}
+.lz-form label{display:flex;flex-direction:column;gap:4px;font-size:.875rem;font-weight:600;color:var(--muted)}
+.lz-form select,.lz-form input{min-height:44px;font:600 1rem var(--sans);border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--surface);color:var(--ink)}
+.lz-form input{text-transform:uppercase;letter-spacing:.06em;width:12ch}
+.lz-block #lzm{margin-top:10px}
 </style>
 </head>
 <body>
@@ -993,7 +1004,7 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="23b2473cb7";
+const VERSION="d58dec26fd";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -1313,6 +1324,26 @@ const spielRekord=id=>((VS||!sitzung?vSpiel:staende.spielplatz)?.spiele?.[id]?.b
 /* Ein Spiel meldet sein Ergebnis. klein=true: weniger ist besser (z. B. Züge). Gibt true zurück bei neuem Rekord. */
 function rekord(id,wert,klein){let neu=false;spielStat(id,g=>{g.runden=(g.runden||0)+1;if(!klein&&wert<=0)return;if(g.best==null||(klein?wert<g.best:wert>g.best)){neu=g.best!=null;g.best=wert}});return neu}
 let pushTimer=null,pushWarte=new Set();
+/* ---------- Lernzeit-Karten: Abgabe der Lösungswörter ----------
+   Die Karte liegt auf Papier. Das Kind tippt in der nächsten Informatik-Stunde seine Lösungswörter ein.
+   Gespeichert wird nur „abgegeben am“ als eigener Stand „lernzeit“ (wie der Spielplatz), keine Note.
+   Die Wörter stehen nur als Prüfsumme im Code, damit niemand sie im Quelltext liest. */
+const lzNorm=w=>String(w||"").trim().toUpperCase().replace(/\s+/g,"").replace(/Ä/g,"AE").replace(/Ö/g,"OE").replace(/Ü/g,"UE").replace(/ß/g,"SS");
+const lzHash=w=>{let h=2166136261;for(const c of lzNorm(w)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)>>>0}return h.toString(36)};
+const LERNZEIT={"01":{titel:"Maus- und Tasten-Profi",w:["1cyhppb","3s8y0r"]}};
+const LZ_VERSUCHE=3;
+let vLern={karten:{}};
+const lernStand=()=>VS||!sitzung?vLern:(staende.lernzeit=staende.lernzeit||{karten:{}});
+function lernAbgeben(nr,woerter){
+  const k=LERNZEIT[nr],p=lernStand();p.karten=p.karten||{};const e=p.karten[nr]=p.karten[nr]||{};
+  if(e.am)return"schon";
+  const heute=new Date().toDateString();if(e.tag!==heute){e.tag=heute;e.falsch=0}
+  if(e.falsch>=LZ_VERSUCHE)return"gesperrt";
+  const ok=k.w.every((h,i)=>lzHash(woerter[i])===h);
+  if(ok){e.am=Date.now();delete e.falsch;delete e.tag}else e.falsch=(e.falsch||0)+1;
+  if(!VS&&sitzung){staendeLokal();pushWarte.add("lernzeit");clearTimeout(pushTimer);pushTimer=setTimeout(hochladen,ok?0:1500)}
+  return ok?"ok":e.falsch>=LZ_VERSUCHE?"gesperrt":"falsch";
+}
 function speichern(sofort){
   if(!laufend)return;
   if(VS){vStaende[laufend.st.id]=laufend.prog;return}
@@ -1519,6 +1550,7 @@ function seiteStart(){
     :`<div class="gruss"><span>Hallo <b>${ich()}</b></span><span><b>${n}</b> Punkte, <b>${fertig}</b> von ${pfad.length} Stationen, Rang <b>${rName}</b></span></div>`}
   ${heute}
   ${VS?"":spielplatz}
+  ${lernBlock()}
   <h2 style="margin:8px 0 0">${VS?"Lernpfad":"Dein Lernpfad"}</h2>
   <ol class="lernpfad">${liste}</ol>
   ${VS?spielplatz:spOffen||!akt||plusHeute()?"":`<p class="spielplatz zu-hinweis">Der Spielplatz öffnet sich am Ende der Stunde, wenn du deine Station von heute mit einem + schaffst.</p>`}
@@ -1530,7 +1562,29 @@ function seiteStart(){
     if(stt==="morgen")return toast("Diese Station kommt in der nächsten Stunde dran.");
     location.hash=basis()+"s/"+x.id});
   document.querySelectorAll("[data-sp]").forEach(b=>b.onclick=()=>location.hash=basis()+"s/"+b.dataset.sp);
-  if($("#vreset"))$("#vreset").onclick=()=>{vStaende={};laufend=null;seiteStart();toast("Vorschau zurückgesetzt")};
+  if($("#vreset"))$("#vreset").onclick=()=>{vStaende={};laufend=null;vLern={karten:{}};seiteStart();toast("Vorschau zurückgesetzt")};
+  lernBinden();
+}
+function lernBlock(){
+  const p=lernStand().karten||{},nrs=Object.keys(LERNZEIT).sort(),offen=nrs.filter(n=>!p[n]?.am),fertig=nrs.filter(n=>p[n]?.am);
+  return`<div class="lz-block" id="lz">
+    <div class="lz-kopf"><div><h2 style="margin:0">Lernzeit-Karte abgeben</h2><p class="muted small" style="margin:2px 0 0">Hast du eine Karte fertig? Tippe die Lösungswörter aus dem Lösungsfeld ein.</p></div>
+      ${fertig.length?`<p class="lz-fertig small">Abgegeben: ${fertig.map(n=>`<span class="lz-chip">${n} ✓</span>`).join(" ")}</p>`:""}</div>
+    ${offen.length?`<div class="lz-form"><label>Karte <select id="lzk">${offen.map(n=>`<option value="${n}">${n} · ${esc(LERNZEIT[n].titel)}</option>`).join("")}</select></label>
+      <label>Wort aus Aufgabe 1 <input type="text" id="lz1" autocomplete="off" spellcheck="false" maxlength="20"></label>
+      <label>Wort aus Aufgabe 3 <input type="text" id="lz2" autocomplete="off" spellcheck="false" maxlength="20"></label>
+      <button class="btn" id="lzab">Abgeben</button></div><div id="lzm"></div>`:`<p class="muted small" style="margin:8px 0 0">Alle Karten, die es gerade gibt, sind abgegeben.</p>`}
+  </div>`}
+function lernBinden(){
+  const b=$("#lzab");if(!b)return;
+  const los=()=>{const nr=$("#lzk").value,w=[$("#lz1").value,$("#lz2").value],m=$("#lzm");
+    if(!w[0].trim()||!w[1].trim()){m.className="msg no";m.textContent="Tippe beide Wörter ein.";return}
+    const r=lernAbgeben(nr,w),e=(lernStand().karten||{})[nr]||{};
+    if(r==="ok"){toast(`Karte ${nr} abgegeben.`);seiteStart();return}
+    m.className="msg no";
+    m.textContent=r==="gesperrt"?`Das waren ${LZ_VERSUCHE} falsche Versuche. Schau morgen noch mal auf deine Karte und such den Fehler.`
+      :`Mindestens ein Wort stimmt noch nicht. Schau auf deine Karte. Noch ${LZ_VERSUCHE-(e.falsch||0)} ${LZ_VERSUCHE-(e.falsch||0)===1?"Versuch":"Versuche"} heute.`};
+  b.onclick=los;["#lz1","#lz2"].forEach(id=>$(id).onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();los()}});
 }
 
 function seiteStation(st){
@@ -1793,6 +1847,7 @@ function lehrerZeigen(){
       return`<td class="c" title="${esc(st.titel)}: ${pz} %${p.fertig?"":" · Teil "+((p.schritt||0)+1)}">${p.fertig?(()=>{const b=bewertung(st,p);return`<button class="chip ${zeichenKlasse(b.z)} gross-z nchip${b.lehrer?" lehrer":""}" data-ln="${k.id}|${st.id}" title="${b.lehrer?"Von dir festgelegt. ":""}Klicken: Note selbst festlegen">${b.note}${b.stern?"⭐":""}${b.lehrer?" ✎":""}</button><span class="pzk">${pz} %</span>`})():`<button class="nchip offen muted small" data-ln="${k.id}|${st.id}" title="Noch nicht fertig. Klicken: Note selbst festlegen">…${pz}%</button>`}</td>`}).join("");
     return`<tr><td class="t"><span class="e">${t.emoji}</span>${esc(t.name)}</td>
       <td><input type="text" class="vn" data-id="${k.id}" value="${esc(namen[k.id]||"")}" placeholder="Wer ist das?" list="dl-${esc(kl)}"></td><td>${status}</td>${zellen}
+      <td class="small">${(()=>{const lk=(s.lernzeit||{}).karten||{},ab=Object.keys(lk).filter(n=>lk[n].am).sort();return ab.length?ab.map(n=>`<span class="lz-chip" title="abgegeben am ${new Date(lk[n].am).toLocaleDateString("de-DE")}">${n}</span>`).join(" "):`<span class="muted">–</span>`})()}</td>
       <td><button class="link" data-a="mehr" data-id="${k.id}" aria-label="Mehr">⋯</button></td></tr>`};
   $("#lb").innerHTML=`
   <div class="tabs noprint">${KLASSEN.map(k=>`<button class="${k===kl?"an":""}" data-kl="${k}">${k} <span class="muted small">${d.kinder.filter(x=>x.klasse===k).length}</span></button>`).join("")}</div>
@@ -1816,7 +1871,7 @@ function lehrerZeigen(){
       <table class="liste heute-t"><thead><tr><th>Kind</th><th>Station</th><th>Stand</th><th class="c">Minuten</th><th class="c">Fehlversuche</th><th>Hinweis</th><th class="c" title="Mühe-Stern: hebt die Note um eine Stufe">Mühe</th><th class="c" title="Erreichte Punkte in Prozent. „81 → 93“ heißt: nach dem Verbessern">%</th><th class="c" title="Auf die Note klicken, um sie selbst festzulegen">Note</th></tr></thead><tbody>
       ${zeilen.map(x=>`<tr class="${x.hinweis?"auff":""}"><td class="t">${esc(x.name)}</td><td>${esc(x.st)}</td><td>${x.fertig?"fertig":x.teil}</td><td class="c">${x.min}</td><td class="c">${x.fGes}</td><td>${x.hinweis?`<b>${x.hinweis}</b>`:""}</td><td class="c"><button class="stern-btn${x.stern?" an":""}" data-stern="${x.kid}|${x.sid}" title="${x.stern?"Mühe-Stern wieder wegnehmen":"Mühe-Stern geben: Note eine Stufe besser"}">⭐</button></td><td class="c pz">${x.erst!=null?`<span class="muted">${x.erst} → </span>`:""}${x.pz} %</td><td class="c"><button class="chip ${zeichenKlasse(x.z)} gross-z nchip${x.lehrer?" lehrer":""}" data-ln="${x.kid}|${x.sid}" title="${x.lehrer?"Von dir festgelegt. ":""}Klicken: Note selbst festlegen">${x.note}${x.lehrer?" ✎":""}</button></td></tr>`).join("")}</tbody></table></div>`})()}
   <div class="block" style="overflow-x:auto"><h2 style="margin-bottom:8px">Alle Stationen</h2>
-    ${kinder.length?`<table class="liste"><thead><tr><th>Tier</th><th>Vorname <span class="muted small">(nur hier)</span></th><th>Status</th>${PFAD().map((st,i)=>`<th class="c" title="${esc(st.titel)}">${i+1}</th>`).join("")}<th></th></tr></thead><tbody>${kinder.map(zeile).join("")}</tbody></table>`
+    ${kinder.length?`<table class="liste"><thead><tr><th>Tier</th><th>Vorname <span class="muted small">(nur hier)</span></th><th>Status</th>${PFAD().map((st,i)=>`<th class="c" title="${esc(st.titel)}">${i+1}</th>`).join("")}<th title="Abgegebene Lernzeit-Karten">Lernzeit</th><th></th></tr></thead><tbody>${kinder.map(zeile).join("")}</tbody></table>`
       :`<p style="margin:0">Noch keine Kinder in ${kl}. Trag unten die Klassenliste ein, dann bekommt jedes Kind ein Tier.</p>`}
     <datalist id="dl-${esc(kl)}">${(listen[kl]||[]).filter(n=>!kinder.some(k=>namen[k.id]===n)).map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
     ${(listen[kl]||[]).length?`<p class="muted small" style="margin:10px 0 0">${kinder.filter(k=>namen[k.id]).length} von ${listen[kl].length} Kindern zugeordnet.${(()=>{const fehlt=listen[kl].filter(n=>!kinder.some(k=>namen[k.id]===n));return fehlt.length&&fehlt.length<=8?" Noch ohne Tier: "+fehlt.map(esc).join(", "):""})()}</p>`:""}
