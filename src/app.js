@@ -27,14 +27,18 @@ const FREIGABE_MIN=90;
    Anmelden geht PUFFER Minuten vor Beginn bis zum Ende der Stunde. Speichern geht auch danach noch.
    (Kein Puffer nach dem Ende, sonst überschneiden sich Stunden, die direkt aufeinander folgen.) */
 const PUFFER=5;
+/* gruppe: Halbgruppe wie im Notenbuch (1 oder 2). Steht auf den Kärtchen und ordnet die Lehrer-Ansicht. */
 const STUNDENPLAN=[
-  {klasse:"5B",tag:1,von:"09:05",min:60},   // 5B-1 Mo
-  {klasse:"5B",tag:3,von:"11:25",min:60},   // 5B-2 Mi
-  {klasse:"5D",tag:4,von:"13:40",min:60},   // 5D-1 Do
-  {klasse:"5D",tag:3,von:"10:20",min:60},   // 5D-2 Mi
-  {klasse:"5E",tag:1,von:"08:00",min:60},   // 5E-1 Mo
-  {klasse:"5E",tag:5,von:"10:20",min:60},   // 5E-2 Fr
+  {klasse:"5B",tag:1,von:"09:05",min:60,gruppe:1},   // 5B-1 Mo
+  {klasse:"5B",tag:3,von:"11:25",min:60,gruppe:2},   // 5B-2 Mi
+  {klasse:"5D",tag:3,von:"10:20",min:60,gruppe:1},   // 5D-1 Mi (laut Anmeldungen der Kinder)
+  {klasse:"5D",tag:4,von:"13:40",min:60,gruppe:2},   // 5D-2 Do
+  {klasse:"5E",tag:1,von:"08:00",min:60,gruppe:1},   // 5E-1 Mo
+  {klasse:"5E",tag:5,von:"10:20",min:60,gruppe:2},   // 5E-2 Fr
 ];
+const TAGNAME=["","Montag","Dienstag","Mittwoch","Donnerstag","Freitag"];
+const gruppenStunde=(kl,g)=>STUNDENPLAN.find(s=>s.klasse===kl&&s.gruppe===g);
+const gruppenText=(kl,g,kurz)=>{const s=gruppenStunde(kl,g);return s?`Gruppe ${g} · ${kurz?TAGNAME[s.tag].slice(0,2):TAGNAME[s.tag]} ${s.von}`:`Gruppe ${g}`};
 /* Ferien NRW 2026/27 (erster und letzter Ferientag). Bewegliche Ferientage der Schule hier ergänzen. */
 const FERIEN=[["2026-12-23","2027-01-06"],["2027-03-22","2027-04-03"],["2027-05-18","2027-05-18"],["2027-07-19","2027-08-31"]];
 
@@ -654,6 +658,13 @@ async function lehrerLaden(){
   if(db.online&&n>0&&n!==nt.n&&nt.tag!==new Date().toDateString())notfallLaden(true);
 }
 
+/* Halbgruppe: gespeichert, sonst aus den Zeiten der fertigen Stationen erkannt (welche Stunde laut Stundenplan) */
+function gruppeVon(k){if(k.gruppe)return{g:k.gruppe,erkannt:false};
+  const z=[0,0,0];(lDaten.abschluesse||[]).filter(a=>a.kind_id===k.id).forEach(a=>{const t=new Date(a.fertig_am);
+    const tag=t.getDay(),m=t.getHours()*60+t.getMinutes();
+    STUNDENPLAN.filter(s=>s.klasse===k.klasse&&s.tag===tag).forEach(s=>{const [h,mi]=s.von.split(":").map(Number),v=h*60+mi;if(m>=v-PUFFER&&m<=v+s.min+30)z[s.gruppe]++})});
+  return z[1]>z[2]?{g:1,erkannt:true}:z[2]>z[1]?{g:2,erkannt:true}:{g:0,erkannt:false}}
+
 function lehrerZeigen(){
   const d=lDaten,kl=lKlasse;
   const kinder=d.kinder.filter(k=>k.klasse===kl);
@@ -667,8 +678,9 @@ function lehrerZeigen(){
     const status=k.besetzt?`<span class="chip good">angemeldet</span> <button class="link" data-a="freigeben" data-id="${k.id}">abmelden</button>`:`<span class="muted small">–</span>`;
     const zellen=PFAD().map(st=>{const p=s[st.id];if(!p)return`<td class="muted c">·</td>`;const pz=prozent(st,p);
       return`<td class="c" title="${esc(st.titel)}: ${pz} %${p.fertig?"":" · Teil "+((p.schritt||0)+1)}">${p.fertig?(()=>{const b=bewertung(st,p);return`<button class="chip ${zeichenKlasse(b.z)} gross-z nchip${b.lehrer?" lehrer":""}" data-ln="${k.id}|${st.id}" title="${b.lehrer?"Von dir festgelegt. ":""}Klicken: Note selbst festlegen">${b.note}${b.stern?"⭐":""}${b.lehrer?" ✎":""}</button><span class="pzk">${pz} %</span>`})():`<button class="nchip offen muted small" data-ln="${k.id}|${st.id}" title="Noch nicht fertig. Klicken: Note selbst festlegen">…${pz}%</button>`}</td>`}).join("");
+    const gv=gruppeVon(k);
     return`<tr><td class="t"><span class="e">${t.emoji}</span>${esc(t.name)}</td>
-      <td><input type="text" class="vn" data-id="${k.id}" value="${esc(namen[k.id]||"")}" placeholder="Wer ist das?" list="dl-${esc(kl)}"></td><td>${status}</td>${zellen}
+      <td><input type="text" class="vn" data-id="${k.id}" value="${esc(namen[k.id]||"")}" placeholder="Wer ist das?" list="dl-${esc(kl)}"></td><td><select class="grw" data-id="${k.id}" title="${gv.erkannt?"Automatisch erkannt. Auswählen, um es festzulegen.":"Halbgruppe"}"><option value="">–</option><option value="1" ${gv.g===1?"selected":""}>1${gv.erkannt&&gv.g===1?" ?":""}</option><option value="2" ${gv.g===2?"selected":""}>2${gv.erkannt&&gv.g===2?" ?":""}</option></select></td><td>${status}</td>${zellen}
       <td class="small">${(()=>{const lk=(s.lernzeit||{}).karten||{},ab=Object.keys(lk).filter(n=>lk[n].am).sort();return ab.length?ab.map(n=>`<span class="lz-chip" title="abgegeben am ${new Date(lk[n].am).toLocaleDateString("de-DE")}">${n}</span>`).join(" "):`<span class="muted">–</span>`})()}</td>
       <td><button class="link" data-a="mehr" data-id="${k.id}" aria-label="Mehr">⋯</button></td></tr>`};
   $("#lb").innerHTML=`
@@ -693,7 +705,8 @@ function lehrerZeigen(){
       <table class="liste heute-t"><thead><tr><th>Kind</th><th>Station</th><th>Stand</th><th class="c">Minuten</th><th class="c">Fehlversuche</th><th>Hinweis</th><th class="c" title="Mühe-Stern: hebt die Note um eine Stufe">Mühe</th><th class="c" title="Erreichte Punkte in Prozent. „81 → 93“ heißt: nach dem Verbessern">%</th><th class="c" title="Auf die Note klicken, um sie selbst festzulegen">Note</th></tr></thead><tbody>
       ${zeilen.map(x=>`<tr class="${x.hinweis?"auff":""}"><td class="t">${esc(x.name)}</td><td>${esc(x.st)}</td><td>${x.fertig?"fertig":x.teil}</td><td class="c">${x.min}</td><td class="c">${x.fGes}</td><td>${x.hinweis?`<b>${x.hinweis}</b>`:""}</td><td class="c"><button class="stern-btn${x.stern?" an":""}" data-stern="${x.kid}|${x.sid}" title="${x.stern?"Mühe-Stern wieder wegnehmen":"Mühe-Stern geben: Note eine Stufe besser"}">⭐</button></td><td class="c pz">${x.erst!=null?`<span class="muted">${x.erst} → </span>`:""}${x.pz} %</td><td class="c"><button class="chip ${zeichenKlasse(x.z)} gross-z nchip${x.lehrer?" lehrer":""}" data-ln="${x.kid}|${x.sid}" title="${x.lehrer?"Von dir festgelegt. ":""}Klicken: Note selbst festlegen">${x.note}${x.lehrer?" ✎":""}</button></td></tr>`).join("")}</tbody></table></div>`})()}
   <div class="block" style="overflow-x:auto"><h2 style="margin-bottom:8px">Alle Stationen</h2>
-    ${kinder.length?`<table class="liste"><thead><tr><th>Tier</th><th>Vorname <span class="muted small">(nur hier)</span></th><th>Status</th>${PFAD().map((st,i)=>`<th class="c" title="${esc(st.titel)}">${i+1}</th>`).join("")}<th title="Abgegebene Lernzeit-Karten">Lernzeit</th><th></th></tr></thead><tbody>${kinder.map(zeile).join("")}</tbody></table>`
+    ${kinder.length?`<table class="liste"><thead><tr><th>Tier</th><th>Vorname <span class="muted small">(nur hier)</span></th><th title="Halbgruppe">Gr.</th><th>Status</th>${PFAD().map((st,i)=>`<th class="c" title="${esc(st.titel)}">${i+1}</th>`).join("")}<th title="Abgegebene Lernzeit-Karten">Lernzeit</th><th></th></tr></thead>${[1,2,0].map(g=>{const ks=kinder.filter(k=>gruppeVon(k).g===g).sort((a,b)=>(namen[a.id]||"~"+a.tier).localeCompare(namen[b.id]||"~"+b.tier,"de"));if(!ks.length)return"";
+      return`<tbody><tr class="grkopf"><th colspan="${PFAD().length+6}">${g?esc(gruppenText(kl,g)):"Ohne Gruppe"} <span class="muted small">· ${ks.length} Kinder</span></th></tr>${ks.map(zeile).join("")}</tbody>`}).join("")}</table>`
       :`<p style="margin:0">Noch keine Kinder in ${kl}. Trag unten die Klassenliste ein, dann bekommt jedes Kind ein Tier.</p>`}
     <datalist id="dl-${esc(kl)}">${(listen[kl]||[]).filter(n=>!kinder.some(k=>namen[k.id]===n)).map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
     ${(listen[kl]||[]).length?`<p class="muted small" style="margin:10px 0 0">${kinder.filter(k=>namen[k.id]).length} von ${listen[kl].length} Kindern zugeordnet.${(()=>{const fehlt=listen[kl].filter(n=>!kinder.some(k=>namen[k.id]===n));return fehlt.length&&fehlt.length<=8?" Noch ohne Tier: "+fehlt.map(esc).join(", "):""})()}</p>`:""}
@@ -710,7 +723,7 @@ function lehrerZeigen(){
         return`<tr><td class="t">${esc(namen[k.id]||`${t.emoji} ${t.name}`)}</td>${SP.map(x=>{const g=sp[x.id];if(!g)return`<td class="muted c">·</td>`;ms+=g.ms||0;return`<td class="c">${g.n}×${g.best!=null?` <span class="muted">★ ${g.best}</span>`:""}</td>`}).join("")}<td class="c">${Math.round(ms/60000)}</td></tr>`}).join("")}
       </tbody></table></div></details>`})()}
   <div class="row noprint">
-    <button class="btn ghost" id="druck" ${kinder.length?"":"disabled"}>Kärtchen drucken</button>
+    <button class="btn ghost" id="druck" ${kinder.length?"":"disabled"}>Kärtchen ${esc(kl)} als PDF</button>
     <button class="btn" id="notfall">Notfall-Datei: alle Noten speichern</button>
     <button class="btn ghost" id="sichern">Namensliste sichern</button><label class="btn ghost">Namensliste laden<input type="file" id="laden" accept=".json" hidden></label>
   </div>
@@ -728,7 +741,8 @@ function lehrerZeigen(){
   document.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{const id=b.dataset.id,a=b.dataset.a;
     if(a==="freigeben")return lAktion(()=>db.lAbmeldenKind(id));
     if(a==="mehr")return lMehr(d.kinder.find(k=>k.id===id))});
-  $("#druck").onclick=()=>lDruck(kinder);
+  $("#druck").onclick=()=>kaertchenPdf(kl,kinder);
+  document.querySelectorAll(".grw").forEach(s=>s.onchange=()=>lAktion(()=>db.lKindGruppe(s.dataset.id,parseInt(s.value)||null)));
   $("#notfall").onclick=()=>notfallLaden(false);
   $("#zuteilen").onclick=async()=>{const liste=[...new Set($("#kliste").value.split("\n").map(x=>x.trim()).filter(Boolean))];
     listen[kl]=liste;namenMerken();
@@ -763,19 +777,33 @@ function lMehr(k){
   else if(wahl==="2"){if(confirm(`${t.name} mit allen Punkten löschen?`)){delete namen[k.id];namenMerken();lAktion(()=>db.lKindLoeschen(k.id))}}
 }
 
-function lDruck(kinder){
-  const w=window.open("","_blank");if(!w)return toast("Bitte Pop-ups erlauben");
-  w.document.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Kärtchen ${esc(lKlasse)}</title><style>
-    body{font:16px system-ui,sans-serif;margin:10mm}.g{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
-    .k{border:1px dashed #999;padding:10px 12px;height:42mm;display:flex;flex-direction:column;justify-content:space-between;break-inside:avoid}
-    .e{font-size:40px;line-height:1}.n{font-size:20px;font-weight:700}.f{display:flex;align-items:center;gap:8px;font-weight:700}
-    .f i{width:22px;height:22px;border-radius:50%;display:inline-block;-webkit-print-color-adjust:exact;print-color-adjust:exact}.s{color:#666;font-size:12px}
-    </style></head><body><div class="g">${kinder.map(k=>{const t=tierInfo(k.tier);
-    return`<div class="k"><div style="display:flex;justify-content:space-between"><span class="e">${t.emoji}</span><span class="s">Informatik 5, Klasse ${esc(k.klasse)}</span></div>
-    <div class="n">${esc(namen[k.id]||"")}</div><div class="f">Dein Tier: ${esc(t.name)}</div></div>`}).join("")}</div>
-    <script>onload=()=>print()<\/script></body></html>`);
-  w.document.close();
-}
+/* Kärtchen als echte PDF-Datei (A4 hoch, 10 Kärtchen pro Seite, Schnittlinien). Jede Gruppe beginnt auf einer neuen Seite.
+   Wird direkt heruntergeladen; öffnen und ganz normal drucken (100 %, „Tatsächliche Größe“). */
+function jsPdfLaden(){return window.jspdf?Promise.resolve():new Promise((ok,nein)=>{const s=document.createElement("script");s.src="vendor/jspdf.js?v="+VERSION;s.onload=ok;s.onerror=()=>nein(new Error("PDF-Baustein lädt nicht"));document.head.append(s)})}
+function emojiBild(e){try{const c=document.createElement("canvas");c.width=c.height=160;const x=c.getContext("2d");
+  x.textAlign="center";x.textBaseline="middle";x.font='120px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';x.fillText(e,80,88);
+  const d=x.getImageData(0,0,160,160).data;let n=0;for(let i=3;i<d.length;i+=40)if(d[i])n++;return n>20?c.toDataURL("image/png"):null}catch(err){return null}}
+async function kaertchenPdf(kl,kinder){
+  try{await jsPdfLaden()}catch(e){return toast("Hat nicht geklappt: "+e.message)}
+  const {jsPDF}=window.jspdf,doc=new jsPDF({unit:"mm",format:"a4"});
+  const RAND=10,SP=2,ZE=5,B=(210-2*RAND)/SP,H=(297-2*RAND)/ZE;
+  const gruppen=[1,2,0].map(g=>kinder.filter(k=>gruppeVon(k).g===g).sort((a,b)=>(namen[a.id]||"~").localeCompare(namen[b.id]||"~","de"))).map((ks,i)=>({g:[1,2,0][i],ks})).filter(x=>x.ks.length);
+  const bilder={};let seite=0;
+  const linien=()=>{doc.setDrawColor(150);doc.setLineWidth(.2);doc.setLineDashPattern([2,1.5],0);
+    for(let i=0;i<=SP;i++)doc.line(RAND+i*B,RAND,RAND+i*B,297-RAND);for(let j=0;j<=ZE;j++)doc.line(RAND,RAND+j*H,210-RAND,RAND+j*H);doc.setLineDashPattern([],0)};
+  gruppen.forEach(({g,ks})=>{for(let i=0;i<ks.length;i++){const pos=i%(SP*ZE);
+    if(pos===0){if(seite++)doc.addPage();linien()}
+    const k=ks[i],t=tierInfo(k.tier),x=RAND+(pos%SP)*B,y=RAND+Math.floor(pos/SP)*H,P=6;
+    doc.setTextColor(90);doc.setFont("helvetica","normal");doc.setFontSize(9);
+    doc.text("Informatik 5",x+P,y+P+2);doc.text(`Klasse ${k.klasse} · ${g?gruppenText(k.klasse,g):""}`,x+B-P,y+P+2,{align:"right"});
+    doc.setTextColor(0);doc.setFont("helvetica","bold");doc.setFontSize(15);doc.text(namen[k.id]||" ",x+P,y+P+10);
+    if(!(t.emoji in bilder))bilder[t.emoji]=emojiBild(t.emoji);
+    const bx=bilder[t.emoji]?20:0;if(bx)doc.addImage(bilder[t.emoji],"PNG",x+P,y+20,18,18);
+    doc.setFont("helvetica","normal");doc.setFontSize(10);doc.setTextColor(90);doc.text("Dein Tier",x+P+bx+2,y+26);
+    doc.setTextColor(0);doc.setFont("helvetica","bold");doc.setFontSize(24);doc.text(t.name,x+P+bx+2,y+35);
+    doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(60);
+    doc.text(`So geht's: Lesezeichen "Informatik 5"  >  ${k.klasse}  >  ${t.name}`,x+P,y+H-P)}});
+  doc.save(`Informatik5-Kaertchen-${kl}.pdf`);toast("PDF ist heruntergeladen. Öffnen und drucken.")}
 
 /* ---------- Bausteine für Stationen ---------- */
 

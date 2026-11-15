@@ -116,6 +116,9 @@ table.liste{border-collapse:collapse;width:100%;font-size:.9375rem}
 .liste td{border-top:1px solid var(--line);padding:8px 10px;vertical-align:middle;white-space:nowrap}
 .liste td.t{font-weight:650}.liste td.t .e{font-size:1.5rem;margin-right:6px;vertical-align:middle}
 .liste input.vn{min-height:40px;padding:6px 10px;font-size:1rem;min-width:9rem;border-radius:6px}
+.liste tr.grkopf th{padding:18px 10px 6px;font-size:.95rem;color:var(--ink,inherit);border-bottom:2px solid var(--line)}
+.liste tbody:first-of-type tr.grkopf th{padding-top:6px}
+.liste select.grw{min-height:40px;padding:4px 6px;font-size:1rem;border-radius:6px;border:1px solid var(--line);background:transparent;color:inherit}
 .chip.bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
 label.btn{cursor:pointer}
 .steps.springen i{cursor:pointer;height:14px}

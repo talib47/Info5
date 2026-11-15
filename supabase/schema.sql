@@ -149,3 +149,6 @@ create table if not exists lehrer_uebergabe(id int primary key default 1, inhalt
 alter table lehrer_uebergabe enable row level security;
 drop policy if exists lu_lehrkraft on lehrer_uebergabe;
 create policy lu_lehrkraft on lehrer_uebergabe for all to authenticated using (ist_lehrkraft()) with check (ist_lehrkraft());
+
+-- Halbgruppe (1 oder 2) wie im Notenbuch; die Lehrkraft legt sie in der Lehrer-Ansicht fest.
+alter table kinder add column if not exists gruppe smallint check (gruppe in (1,2));

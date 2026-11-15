@@ -142,7 +142,7 @@ const db={
       for(const r of [k,s,f])if(r.error)throw r.error;
       const staende={};s.data.forEach(r=>{(staende[r.kind_id]=staende[r.kind_id]||{})[r.station]=r.prog});
       const freigaben={};f.data.forEach(r=>freigaben[r.klasse]={offen_bis:r.offen_bis?new Date(r.offen_bis).getTime():0,zu_bis:r.zu_bis?new Date(r.zu_bis).getTime():0});
-      return{kinder:k.data.map(r=>({id:r.id,klasse:r.klasse,tier:r.tier,
+      return{kinder:k.data.map(r=>({id:r.id,klasse:r.klasse,tier:r.tier,gruppe:r.gruppe||null,
         besetzt:!!(r.token&&Date.now()-new Date(r.aktiv_seit).getTime()<MIN75),aktiv:r.aktiv_seit?new Date(r.aktiv_seit).getTime():0})),staende,freigaben,abschluesse:a.error?[]:a.data};
     }
     const d=vdb.lesen();
@@ -154,6 +154,9 @@ const db={
     const d=vdb.lesen();const k={id:Math.random().toString(36).slice(2,12),klasse,tier,token:null,geraet:null,aktiv:0,erstellt:jetztMs()};
     d.kinder.push(k);vdb.schreiben(d);return k.id;
   },
+  async lKindGruppe(id,g){
+    if(CLOUD){const {error}=await sb.from("kinder").update({gruppe:g||null}).eq("id",id);if(error)throw error;return}
+    const d=vdb.lesen();const k=d.kinder.find(x=>x.id===id);if(k){k.gruppe=g||null;vdb.schreiben(d)}},
   async lAbmeldenKind(id){
     if(CLOUD){const {error}=await sb.from("kinder").update({token:null,geraet:null}).eq("id",id);if(error)throw error;return}
     const d=vdb.lesen();const k=d.kinder.find(x=>x.id===id);if(k){k.token=null;k.geraet=null;vdb.schreiben(d)}
