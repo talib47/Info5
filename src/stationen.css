@@ -19,3 +19,23 @@
 .pal button{width:52px;height:52px;border-radius:14px;border:3px solid var(--surface);background:var(--c);box-shadow:0 0 0 1.5px var(--line);display:flex;align-items:flex-end;justify-content:flex-end;padding:3px 6px}
 .pal button span{font-size:.75rem;font-weight:700;color:#000;background:rgba(255,255,255,.8);border-radius:5px;padding:0 4px}
 .pal button.an{box-shadow:0 0 0 3px var(--accent);transform:scale(1.06)}
+/* Station 3: Nachricht der Rahmenfigur, Endungs-Probe, Datei-Suche */
+.nachricht{border:1.5px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px 14px;max-width:560px}
+.nachricht .nv{display:block;font-size:.8125rem;color:var(--muted);font-weight:600}
+.nachricht p{margin:2px 0 0;font-size:1.0625rem}
+.regel .nachricht{background:var(--surface)}
+.probe{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;border:1.5px solid var(--line);border-radius:var(--r);background:var(--surface);padding:14px 16px}
+.probe-datei{display:grid;grid-template-columns:auto 1fr;column-gap:12px;align-items:center;flex:1 1 100%}
+.probe-datei .pd-ico{grid-row:span 2;font-size:2.25rem;line-height:1}
+.probe-datei .pd-name{font:700 1.125rem var(--mono);overflow-wrap:anywhere}
+.probe-endungen{display:flex;flex-wrap:wrap;gap:8px;flex:1}
+.probe-endungen .karte{font-family:var(--mono);min-width:76px;justify-content:center}
+.fenster{margin-top:12px;border:1.5px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden;max-width:560px}
+.fenster .f-kopf{padding:6px 12px;border-bottom:1.5px solid var(--line);font-weight:700;font-size:.9375rem}
+.fenster p{margin:0;padding:14px 12px}
+.fenster.ok{border-color:var(--good)}
+.fenster:not(.ok) p b{color:var(--bad)}
+.ex-leiste input{min-height:44px;flex:1}
+.treffer{list-style:none;margin:6px 0 0;padding:0 4px 8px;columns:2 220px;column-gap:16px}
+.treffer li{font:600 .9375rem var(--mono);padding:5px 8px;border-bottom:1px solid var(--line);break-inside:avoid}
+.pfadzeile{margin-top:12px;font:700 1.0625rem var(--mono)}
