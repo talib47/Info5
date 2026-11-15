@@ -106,3 +106,5 @@
 .lz-form select,.lz-form input{min-height:44px;font:600 1rem var(--sans);border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--surface);color:var(--ink)}
 .lz-form input{text-transform:uppercase;letter-spacing:.06em;width:12ch}
 .lz-block #lzm{margin-top:10px}
+.lz-felder{display:contents}
+.lz-form input.zahl{width:8ch}

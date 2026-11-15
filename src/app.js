@@ -142,7 +142,11 @@ let pushTimer=null,pushWarte=new Set();
    Die Wörter stehen nur als Prüfsumme im Code, damit niemand sie im Quelltext liest. */
 const lzNorm=w=>String(w||"").trim().toUpperCase().replace(/\s+/g,"").replace(/Ä/g,"AE").replace(/Ö/g,"OE").replace(/Ü/g,"UE").replace(/ß/g,"SS");
 const lzHash=w=>{let h=2166136261;for(const c of lzNorm(w)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)>>>0}return h.toString(36)};
-const LERNZEIT={"01":{titel:"Maus- und Tasten-Profi",w:["1cyhppb","3s8y0r"]}};
+/* Erzeugt mit dem Karten-Programm (python3 lz.py --hash N). f: welche Aufgabe, Wort oder Zahl. */
+const LERNZEIT={
+"01":{titel:"Maus- und Tasten-Profi",f:[["Aufgabe 1","Wort"],["Aufgabe 3","Wort"]],w:["1cyhppb","3s8y0r"]},
+"02":{titel:"Was steckt im Computer?",f:[["Aufgabe 1","Zahl"],["Aufgabe 2","Wort"]],w:["1iu4cqi","1ns75ha"]},
+};
 const LZ_VERSUCHE=3;
 let vLern={karten:{}};
 const lernStand=()=>VS||!sitzung?vLern:(staende.lernzeit=staende.lernzeit||{karten:{}});
@@ -380,23 +384,26 @@ function seiteStart(){
 function lernBlock(){
   const p=lernStand().karten||{},nrs=Object.keys(LERNZEIT).sort(),offen=nrs.filter(n=>!p[n]?.am),fertig=nrs.filter(n=>p[n]?.am);
   return`<div class="lz-block" id="lz">
-    <div class="lz-kopf"><div><h2 style="margin:0">Lernzeit-Karte abgeben</h2><p class="muted small" style="margin:2px 0 0">Hast du eine Karte fertig? Tippe die Lösungswörter aus dem Lösungsfeld ein.</p></div>
+    <div class="lz-kopf"><div><h2 style="margin:0">Lernzeit-Karte abgeben</h2><p class="muted small" style="margin:2px 0 0">Hast du eine Karte fertig? Tippe ein, was in deinem Lösungsfeld steht.</p></div>
       ${fertig.length?`<p class="lz-fertig small">Abgegeben: ${fertig.map(n=>`<span class="lz-chip">${n} ✓</span>`).join(" ")}</p>`:""}</div>
     ${offen.length?`<div class="lz-form"><label>Karte <select id="lzk">${offen.map(n=>`<option value="${n}">${n} · ${esc(LERNZEIT[n].titel)}</option>`).join("")}</select></label>
-      <label>Wort aus Aufgabe 1 <input type="text" id="lz1" autocomplete="off" spellcheck="false" maxlength="20"></label>
-      <label>Wort aus Aufgabe 3 <input type="text" id="lz2" autocomplete="off" spellcheck="false" maxlength="20"></label>
+      <span id="lzf" class="lz-felder">${lernFelder(offen[0])}</span>
       <button class="btn" id="lzab">Abgeben</button></div><div id="lzm"></div>`:`<p class="muted small" style="margin:8px 0 0">Alle Karten, die es gerade gibt, sind abgegeben.</p>`}
   </div>`}
+/* Eingabefelder passend zur Karte: so viele wie im Lösungsfeld, beschriftet wie auf dem Blatt */
+const lernFelder=nr=>LERNZEIT[nr].f.map(([a,art],i)=>`<label>${art} aus ${a} <input type="text" class="lzw${art==="Zahl"?" zahl":""}" data-i="${i}" ${art==="Zahl"?'inputmode="numeric" maxlength="6"':'maxlength="20"'} autocomplete="off" spellcheck="false"></label>`).join("");
 function lernBinden(){
   const b=$("#lzab");if(!b)return;
-  const los=()=>{const nr=$("#lzk").value,w=[$("#lz1").value,$("#lz2").value],m=$("#lzm");
-    if(!w[0].trim()||!w[1].trim()){m.className="msg no";m.textContent="Tippe beide Wörter ein.";return}
+  const binde=()=>document.querySelectorAll(".lzw").forEach(x=>x.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();los()}});
+  $("#lzk").onchange=()=>{$("#lzf").innerHTML=lernFelder($("#lzk").value);$("#lzm").className="";$("#lzm").textContent="";binde()};
+  const los=()=>{const nr=$("#lzk").value,w=[...document.querySelectorAll(".lzw")].map(x=>x.value),m=$("#lzm");
+    if(w.some(x=>!x.trim())){m.className="msg no";m.textContent=w.length===1?"Tippe deine Lösung ein.":"Füll alle Felder aus.";return}
     const r=lernAbgeben(nr,w),e=(lernStand().karten||{})[nr]||{};
     if(r==="ok"){toast(`Karte ${nr} abgegeben.`);seiteStart();return}
     m.className="msg no";
     m.textContent=r==="gesperrt"?`Das waren ${LZ_VERSUCHE} falsche Versuche. Schau morgen noch mal auf deine Karte und such den Fehler.`
-      :`Mindestens ein Wort stimmt noch nicht. Schau auf deine Karte. Noch ${LZ_VERSUCHE-(e.falsch||0)} ${LZ_VERSUCHE-(e.falsch||0)===1?"Versuch":"Versuche"} heute.`};
-  b.onclick=los;["#lz1","#lz2"].forEach(id=>$(id).onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();los()}});
+      :`${w.length===1?"Das stimmt noch nicht.":"Mindestens eine Lösung stimmt noch nicht."} Schau auf deine Karte. Noch ${LZ_VERSUCHE-(e.falsch||0)} ${LZ_VERSUCHE-(e.falsch||0)===1?"Versuch":"Versuche"} heute.`};
+  b.onclick=los;binde();
 }
 
 function seiteStation(st){
