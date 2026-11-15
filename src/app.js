@@ -148,6 +148,7 @@ const LERNZEIT={
 "02":{titel:"Was steckt im Computer?",f:[["Aufgabe 1","Zahl"],["Aufgabe 2","Wort"]],w:["1iu4cqi","1ns75ha"]},
 "03":{titel:"Ordnung im Computer",f:[["Aufgabe 1","Wort"],["Aufgabe 2","Zahl"]],w:["91vwd6","kzvamd"]},
 "04":{titel:"Tipp-Training",f:[["Aufgabe 1","Wort"],["Aufgabe 2","Zahl"]],w:["13vsdn1","1ez1x1n"]},
+"05":{titel:"Passwort-Werkstatt",f:[["Aufgabe 1","Zahl"],["Aufgabe 2","Wort"]],w:["15i2l20","bgxngy"]},
 };
 const LZ_VERSUCHE=3;
 let vLern={karten:{}};
