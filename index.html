@@ -1009,7 +1009,7 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="ce89b72035";
+const VERSION="fa9fa422b4";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -1349,11 +1349,37 @@ const LERNZEIT={
 "03":{titel:"Ordnung im Computer",f:[["Aufgabe 1","Wort"],["Aufgabe 2","Zahl"]],w:["91vwd6","kzvamd"]},
 "04":{titel:"Tipp-Training",f:[["Aufgabe 1","Wort"],["Aufgabe 2","Zahl"]],w:["13vsdn1","1ez1x1n"]},
 "05":{titel:"Passwort-Werkstatt",f:[["Aufgabe 1","Zahl"],["Aufgabe 2","Wort"]],w:["15i2l20","bgxngy"]},
+"06":{titel:"Echt oder Fake?",f:[["Aufgabe 1","Wort"],["Aufgabe 2","Zahl"]],w:["1517obi","13u1te7"]},
+"07":{titel:"Nett im Netz",f:[["Aufgabe 1","Wort"],["Aufgabe 2","Zahl"]],w:["1rxlka4","159hnjj"]},
+"08":{titel:"Pixel-Werkstatt",f:[["Aufgabe 1","Wort"],["Aufgabe 2","Zahl"]],w:["b3sywn","11pcryb"]},
+"09":{titel:"Geheimsprache Binär",f:[["Aufgabe 1","Zahl"],["Aufgabe 3","Wort"]],w:["15vzeev","182vlxw"]},
+"10":{titel:"Geheimschrift",f:[["Aufgabe 1","Wort"],["Aufgabe 2","Wort"]],w:["nfqf6t","1qr6gul"]},
+"11":{titel:"Algorithmen im Alltag",f:[["Aufgabe 1","Zahl"],["Aufgabe 2","Wort"]],w:["n8ok35","12zo62c"]},
+"12":{titel:"Robo-Labyrinth",f:[["Aufgabe 1","Wort"],["Aufgabe 2","Zahl"]],w:["h0d9qx","12tb6q7"]},
+"13":{titel:"Schleifen-Profi",f:[["Aufgabe 1","Zahl"],["Aufgabe 2","Zahl"]],w:["b1mtmh","13nv4eq"]},
+"14":{titel:"Suchen und Sortieren",f:[["Aufgabe 1","Wort"],["Aufgabe 2","Zahl"]],w:["127uwdj","tixyvq"]},
+"15":{titel:"Automaten überall",f:[["Aufgabe 1","Zahl"],["Aufgabe 2","Wort"]],w:["zyockl","xxv1dn"]},
+"16":{titel:"Wie lernt eine KI?",f:[["Aufgabe 1","Wort"],["Aufgabe 2","Zahl"]],w:["7rexkp","cg56bw"]},
+"17":{titel:"Meine Daten-Spuren",f:[["Aufgabe 1","Zahl"],["Aufgabe 2","Wort"]],w:["cezz86","1sjdn12"]},
 };
+/* Wochenplan der Lernzeit-Karten: Karte 01 in der Woche ab LZ_START, danach jede Schulwoche eine neue Karte.
+   Ab dem Montag ihrer Woche kann eine Karte abgegeben werden, danach bleibt sie offen.
+   Schulwoche = mindestens 3 Schultage Mo–Fr außerhalb der FERIEN (kurze Wochen vor und nach Weihnachten zählen nicht).
+   In der Vorschau (Lehrer) sind alle Karten offen. */
+const LZ_START="2026-11-16";
+const isoTag=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const LZ_AB=(()=>{const ferien=t=>FERIEN.some(([a,b])=>t>=a&&t<=b),ab={},nrs=Object.keys(LERNZEIT).sort();
+  const d=new Date(LZ_START+"T12:00:00");let i=0;
+  for(let w=0;w<120&&i<nrs.length;w++,d.setDate(d.getDate()+7)){
+    let schule=0;for(let k=0;k<5;k++){const t=new Date(d);t.setDate(d.getDate()+k);if(!ferien(isoTag(t)))schule++}
+    if(schule>=3)ab[nrs[i++]]=isoTag(d)}
+  return ab})();
+const lzOffen=nr=>VS||!LZ_AB[nr]||LZ_AB[nr]<=isoTag(new Date());
 const LZ_VERSUCHE=3;
 let vLern={karten:{}};
 const lernStand=()=>VS||!sitzung?vLern:(staende.lernzeit=staende.lernzeit||{karten:{}});
 function lernAbgeben(nr,woerter){
+  if(!lzOffen(nr))return"zu";
   const k=LERNZEIT[nr],p=lernStand();p.karten=p.karten||{};const e=p.karten[nr]=p.karten[nr]||{};
   if(e.am)return"schon";
   const heute=new Date().toDateString();if(e.tag!==heute){e.tag=heute;e.falsch=0}
@@ -1585,7 +1611,7 @@ function seiteStart(){
   lernBinden();
 }
 function lernBlock(){
-  const p=lernStand().karten||{},nrs=Object.keys(LERNZEIT).sort(),offen=nrs.filter(n=>!p[n]?.am),fertig=nrs.filter(n=>p[n]?.am);
+  const p=lernStand().karten||{},nrs=Object.keys(LERNZEIT).sort().filter(lzOffen),offen=nrs.filter(n=>!p[n]?.am),fertig=nrs.filter(n=>p[n]?.am);
   return`<div class="lz-block" id="lz">
     <div class="lz-kopf"><div><h2 style="margin:0">Lernzeit-Karte abgeben</h2><p class="muted small" style="margin:2px 0 0">Hast du eine Karte fertig? Tippe ein, was in deinem Lösungsfeld steht.</p></div>
       ${fertig.length?`<p class="lz-fertig small">Abgegeben: ${fertig.map(n=>`<span class="lz-chip">${n} ✓</span>`).join(" ")}</p>`:""}</div>
