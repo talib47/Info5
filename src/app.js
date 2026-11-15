@@ -147,6 +147,7 @@ const LERNZEIT={
 "01":{titel:"Maus- und Tasten-Profi",f:[["Aufgabe 1","Wort"],["Aufgabe 3","Wort"]],w:["1cyhppb","3s8y0r"]},
 "02":{titel:"Was steckt im Computer?",f:[["Aufgabe 1","Zahl"],["Aufgabe 2","Wort"]],w:["1iu4cqi","1ns75ha"]},
 "03":{titel:"Ordnung im Computer",f:[["Aufgabe 1","Wort"],["Aufgabe 2","Zahl"]],w:["91vwd6","kzvamd"]},
+"04":{titel:"Tipp-Training",f:[["Aufgabe 1","Wort"],["Aufgabe 2","Zahl"]],w:["13vsdn1","1ez1x1n"]},
 };
 const LZ_VERSUCHE=3;
 let vLern={karten:{}};

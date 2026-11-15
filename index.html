@@ -1006,7 +1006,7 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="b93ef21f11";
+const VERSION="26d7b24f5d";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -1337,6 +1337,7 @@ const LERNZEIT={
 "01":{titel:"Maus- und Tasten-Profi",f:[["Aufgabe 1","Wort"],["Aufgabe 3","Wort"]],w:["1cyhppb","3s8y0r"]},
 "02":{titel:"Was steckt im Computer?",f:[["Aufgabe 1","Zahl"],["Aufgabe 2","Wort"]],w:["1iu4cqi","1ns75ha"]},
 "03":{titel:"Ordnung im Computer",f:[["Aufgabe 1","Wort"],["Aufgabe 2","Zahl"]],w:["91vwd6","kzvamd"]},
+"04":{titel:"Tipp-Training",f:[["Aufgabe 1","Wort"],["Aufgabe 2","Zahl"]],w:["13vsdn1","1ez1x1n"]},
 };
 const LZ_VERSUCHE=3;
 let vLern={karten:{}};
