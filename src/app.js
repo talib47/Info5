@@ -149,6 +149,7 @@ const LERNZEIT={
 "03":{titel:"Ordnung im Computer",f:[["Aufgabe 1","Wort"],["Aufgabe 2","Zahl"]],w:["91vwd6","kzvamd"]},
 "04":{titel:"Tipp-Training",f:[["Aufgabe 1","Wort"],["Aufgabe 2","Zahl"]],w:["13vsdn1","1ez1x1n"]},
 "05":{titel:"Passwort-Werkstatt",f:[["Aufgabe 1","Zahl"],["Aufgabe 2","Wort"]],w:["15i2l20","bgxngy"]},
+"06":{titel:"Echt oder Fake?",f:[["Aufgabe 1","Wort"],["Aufgabe 2","Zahl"]],w:["1517obi","13u1te7"]},
 };
 const LZ_VERSUCHE=3;
 let vLern={karten:{}};
