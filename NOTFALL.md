@@ -6,7 +6,7 @@ Die Noten liegen an vier Stellen. Fällt eine aus, gibt es die nächste. Für ni
 
 In der Lehrer-Ansicht: **„Notfall-Datei: alle Noten speichern“**. Das ist eine Tabelle (`Informatik5-Noten-JJJJ-MM-TT.csv`), die sich mit Excel öffnen lässt: Klasse, Name, Tier, Station, Stand, Note, Punkte, Fehlversuche, Minuten, Datum.
 
-Die Datei wird außerdem **einmal am Tag automatisch heruntergeladen**, sobald du die Lehrer-Ansicht öffnest und es neue Noten gibt. Sie landet im Download-Ordner. Lege sie ab und zu auf IServ oder einen Stick.
+Die Datei wird nur heruntergeladen, wenn du auf den Knopf drückst (kein automatischer Download mehr). Lade sie ab und zu herunter und lege sie auf IServ oder einen Stick.
 
 Eine Kopie der letzten Notenliste liegt zusätzlich im Browser, mit dem du die Lehrer-Ansicht zuletzt geöffnet hast.
 

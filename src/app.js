@@ -654,7 +654,7 @@ function lehrerLogin(){
   $("#f").onsubmit=async e=>{e.preventDefault();try{await db.lAnmelden($("#e").value.trim(),$("#p").value);seiteLehrer()}catch(err){const m=$("#m");m.className="msg no";m.textContent="Anmeldung fehlgeschlagen."}};
 }
 
-/* Notfall-Datei: alle Noten als Tabelle (öffnet in Excel) – auf Knopfdruck und einmal täglich automatisch */
+/* Notfall-Datei: alle Noten als Tabelle (öffnet in Excel) – nur auf Knopfdruck */
 function notfallCsv(){const d=lDaten;if(!d)return"";
   const tierVon=Object.fromEntries(d.kinder.map(k=>[k.id,k])),titel=Object.fromEntries(STATIONEN.map(s=>[s.id,s.titel]));
   const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
@@ -678,10 +678,8 @@ function notfallLaden(auto){const csv=notfallCsv();if(!csv)return;
 async function lehrerLaden(){
   try{lDaten=await db.lAlles()}catch(e){$("#lb").innerHTML=`<div class="msg no">Laden fehlgeschlagen: ${esc(e.message||e)}</div>`;return}
   lehrerZeigen();
-  /* Kopie der Notenliste immer auch in diesem Browser; neue Abschlüsse → einmal am Tag automatisch als Datei */
+  /* Kopie der Notenliste immer auch in diesem Browser (kein automatischer Download mehr) */
   try{localStorage.setItem("if5-notfall",notfallCsv());localStorage.setItem("if5-notfall-zeit",new Date().toISOString())}catch(e){}
-  const nt=lsGet("if5-notfall-tag")||{},n=(lDaten.abschluesse||[]).length;
-  if(db.online&&n>0&&n!==nt.n&&nt.tag!==new Date().toDateString())notfallLaden(true);
 }
 
 /* Halbgruppe: gespeichert, sonst aus den Zeiten der fertigen Stationen erkannt (welche Stunde laut Stundenplan) */
@@ -757,7 +755,7 @@ function lehrerZeigen(){
     <ol>${PFAD().map(st=>`<li><b>${esc(st.titel)}</b> <span class="chip">${KAPITEL_NAME[st.kapitel]||""}</span><br><span class="small">${esc(st.kurz)}</span>${st.klp?`<br><span class="muted small">KLP: ${esc(st.klp)}</span>`:""}</li>`).join("")}</ol>
     <p class="muted small">Ablauf: Jede Station ist eine Doppelstunde (60 Min.). Die Kinder gehen den Lernpfad der Reihe nach, höchstens eine neue Station pro Tag. Der Spielplatz (Bonus-Spiele, ohne Note) öffnet nur mit einem + in der Station von heute.</p></details>
   <p class="muted small" style="margin-top:14px">${!db.online?"<b>Vorschau-Modus:</b> Alles liegt nur in diesem Browser."
-    :db.hatSchluessel()?"<b>Sicherung:</b> Jede fertige Station wird zusätzlich in ein Protokoll geschrieben, das sich nicht löschen lässt. Die Datenbank sichert sich stündlich selbst (60 Tage zurück). Eine Notfall-Datei mit allen Noten wird einmal täglich automatisch heruntergeladen, wenn es neue Noten gibt. Die Namen sehen nur du und dieses Konto. Sie werden mit deinem Passwort verschlüsselt gesichert und sind nach der Anmeldung auf jedem Gerät da. Kinder sehen nur Tiere."+(namenStand==="fehler"?" <b>Die Sicherung hat gerade nicht geklappt.</b>":"")
+    :db.hatSchluessel()?"<b>Sicherung:</b> Jede fertige Station wird zusätzlich in ein Protokoll geschrieben, das sich nicht löschen lässt. Die Datenbank sichert sich stündlich selbst (60 Tage zurück). Eine Kopie aller Noten liegt zusätzlich in diesem Browser; die Notfall-Datei lädst du bei Bedarf mit dem Knopf herunter. Die Namen sehen nur du und dieses Konto. Sie werden mit deinem Passwort verschlüsselt gesichert und sind nach der Anmeldung auf jedem Gerät da. Kinder sehen nur Tiere."+(namenStand==="fehler"?" <b>Die Sicherung hat gerade nicht geklappt.</b>":"")
     :"<b>Melde dich einmal ab und wieder an</b>, dann werden die Namen verschlüsselt bei deinem Konto gesichert. Bis dahin liegen sie nur in diesem Browser."}</p>`;
 
   document.querySelectorAll("[data-kl]").forEach(b=>b.onclick=()=>{lKlasse=b.dataset.kl;lsSet("if5-lklasse",lKlasse);lehrerZeigen()});
