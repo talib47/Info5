@@ -75,7 +75,13 @@ const zeit=ms=>{const m=Math.round((ms||0)/60000);return m<1?"unter 1 Min.":m+" 
 const maxPunkte=st=>st.schritte.reduce((a,s)=>a+(s.punkte||0),0);
 const summe=prog=>Object.values(prog?.punkte||{}).reduce((a,b)=>a+b,0);
 /* Fertige Stationen behalten ihr damaliges Maximum – kommen später Teile dazu, bleibt die alte Note gültig */
-const prozent=(st,prog)=>{const m=prog?.fertig&&prog.erg?.max?prog.erg.max:maxPunkte(st);return m?Math.round(summe(prog)/m*100):100};
+/* Soll: Bewertet wird, was das Kind bearbeitet hat – aber mindestens SOLL_ANTEIL der Station. Was bis zum Soll fehlt, zählt 0.
+   So drückt eine sehr lange Station die Note nicht, Fleiß zählt trotzdem. */
+const SOLL_ANTEIL=0.6;
+const wertMax=(st,prog)=>{const m=prog?.fertig&&prog.erg?.max?prog.erg.max:maxPunkte(st);
+  const bearb=Object.keys(prog?.punkte||{}).reduce((a,k)=>a+(st.schritte[k]?.punkte||0),0);
+  return Math.min(m,Math.max(bearb,Math.ceil(m*SOLL_ANTEIL)))};
+const prozent=(st,prog)=>{const m=wertMax(st,prog);return m?Math.min(100,Math.round(summe(prog)/m*100)):100};
 const ABZEICHEN={"+":"🥇","o":"🥈","−":"🥉"};
 const heuteTag=()=>new Date().toDateString(),tagVon=ms=>new Date(ms).toDateString();
 const PFAD=()=>STATIONEN.filter(s=>!s.spiel),SPIELE=()=>STATIONEN.filter(s=>s.spiel);
@@ -515,13 +521,13 @@ function seiteStation(st){
     daten:prog.daten[i],
     geloest,
     speichern:()=>speichern(),
-    /* Ein falscher Versuch kostet 2 Punkte, aber höchstens die Hälfte der Punkte dieses Teils */
+    /* Ein falscher Versuch kostet 1 Punkt, aber höchstens die Hälfte der Punkte dieses Teils (bis 18.11.2026: 2 Punkte) */
     fehler(){fk[i]=(fk[i]||0)+1;speichern();
       if(fk[i]>=6)hilfeBox(true);else if(fk[i]%3===0)hilfeBox(false);
       /* Raten erkennen: zwei falsche Versuche innerhalb weniger Sekunden → kurze Lese-Pause statt weiterem Raten */
       const jetzt=Date.now();serie=jetzt-letzterFehler<7000?serie+1:1;letzterFehler=jetzt;
       if(serie>=2&&!frei){serie=0;lesePause(15)}},
-    geschafft(p){if(!erledigt(i)){const f=fk[i]||0;p=Math.max(Math.ceil(p/2),p-2*f);
+    geschafft(p){if(!erledigt(i)){const f=fk[i]||0;p=Math.max(Math.ceil(p/2),p-f);
         if(vb){vb.punkte[i]=p;if(p>(prog.punkte[i]||0)){prog.punkte[i]=p;if(prog.skip)delete prog.skip[i]}
           prog.erg={...prog.erg,p:summe(prog),z:zeichenAus(prozent(st,prog))}}
         else prog.punkte[i]=p;
@@ -580,7 +586,7 @@ function seiteErgebnis(st,prog){
   <p class="eyebrow">Ergebnis, ${esc(st.titel)}</p>
   <div class="ergebnis result">
     <div><h1 style="margin:0 0 4px">${ich()}</h1><p class="muted" style="margin:0">${VS?"Vorschau":"Klasse "+esc(sitzung.klasse)}</p>
-      <dl><dt>Punkte</dt><dd>${summe(prog)} von ${prog.fertig&&prog.erg?.max||maxPunkte(st)} (${bw.pz} %)</dd>
+      <dl><dt>Punkte</dt><dd>${summe(prog)} von ${wertMax(st,prog)} (${bw.pz} %)</dd>
       <dt>Fehlversuche</dt><dd>${Object.values(prog.fehler||{}).reduce((a,b)=>a+b,0)}</dd>
       <dt>Gearbeitet</dt><dd>${zeit(prog.aktiv)}</dd>
       <dt>Fertig am</dt><dd>${new Date(prog.fertig).toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</dd></dl></div>
@@ -692,7 +698,7 @@ function notfallCsv(){const d=lDaten;if(!d)return"";
       return[a.note,a.max?noteAus(Math.round(a.punkte*100/a.max)):""]})(),a.punkte,a.max,a.fehlversuche,a.minuten,new Date(a.fertig_am).toLocaleString("de-DE")])});
   d.kinder.forEach(k=>Object.entries(d.staende[k.id]||{}).forEach(([id,p])=>{const st=STATIONEN.find(s=>s.id===id);if(!st||st.spiel)return;
     if(p.fertig&&schon.has(k.id+"|"+id+"|"+p.fertig))return;
-    z.push([k.klasse,namen[k.id]||"",k.tier,st.titel,p.fertig?"fertig":`Teil ${(p.schritt||0)+1} von ${st.schritte.length}`,bewertung(st,p).z,bewertung(st,p).note+(p.lnote?" (Lehrernote)":p.stern?" ⭐":""),summe(p),maxPunkte(st),Object.values(p.fehler||{}).reduce((a,b)=>a+b,0),Math.round((p.aktiv||0)/60000),p.fertig?new Date(p.fertig).toLocaleString("de-DE"):""])}));
+    z.push([k.klasse,namen[k.id]||"",k.tier,st.titel,p.fertig?"fertig":`Teil ${(p.schritt||0)+1} von ${st.schritte.length}`,bewertung(st,p).z,bewertung(st,p).note+(p.lnote?" (Lehrernote)":p.stern?" ⭐":""),summe(p),wertMax(st,p),Object.values(p.fehler||{}).reduce((a,b)=>a+b,0),Math.round((p.aktiv||0)/60000),p.fertig?new Date(p.fertig).toLocaleString("de-DE"):""])}));
   z.sort((a,b)=>String(a[0]+a[1]+a[2]).localeCompare(String(b[0]+b[1]+b[2]),"de"));
   return"\uFEFF"+[kopf,...z].map(r=>r.map(q).join(";")).join("\r\n")}
 function notfallLaden(auto){const csv=notfallCsv();if(!csv)return;

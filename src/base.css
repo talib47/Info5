@@ -312,8 +312,9 @@ ol.reihe li.leer{color:var(--muted);list-style:none;margin-left:-26px;padding:10
 @media (max-width:560px){.paare{gap:8px}.paare .karte{padding:8px 10px;font-size:.875rem}}
 .wahlkarten{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,170px),1fr));gap:8px}
 .wkarte{border:2px solid var(--line);border-radius:var(--r);background:var(--surface);padding:12px;font-weight:600;min-height:58px;text-align:center}
-.wkarte.an{border-color:var(--good);background:var(--good-soft);color:var(--good);box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 25%,transparent)}
-.wkarte.an::before{content:"✔ "}
+/* Ausgewählt ≠ richtig: neutral blau, ohne Haken. Grün gibt es erst nach dem Prüfen. */
+.wkarte.an{border-color:var(--accent)!important;background:var(--tint);color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+.wkarte.an::before{content:"";display:inline-block;width:.6em;height:.6em;border-radius:50%;background:var(--accent);margin-right:.45em;vertical-align:.08em}
 ul.warum{margin:10px 0 0;padding-left:20px;font-weight:500;display:grid;gap:4px}
 
 /* Nachricht / Fehler-Suche */

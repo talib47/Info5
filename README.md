@@ -59,11 +59,11 @@ Eine Datei `src/stationen/NN-name.js` mit `station({...})` (Hilfs-Konstanten in 
 - `schritte`: Liste von Teilen. Am einfachsten mit den fertigen Bausteinen:
   - `src/stationen/00-bausteine.js`: `sortieren`, `reihenfolge`, `paare`, `fehlerSuche`, `entscheidung`, `ordnerPfad`, `eingabe`, `tippen`, `tastenMissionen`, `mausParcours`, `malRoboter` (auch mit Schleifen `3x(R M)`), `info`
   - `src/stationen/00-spezial.js`: `auswaehlen`, `robo` (Labyrinth, Schleifen, `max`, `vorgabe` mit Bug), `binaerTresor`, `caesarRad`, `automat`, `ampelBauen`, `baumFolgen`, `baumBauen`, `kiTrainer`, `kiZeichnen`, `passwortTester`, `pinKnacker`, `zahlRaten`, `waage`, `tauschSortieren`
-- Jeder Teil hat `titel`, `punkte`, optional `merke` (gelber Merkkasten). Eigene Teile: `{titel, punkte, zeige(el, ctx)}`; `ctx.pruefer` (wird von „Weiter“ aufgerufen), `ctx.loesung` (Knopf „🔑 Lösung zeigen“ in der Vorschau), `ctx.geschafft(punkte)`, `ctx.fehler()` (−2 Punkte, höchstens die Hälfte), `ctx.daten` + `ctx.speichern()`.
+- Jeder Teil hat `titel`, `punkte`, optional `merke` (gelber Merkkasten). Eigene Teile: `{titel, punkte, zeige(el, ctx)}`; `ctx.pruefer` (wird von „Weiter“ aufgerufen), `ctx.loesung` (Knopf „🔑 Lösung zeigen“ in der Vorschau), `ctx.geschafft(punkte)`, `ctx.fehler()` (−1 Punkt, höchstens die Hälfte), `ctx.daten` + `ctx.speichern()`.
 - optional `ergebnis(daten)` (HTML für die Ergebniskarte) und `nachErgebnis(daten)`.
 
 Klassenliste jedes Schuljahr oben in `src/app.js` (`KLASSEN`), dazu `STUNDENPLAN` und `FERIEN` anpassen.
 
 ## Bewertung
 
-Wie im Notenbuch: **+** ab 75 % der Punkte, **o** ab 40 %, sonst **−** (Grenzen `PLUS_AB`, `O_AB` in `src/app.js`). Jeder falsche Versuch kostet 2 Punkte (höchstens die Hälfte des Teils). Die Lehrer-Ansicht zeigt unter „Für das Notenbuch · heute“ alle Zeichen des Tages zum Übertragen.
+Wie im Notenbuch: **+** ab 90 % der Punkte, **o** ab 70 %, sonst **−** (Grenzen `PLUS_AB`, `O_AB` in `src/app.js`), dazu Schulnote mit Tendenz. Jeder falsche Versuch kostet 1 Punkt (höchstens die Hälfte des Teils). Bewertet wird, was bearbeitet wurde, mindestens aber 60 % der Station (`SOLL_ANTEIL`); was bis dahin fehlt, zählt 0. Die Lehrer-Ansicht zeigt unter „Für das Notenbuch · heute“ alle Zeichen des Tages zum Übertragen.
