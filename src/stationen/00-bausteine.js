@@ -162,42 +162,66 @@ function luecken({titel,punkte=15,merke,text,saetze,extra=[],art="Merk-Check"}){
 }}}
 
 /* ---------- Die geheime Maschine: EVA zum Ausprobieren ----------
-   maschine({titel,punkte,text,runden:[{f:x=>x*2,regel:"mal 2",falsch:["plus 2","plus 4"]}]})
-   Das Kind gibt Zahlen ein, sieht die Ausgabe und findet heraus, was die Verarbeitung macht. */
+   maschine({titel,punkte,text,runden:[{f:x=>x*2,regel:"mal 2",falsch:["plus 2","plus 4"],probe:10}]})
+   Jede Maschine hat drei Schritte: 1 Ausprobieren (3 Eingaben) · 2 Regel wählen · 3 Probe (Ausgabe vorhersagen).
+   Danach „geknackt“-Karte mit Knopf zur nächsten Maschine, damit der Wechsel nicht wie ein Zurücksetzen wirkt. */
 function maschine({titel,punkte=15,merke,text,runden,wort,art="Ausprobieren"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.r=d.r||0;d.v=d.v||[];
+  const was=wort?"Wort":"Zahl",N=runden.length;
+  const gleich=(R,a,b)=>{a=String(a).trim();b=String(b);if(a===b)return true;const gross=wort&&R.f("ab")==="AB";return !gross&&a.toLowerCase()===b.toLowerCase()};
+  const leiste=()=>`<div class="m-leiste">${runden.map((_,k)=>{const ok=k<d.r||(k===d.r&&d.phase==="geknackt");return`<span class="m-chip${ok?" ok":k===d.r?" jetzt":""}">${ok?"✓ ":""}Maschine ${k+1}</span>`}).join("")}</div>`;
+  const tabelle=(R,leer)=>{const sp=[...d.v,...Array(Math.max(0,3-d.v.length)).fill(null)];
+    return`<table class="liste eva-t"><thead><tr><th>Eingabe</th>${sp.map((x,i)=>x===null?`<td class="leer">${leer?was+" "+(i+1):""}</td>`:`<td>${esc(String(x))}</td>`).join("")}</tr></thead><tbody><tr><th>Ausgabe</th>${sp.map(x=>x===null?`<td class="leer">?</td>`:`<td><b>${esc(String(R.f(x)))}</b></td>`).join("")}</tr></tbody></table>`};
+  const schritt=(n,txt,aus)=>`<p class="frage schritt-t${aus?" aus":""}" style="margin-top:16px"><span class="schritt-n">${n}</span><span>${txt}</span></p>`;
   const zeichne=()=>{
-    if(d.r>=runden.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle ${runden.length} Maschinen durchschaut. Tippe auf „Weiter“.</div>`;return}
-    const R=runden[d.r];if(!d.opt||d.opt.length!==R.falsch.length+1){d.opt=mischen([R.regel,...R.falsch])}
-    const genug=d.v.length>=3,was=wort?"Wort":"Zahl",was3=wort?"3 verschiedene Wörter":"3 verschiedene Zahlen",nr=Math.min(d.v.length+1,3);
-    const spalten=[...d.v,...Array(Math.max(0,3-d.v.length)).fill(null)];
-    el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Maschine ${d.r+1} von ${runden.length}</p>
-      <p class="frage schritt-t"><span class="schritt-n">1</span><span>Tippe nacheinander <b>${was3}</b> ein. Drück nach ${wort?"jedem Wort":"jeder Zahl"} auf <b>Los</b>.</span></p>
+    if(d.r>=N){el.innerHTML=kopfText(text)+leiste()+`<div class="msg ok">Alle ${N} Maschinen geknackt. Tippe auf „Weiter“.</div>`;return}
+    const R=runden[d.r],probe=R.probe??(wort?"haus":10);
+    if(d.phase==="geknackt"){
+      el.innerHTML=kopfText(text)+leiste()+`<div class="m-geknackt"><p class="m-gross">✓ Maschine ${d.r+1} geknackt!</p>
+        <p>Sie ${wort?"":"rechnet "}<b>${R.regel}</b>.</p>${tabelle(R)}
+        ${d.r+1<N?`<p class="muted" style="margin:10px 0 12px">Gleich kommt Maschine ${d.r+2}. Sie macht <b>etwas anderes</b>. Du fängst wieder mit dem Ausprobieren an.</p>
+        <button class="btn" id="mn">Weiter zu Maschine ${d.r+2} →</button>`:`<button class="btn" id="mn" style="margin-top:12px">Fertig</button>`}</div>${MLD}`;
+      el.querySelector("#mn").onclick=()=>{d.r++;d.v=[];d.opt=null;d.phase=null;d.neu=d.r<N;ctx.speichern();zeichne();
+        if(d.r>=N)ctx.geschafft(punkte);else{el.scrollIntoView({block:"start",behavior:"smooth"});el.querySelector("#mz")?.focus()}};
+      return}
+    if(d.phase==="probe"){
+      el.innerHTML=kopfText(text)+leiste()+`<p class="eyebrow" style="margin-top:12px">Maschine ${d.r+1} von ${N}</p>${tabelle(R)}
+        ${schritt("✓",`Richtig: Die Maschine ${wort?"":"rechnet "}<b>${R.regel}</b>.`)}
+        ${schritt(3,`<b>Probe:</b> Was gibt die Maschine aus, wenn du <b>${esc(String(probe))}</b> eingibst? Rechne selbst.`)}
+        <div class="eing" style="margin-top:8px;display:flex;gap:10px;align-items:center"><input type="text" id="mp" ${wort?'spellcheck="false" autocapitalize="off"':'inputmode="numeric"'} maxlength="12" autocomplete="off" placeholder="Ausgabe" style="max-width:200px"><button class="btn" id="mpo">Prüfen</button></div>${MLD}`;
+      const inp=el.querySelector("#mp"),pr=()=>{const v=inp.value.trim();if(!v){meldung(el,false,"Schreib deine Antwort ins Feld.");return}
+        if(gleich(R,v,R.f(probe))){d.phase="geknackt";ctx.speichern();zeichne()}
+        else{ctx.fehler();meldung(el,false,`Noch nicht. Die Maschine ${wort?"":"rechnet "}<b>${R.regel}</b>. Was passiert dann mit <b>${esc(String(probe))}</b>?`);inp.select()}};
+      el.querySelector("#mpo").onclick=pr;inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();pr()}};inp.focus();return}
+    if(!d.opt||d.opt.length!==R.falsch.length+1){d.opt=mischen([R.regel,...R.falsch])}
+    const genug=d.v.length>=3,was3=wort?"3 verschiedene Wörter":"3 verschiedene Zahlen";
+    el.innerHTML=kopfText(text)+leiste()+(d.neu&&!d.v.length?`<div class="msg info m-neu"><b>Neue Maschine!</b> Sie macht etwas anderes als die letzte. Probier wieder aus.</div>`:"")+`<p class="eyebrow" style="margin-top:12px">Maschine ${d.r+1} von ${N}</p>
+      ${schritt(1,`Tippe nacheinander <b>${was3}</b> ein. Drück nach ${wort?"jedem Wort":"jeder Zahl"} auf <b>Los</b>.`)}
       <div class="eva-m"><div class="eva-k"><span>Eingabe</span><input type="text" ${wort?'maxlength="12" autocapitalize="off" spellcheck="false"':'inputmode="numeric" maxlength="3"'} placeholder="${was}" autocomplete="off" id="mz"></div>
         <i>→</i><div class="eva-k mitte"><span>Verarbeitung</span><b class="zahnrad">${sym("chip",34)}</b></div><i>→</i>
-        <div class="eva-k"><span>Ausgabe</span><b id="ma">${d.v.length?R.f(d.v[d.v.length-1]):"…"}</b></div>
+        <div class="eva-k"><span>Ausgabe</span><b id="ma">${d.v.length?esc(String(R.f(d.v[d.v.length-1]))):"…"}</b></div>
         <button class="btn" id="ml">Los</button></div>
-      <table class="liste eva-t"><thead><tr><th>Eingabe</th>${spalten.map((x,i)=>x===null?`<td class="leer">${was} ${i+1}</td>`:`<td>${x}</td>`).join("")}</tr></thead><tbody><tr><th>Ausgabe</th>${spalten.map(x=>x===null?`<td class="leer">?</td>`:`<td><b>${R.f(x)}</b></td>`).join("")}</tr></tbody></table>
-      <p class="frage schritt-t${genug?"":" aus"}" style="margin-top:16px"><span class="schritt-n">2</span><span>Was macht die Maschine mit ${wort?"dem Wort":"der Zahl"}?</span></p>
+      ${tabelle(R,true)}
+      ${schritt(2,`Was macht die Maschine mit ${wort?"dem Wort":"der Zahl"}?`,!genug)}
       ${genug?`<div class="karten">${d.opt.map((o,i)=>`<button class="karte" data-o="${i}">${wort?"Sie":"Sie rechnet"} <b>${o}</b></button>`).join("")}</div>`
-        :`<p class="muted">Noch <b>${3-d.v.length}</b> ${3-d.v.length===1?(wort?"Wort":"Zahl"):(wort?"Wörter":"Zahlen")} eintippen, dann geht es hier weiter.</p>`}${MLD}`;
+        :`<p class="muted">Noch <b>${3-d.v.length}</b> ${3-d.v.length===1?was:(wort?"Wörter":"Zahlen")} eintippen, dann geht es hier weiter.</p>`}
+      ${schritt(3,"Probe",true)}${MLD}`;
     const inp=el.querySelector("#mz"),los=()=>{const x=wort?inp.value.trim():parseInt(inp.value,10);
       if(wort?!/^[a-zäöüßA-ZÄÖÜ]{2,12}$/.test(x):(isNaN(x)||x<0||x>999)){meldung(el,false,wort?"Tippe ein Wort ins Feld <b>Eingabe</b>. Nur Buchstaben.":"Tippe eine Zahl von 0 bis 999 ins Feld <b>Eingabe</b>.");inp.focus();return}
       if(d.v.includes(x)&&d.v.length<3){inp.value="";meldung(el,false,`<b>${esc(String(x))}</b> hattest du schon. Nimm ${wort?"ein anderes Wort":"eine andere Zahl"}.`);inp.focus();return}
       if(!d.v.includes(x))d.v.push(x);else{d.v=d.v.filter(y=>y!==x);d.v.push(x)}
-      if(d.v.length>8)d.v.shift();ctx.speichern();zeichne();
-      if(d.v.length<3)meldung(el,true,`Gut! Jetzt ${wort?"Wort":"Zahl"} ${d.v.length+1}: Tippe ${wort?"ein anderes Wort":"eine andere Zahl"} ein.`);
+      if(d.v.length>8)d.v.shift();d.neu=false;ctx.speichern();zeichne();
+      if(d.v.length<3)meldung(el,true,`Gut! Jetzt ${was} ${d.v.length+1}: Tippe ${wort?"ein anderes Wort":"eine andere Zahl"} ein.`);
       else if(d.v.length===3)meldung(el,true,"Super, 3 geschafft! Schau in die Tabelle und wähle bei Schritt 2.");
       el.querySelector("#mz").focus()};
     el.querySelector("#ml").onclick=los;inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();los()}};
     el.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{
-      if(d.opt[+b.dataset.o]===R.regel){d.r++;d.v=[];d.opt=null;ctx.speichern();zeichne();
-        if(d.r>=runden.length)ctx.geschafft(punkte);else meldung(el,true,`Richtig: Die Maschine ${wort?"":"rechnete "}<b>${R.regel}</b>. Hier kommt die nächste.`)}
+      if(d.opt[+b.dataset.o]===R.regel){d.phase="probe";ctx.speichern();zeichne()}
       else{ctx.fehler();b.classList.add("falsch");meldung(el,false,wort?"Das passt nicht zu allen Wörtern. Schau in die Tabelle und probier noch ein Wort aus.":"Das passt nicht zu allen Zahlen. Schau in die Tabelle und probier noch eine Zahl aus.")}});
   };
   zeichne();
-  ctx.pruefer=()=>{if(d.r>=runden.length){ctx.geschafft(punkte);return true}meldung(el,false,"Finde zuerst bei allen Maschinen heraus, was sie rechnen.");return false};
-  ctx.loesung=()=>{d.r=runden.length;zeichne()};
+  ctx.pruefer=()=>{if(d.r>=N){ctx.geschafft(punkte);return true}meldung(el,false,d.phase==="geknackt"?`Tippe auf „Weiter zu Maschine ${d.r+2}“.`:"Knacke zuerst alle Maschinen.");return false};
+  ctx.loesung=()=>{d.r=N;zeichne()};
 }}}
 
 
