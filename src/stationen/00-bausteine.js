@@ -169,20 +169,26 @@ function maschine({titel,punkte=15,merke,text,runden,wort,art="Ausprobieren"}){r
   const zeichne=()=>{
     if(d.r>=runden.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle ${runden.length} Maschinen durchschaut. Tippe auf „Weiter“.</div>`;return}
     const R=runden[d.r];if(!d.opt||d.opt.length!==R.falsch.length+1){d.opt=mischen([R.regel,...R.falsch])}
-    const genug=d.v.length>=3;
+    const genug=d.v.length>=3,was=wort?"Wort":"Zahl",was3=wort?"3 verschiedene Wörter":"3 verschiedene Zahlen",nr=Math.min(d.v.length+1,3);
+    const spalten=[...d.v,...Array(Math.max(0,3-d.v.length)).fill(null)];
     el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Maschine ${d.r+1} von ${runden.length}</p>
-      <div class="eva-m"><div class="eva-k"><span>Eingabe</span><input type="text" ${wort?'maxlength="12" autocapitalize="off" spellcheck="false" placeholder="Wort"':'inputmode="numeric" maxlength="3" placeholder="Zahl"'} autocomplete="off" id="mz"></div>
+      <p class="frage schritt-t"><span class="schritt-n">1</span><span>Tippe nacheinander <b>${was3}</b> ein. Drück nach ${wort?"jedem Wort":"jeder Zahl"} auf <b>Los</b>.</span></p>
+      <div class="eva-m"><div class="eva-k"><span>Eingabe</span><input type="text" ${wort?'maxlength="12" autocapitalize="off" spellcheck="false"':'inputmode="numeric" maxlength="3"'} placeholder="${was}" autocomplete="off" id="mz"></div>
         <i>→</i><div class="eva-k mitte"><span>Verarbeitung</span><b class="zahnrad">${sym("chip",34)}</b></div><i>→</i>
         <div class="eva-k"><span>Ausgabe</span><b id="ma">${d.v.length?R.f(d.v[d.v.length-1]):"…"}</b></div>
         <button class="btn" id="ml">Los</button></div>
-      ${d.v.length?`<table class="liste eva-t"><thead><tr><th>Eingabe</th>${d.v.map(x=>`<td>${x}</td>`).join("")}</tr></thead><tbody><tr><th>Ausgabe</th>${d.v.map(x=>`<td><b>${R.f(x)}</b></td>`).join("")}</tr></tbody></table>`:""}
-      <p class="frage" style="margin-top:16px">Was macht die Maschine mit ${wort?"dem Wort":"der Zahl"}?</p>
+      <table class="liste eva-t"><thead><tr><th>Eingabe</th>${spalten.map((x,i)=>x===null?`<td class="leer">${was} ${i+1}</td>`:`<td>${x}</td>`).join("")}</tr></thead><tbody><tr><th>Ausgabe</th>${spalten.map(x=>x===null?`<td class="leer">?</td>`:`<td><b>${R.f(x)}</b></td>`).join("")}</tr></tbody></table>
+      <p class="frage schritt-t${genug?"":" aus"}" style="margin-top:16px"><span class="schritt-n">2</span><span>Was macht die Maschine mit ${wort?"dem Wort":"der Zahl"}?</span></p>
       ${genug?`<div class="karten">${d.opt.map((o,i)=>`<button class="karte" data-o="${i}">${wort?"Sie":"Sie rechnet"} <b>${o}</b></button>`).join("")}</div>`
-        :`<p class="muted">Probier zuerst <b>${3-d.v.length}</b> ${wort?(d.v.length===2?"weiteres Wort":d.v.length?"weitere Wörter":"verschiedene Wörter"):(d.v.length===2?"weitere Zahl":d.v.length?"weitere Zahlen":"verschiedene Zahlen")} aus. Dann kannst du antworten.</p>`}${MLD}`;
+        :`<p class="muted">Noch <b>${3-d.v.length}</b> ${3-d.v.length===1?(wort?"Wort":"Zahl"):(wort?"Wörter":"Zahlen")} eintippen, dann geht es hier weiter.</p>`}${MLD}`;
     const inp=el.querySelector("#mz"),los=()=>{const x=wort?inp.value.trim():parseInt(inp.value,10);
       if(wort?!/^[a-zäöüßA-ZÄÖÜ]{2,12}$/.test(x):(isNaN(x)||x<0||x>999)){meldung(el,false,wort?"Tippe ein Wort ins Feld <b>Eingabe</b>. Nur Buchstaben.":"Tippe eine Zahl von 0 bis 999 ins Feld <b>Eingabe</b>.");inp.focus();return}
+      if(d.v.includes(x)&&d.v.length<3){inp.value="";meldung(el,false,`<b>${esc(String(x))}</b> hattest du schon. Nimm ${wort?"ein anderes Wort":"eine andere Zahl"}.`);inp.focus();return}
       if(!d.v.includes(x))d.v.push(x);else{d.v=d.v.filter(y=>y!==x);d.v.push(x)}
-      if(d.v.length>8)d.v.shift();ctx.speichern();zeichne();el.querySelector("#mz").focus()};
+      if(d.v.length>8)d.v.shift();ctx.speichern();zeichne();
+      if(d.v.length<3)meldung(el,true,`Gut! Jetzt ${wort?"Wort":"Zahl"} ${d.v.length+1}: Tippe ${wort?"ein anderes Wort":"eine andere Zahl"} ein.`);
+      else if(d.v.length===3)meldung(el,true,"Super, 3 geschafft! Schau in die Tabelle und wähle bei Schritt 2.");
+      el.querySelector("#mz").focus()};
     el.querySelector("#ml").onclick=los;inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();los()}};
     el.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{
       if(d.opt[+b.dataset.o]===R.regel){d.r++;d.v=[];d.opt=null;ctx.speichern();zeichne();
@@ -197,16 +203,20 @@ function maschine({titel,punkte=15,merke,text,runden,wort,art="Ausprobieren"}){r
 
 /* ---------- Was bin ich? Rätsel mit Hinweisen, die man nach und nach aufdeckt (auf dunkler Tafel) ----------
    raetsel({titel,punkte,text,runden:[{hinweise:["…","…","…"],antwort:["Maus"]}]})  Mehr Hinweise kosten nichts, nur falsche Antworten. */
-function raetsel({titel,punkte=10,merke,text,runden,art="Rätsel"}){return{titel,punkte,merke,art,zeige(el,ctx){
+function raetsel({titel,punkte=10,merke,text,runden,wahl=[],art="Rätsel"}){return{titel,punkte,merke,art,zeige(el,ctx){
   const d=ctx.daten;d.r=d.r||0;d.h=d.h||1;
   const norm=v=>String(v||"").trim().toLowerCase().replace(/^(der|die|das|eine?)\s+/,"").replace(/[\s+-]+/g,"");
+  const woerter=[...runden.map(r=>r.antwort[0]),...wahl].sort((a,b)=>a.localeCompare(b,"de"));
   const zeichne=()=>{
     if(d.r>=runden.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle ${runden.length} Rätsel gelöst. Tippe auf „Weiter“.</div>`;return}
     const R=runden[d.r],n=Math.min(d.h,R.hinweise.length);
     el.innerHTML=kopfText(text)+`<div class="tafel"><p class="eyebrow">Rätsel ${d.r+1} von ${runden.length}</p>
       <ol class="hinweise">${R.hinweise.slice(0,n).map(h=>`<li>${h}</li>`).join("")}</ol>
       ${n<R.hinweise.length?`<button class="btn ghost" id="mehr">Noch ein Hinweis</button>`:""}
-      <div class="eing" style="margin-top:14px"><input type="text" id="ra" placeholder="Was bin ich?" autocomplete="off" spellcheck="false" maxlength="30" value="${esc(d.v||"")}"></div></div>${MLD}`;
+      <div class="eing" style="margin-top:14px"><input type="text" id="ra" placeholder="Was bin ich?" autocomplete="off" spellcheck="false" maxlength="30" value="${esc(d.v||"")}"></div></div>
+      <p class="muted small" style="margin:14px 0 6px">Du kannst auch ein Wort antippen. Dann auf „Weiter“.</p>
+      <div class="karten">${woerter.map(w=>{const fertig=runden.slice(0,d.r).some(r=>r.antwort[0]===w);return`<button class="karte${d.v===w?" an":""}" data-w="${esc(w)}" ${fertig?"disabled style='opacity:.35;text-decoration:line-through'":""}>${esc(w)}</button>`}).join("")}</div>${MLD}`;
+    el.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{d.v=b.dataset.w;ctx.speichern();zeichne()});
     const m=el.querySelector("#mehr");if(m)m.onclick=()=>{d.h++;ctx.speichern();zeichne()};
     const inp=el.querySelector("#ra");inp.oninput=()=>{d.v=inp.value;ctx.speichern()};
     inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();document.getElementById("weiter")?.click()}};
