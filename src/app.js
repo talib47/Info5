@@ -94,13 +94,16 @@ function status(st){
   const s=meineStaende(),p=s[st.id];
   if(p?.fertig)return"fertig";
   if(VS||st.spiel)return"offen";
-  const pfad=PFAD(),i=pfad.indexOf(st);if(i<=0)return!p&&stoppZeit()?"schluss":"offen";
+  const pfad=PFAD(),i=pfad.indexOf(st),rg=regelVon(sitzung?.klasse),schalter=(rg.stationen||{})[st.id];
+  if(i<=0)return!p&&stoppZeit()?"schluss":!p&&schalter===false?"morgen":"offen";
   const vor=s[pfad[i-1].id];
   if(!vor?.fertig)return"zu";
   if(!p&&stoppZeit())return"schluss";
   if(p)return"offen";
-  /* Ab hier nur noch NEUE Stationen (fertige und angefangene sind oben schon entschieden). Regel der Klasse: */
-  const rg=regelVon(sitzung?.klasse);
+  /* Ab hier nur noch NEUE Stationen (fertige und angefangene sind oben schon entschieden).
+     Schalter der Lehrkraft (klassen.stationen) gehen vor: true = offen, false = zu. Sonst gilt die Regel der Klasse. */
+  if(schalter===false)return"morgen";
+  if(schalter===true)return"offen";
   /* wochenweise: Station öffnet ab dem Montag ihrer Schulwoche (Station 1 in der Startwoche). Wer gefehlt hat, holt nach. */
   if(rg.modus==="woche"){const ab=stAb(rg.start)[i];if(ab&&ab>isoTag(new Date()))return"morgen"}
   /* eine pro Tag: Wer eine angefangene Station von einem früheren Tag heute erst fertig macht, darf heute noch die nächste beginnen. */
@@ -233,7 +236,7 @@ function planAnwenden(p){if(!p||!Array.isArray(p.klassen)||!Array.isArray(p.plan
   const alt=JSON.stringify([KLASSEN,STUNDENPLAN,REGELN]);
   KLASSEN=p.klassen.map(k=>k.klasse).sort((a,b)=>a.localeCompare(b,"de",{numeric:true}));
   STUNDENPLAN=p.plan.map(x=>({klasse:x.klasse,tag:+x.tag,von:String(x.von).slice(0,5),min:+x.min,gruppe:x.gruppe==null?0:+x.gruppe}));
-  REGELN={};p.klassen.forEach(k=>REGELN[k.klasse]={modus:k.modus,start:k.start||null});
+  REGELN={};p.klassen.forEach(k=>REGELN[k.klasse]={modus:k.modus,start:k.start||null,stationen:k.stationen||{}});
   return JSON.stringify([KLASSEN,STUNDENPLAN,REGELN])!==alt}
 planAnwenden(lsGet("if5-plan"));
 async function planLaden(){
@@ -479,6 +482,7 @@ function seiteStart(){
   /* Oben steht genau eine Sache: die Station von heute – oder, wenn sie geschafft ist, der Spielplatz als Belohnung */
   const heute=VS?"":!akt?`<div class="heute-karte">${pix("pixel",56,"blau")}<div><p class="eyebrow">Alles geschafft</p><h2>Du hast alle ${pfad.length} Stationen geschafft.</h2><p class="muted">Starke Leistung. Der Spielplatz gehört dir.</p></div></div>`
     :stAkt==="schluss"?`<div class="heute-karte">${pix(akt.id,56)}<div><p class="eyebrow">Gleich ist Schluss</p><h2>Die Stunde ist gleich vorbei.</h2><p class="muted">${spOffen?"Du hast heute ein + geschafft und darfst spielen. ":""}Nächste Stunde geht es weiter mit „${esc(akt.titel)}“.</p></div></div>`
+    :stAkt==="morgen"&&!heuteFertig().length?`<div class="heute-karte">${pix(akt.id,56)}<div><p class="eyebrow">Gleich geht es weiter</p><h2>Deine nächste Station ist noch zu.</h2><p class="muted">„${esc(akt.titel)}“ öffnet bald. Wenn du willst, kannst du eine fertige Station unten im Lernpfad verbessern.</p></div></div>`
     :stAkt==="morgen"?`<div class="heute-karte">${pix(akt.id,56)}<div><p class="eyebrow">Für heute fertig</p><h2>Deine Station ist geschafft.</h2><p class="muted">${spOffen?"Du hast ein + geschafft und darfst spielen.":plusHeute()?kartenHinweis():stoppZeit()?"Die Stunde ist gleich vorbei.":"Für den Spielplatz brauchst du ein +. Du kannst deine Station verbessern: Tippe sie unten im Lernpfad an."} Nächste Stunde geht es weiter mit „${esc(akt.titel)}“</p></div></div>`
     :`<button class="heute-karte" data-id="${akt.id}">${pix(akt.id,56,"blau")}<div><p class="eyebrow">${s[akt.id]?"Hier machst du weiter":"Deine Station heute"}</p><h2>${esc(akt.titel)}</h2><p class="muted">${esc(akt.kurz)}</p></div><span class="btn">${s[akt.id]?"Weitermachen":"Anfangen"}</span></button>`;
   const spielplatz=VS?`<h2 style="margin:28px 0 6px">Spielplatz</h2><p class="muted">Bonus-Spiele ohne Note. Kinder sehen sie erst, wenn die Station von heute geschafft ist.</p><div class="spielplatz">${spielListe}</div>`
@@ -790,39 +794,29 @@ function gruppeVon(k){if(k.gruppe)return{g:k.gruppe,erkannt:false};
     STUNDENPLAN.filter(s=>s.klasse===k.klasse&&s.tag===tag).forEach(s=>{const [h,mi]=s.von.split(":").map(Number),v=h*60+mi;if(m>=v-PUFFER&&m<=v+s.min+30)z[s.gruppe]++})});
   return z[1]>z[2]?{g:1,erkannt:true}:z[2]>z[1]?{g:2,erkannt:true}:{g:0,erkannt:false}}
 
-/* „Stationen öffnen“: Regel pro Klasse. Ungespeicherte Auswahl bleibt beim automatischen Neuladen erhalten (rEntwurf). */
-const rEntwurf={};
+/* „Stationen“: Jede Schulwoche öffnet automatisch eine neue Station (Regel der Klasse).
+   Mit dem Schalter öffnet oder schließt die Lehrkraft eine Station sofort (klassen.stationen: {id: true|false}).
+   Stimmt der Schalter wieder mit „automatisch“ überein, wird der Eintrag gelöscht. */
 const datumDE=iso=>{const [y,m,d]=iso.split("-");return`${d}.${m}.${y}`};
-const regelDerKlasse=kl=>{const r=(lDaten?.regeln||{})[kl];return regelOk(r)?r:STANDARD_REGEL};
-function regelText(r){const heute=isoTag(new Date()),n=PFAD().length;
-  if(r.modus==="frei")return`Alle ${n} Stationen sind offen. Die Kinder gehen sie der Reihe nach.`;
-  if(r.modus==="tag")return"Jedes Kind kann pro Tag höchstens eine neue Station beginnen, der Reihe nach.";
-  const ab=stAb(r.start),offen=ab.filter(a=>a<=heute).length,naechst=ab[offen];
-  return`${offen?`Offen: Station 1${offen>1?"–"+offen:""}.`:"Noch keine Station offen."}${naechst?` Station ${offen+1} öffnet am ${datumDE(naechst)}.`:""} Plan: ${ab.slice(0,8).map((a,i)=>`Nr. ${i+1} am ${datumDE(a).slice(0,6)}`).join(" · ")}${ab.length>8?" …":""}`}
-function regelBox(kl){const g=regelDerKlasse(kl),e=rEntwurf[kl]||g,gespeichert=regelOk((lDaten?.regeln||{})[kl]),geaendert=!gespeichert||JSON.stringify(e)!==JSON.stringify(g);
-  const start=e.start||g.start||ST_START;
-  return`<div class="block noprint regel-box">
-    <h2 style="margin:0">Stationen öffnen <span class="muted small">· ${esc(kl)}</span></h2>
-    <p class="muted small" style="margin:2px 0 10px">Gilt nur für ${esc(kl)}. Fertige und angefangene Stationen und alle Noten bleiben, wie sie sind.</p>
-    <div class="regel-wahl">
-      <label class="regel-opt"><input type="radio" name="rmodus" value="woche" ${e.modus==="woche"?"checked":""}> wochenweise ab Startwoche <input type="date" id="rstart" value="${esc(start)}" ${e.modus==="woche"?"":"disabled"}></label>
-      <label class="regel-opt"><input type="radio" name="rmodus" value="frei" ${e.modus==="frei"?"checked":""}> alle frei</label>
-      <label class="regel-opt"><input type="radio" name="rmodus" value="tag" ${e.modus==="tag"?"checked":""}> eine pro Tag</label>
-    </div>
-    <p class="small" style="margin:10px 0 0">${esc(regelText({...e,start}))}</p>
-    <div class="row" style="margin-top:10px"><button class="btn" id="rsave" ${geaendert?"":"disabled"}>Speichern</button>${!geaendert?`<span class="muted small">Gespeichert.</span>`:`${rEntwurf[kl]?`<button class="btn ghost" id="rweg">Verwerfen</button>`:""}<span class="small"><b>Noch nicht gespeichert.</b> Gerade gilt${gespeichert?"":" (Standard)"}: ${g.modus==="woche"?"wochenweise ab "+datumDE(g.start):esc(MODI[g.modus])}.</span>`}</div>
-  </div>`}
-function regelBoxAktiv(kl){
-  const neu=()=>{const m=document.querySelector('input[name="rmodus"]:checked')?.value||"woche",d=$("#rstart").value;
-    const g=regelDerKlasse(kl),start=d?montagVon(d):(g.start||ST_START);
-    rEntwurf[kl]=m==="woche"?{modus:m,start}:{modus:m,start:g.start||start};
-    if(JSON.stringify(rEntwurf[kl])===JSON.stringify(g))delete rEntwurf[kl];
-    const box=document.querySelector(".regel-box");box.outerHTML=regelBox(kl);regelBoxAktiv(kl)};
-  document.querySelectorAll('input[name="rmodus"]').forEach(i=>i.onchange=neu);
-  $("#rstart").onchange=neu;
-  if($("#rweg"))$("#rweg").onclick=()=>{delete rEntwurf[kl];lehrerZeigen()};
-  $("#rsave").onclick=()=>{const r=rEntwurf[kl]||regelDerKlasse(kl);
-    lAktion(async()=>{await db.lRegel(kl,r);delete rEntwurf[kl];toast(`${kl}: ${r.modus==="woche"?"wochenweise ab "+datumDE(r.start):MODI[r.modus]}`)})}}
+const regelDerKlasse=kl=>{const r=(lDaten?.regeln||{})[kl];return regelOk(r)?{...r,stationen:r.stationen||{}}:{...STANDARD_REGEL,stationen:{}}};
+function stationenStand(kl){const r=regelDerKlasse(kl),heute=isoTag(new Date()),ab=r.modus==="woche"?stAb(r.start):[];
+  return PFAD().map((st,i)=>{const auto=r.modus!=="woche"||(i===0)||!ab[i]||ab[i]<=heute,ov=r.stationen[st.id],offen=ov===undefined?auto:ov;
+    const info=ov===true&&!auto?`von dir geöffnet (sonst ab ${datumDE(ab[i]).slice(0,6)})`:ov===false?"von dir geschlossen"
+      :auto?(r.modus==="woche"&&ab[i]&&i>0?`offen seit ${datumDE(ab[i]).slice(0,6)}`:"offen"):`öffnet am ${datumDE(ab[i]).slice(0,6)}`;
+    return{st,i,auto,ov,offen,info}})}
+function stationenBox(kl){const z=stationenStand(kl),n=z.filter(x=>x.offen).length,nae=z.find(x=>!x.offen&&x.ov===undefined);
+  return`<details class="block noprint st-box" id="stbox" ${lsGet("if5-stbox")?"open":""}><summary><b>Stationen</b> <span class="muted small">· ${n} von ${z.length} offen${nae?` · nächste öffnet am ${esc(nae.info.replace("öffnet am ",""))}`:""}</span></summary>
+    <p class="muted small" style="margin:10px 0 12px">Jede Schulwoche öffnet automatisch eine neue Station. Mit dem Schalter öffnest oder schließt du eine Station sofort. Was Kinder schon angefangen oder fertig haben, bleibt.</p>
+    <ol class="st-liste">${z.map(x=>`<li class="st-zeile${x.ov!==undefined?" hand":""}"><span class="nr">${x.i+1}</span>${pix(x.st.id,24)}<span class="st-t"><b>${esc(x.st.titel)}</b><small>${esc(x.info)}${x.ov!==undefined?` · <button class="link" data-auto="${x.st.id}">zurücksetzen</button>`:""}</small></span>
+      <button class="schalter" role="switch" aria-checked="${x.offen}" aria-label="${esc(x.st.titel)} ${x.offen?"schließen":"öffnen"}" data-st="${x.st.id}"><span></span></button></li>`).join("")}</ol></details>`}
+function stationenBoxAktiv(kl){
+  const box=$("#stbox");if(!box)return;box.ontoggle=()=>lsSet("if5-stbox",box.open);
+  const speichern=async(neu,text)=>{box.querySelectorAll("button").forEach(b=>b.disabled=true);
+    try{await db.lStationen(kl,neu);toast(text)}catch(e){toast("Hat nicht geklappt: "+(e.message||e))}await lehrerLaden()};
+  box.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{const x=stationenStand(kl).find(y=>y.st.id===b.dataset.st),neu={...regelDerKlasse(kl).stationen};
+    const ziel=!x.offen;if(ziel===x.auto)delete neu[x.st.id];else neu[x.st.id]=ziel;
+    speichern(neu,`${x.st.titel}: ${ziel?"offen":"zu"}`)});
+  box.querySelectorAll("[data-auto]").forEach(b=>b.onclick=()=>{const neu={...regelDerKlasse(kl).stationen};delete neu[b.dataset.auto];speichern(neu,"Wieder wie geplant")})}
 
 /* ---------- Klasse anlegen / Unterricht ändern ----------
    Die Lehrkraft gibt nur Tag, Beginn und Dauer ein. Anmelden ab PUFFER Minuten vorher und Stopp STOPP_MIN Minuten vor Ende rechnet die App selbst. */
@@ -849,17 +843,12 @@ function klasseDialog(kl){
     <div id="kstunden">${stunden.map(zeile).join("")}</div>
     <button class="link" id="kplus" style="margin-top:6px">+ weitere Stunde</button>
     <p class="muted small" style="margin:8px 0 0">Die Kinder können sich ${PUFFER} Minuten vor Beginn anmelden. ${STOPP_MIN} Minuten vor Ende stoppt die Station automatisch. Ferien rechnet die App selbst heraus.</p>
-    ${neu?`<p style="margin:16px 0 6px"><b>Wie öffnen die Stationen?</b></p>
-    <div class="regel-wahl">
-      <label class="regel-opt"><input type="radio" name="kmodus" value="woche" ${r.modus==="woche"?"checked":""}> wochenweise ab Startwoche <input type="date" id="kstart" value="${esc(r.start||"")}" ${r.modus==="woche"?"":"disabled"}></label>
-      <label class="regel-opt"><input type="radio" name="kmodus" value="frei" ${r.modus==="frei"?"checked":""}> alle frei</label>
-      <label class="regel-opt"><input type="radio" name="kmodus" value="tag" ${r.modus==="tag"?"checked":""}> eine pro Tag</label></div>`:""}
+    ${neu?`<p class="muted small" style="margin:14px 0 0">Die Stationen öffnen automatisch, ab dieser Woche eine pro Schulwoche. Einzelne Stationen kannst du später selbst öffnen oder schließen.</p>`:""}
     ${fehler?`<div class="msg no" style="margin-top:12px">${esc(fehler)}</div>`:""}
     <div class="row" style="margin-top:18px;justify-content:flex-end"><button class="btn ghost" id="kzu">Abbrechen</button><button class="btn" id="kok">${neu?"Klasse anlegen":"Speichern"}</button></div>`;
     const lesen=()=>{if(!geteilt)stunden.forEach(x=>x.gruppe=0);dlg.querySelectorAll(".kstd").forEach(z=>{const x=stunden[+z.dataset.i];z.querySelectorAll("[data-f]").forEach(f=>{const v=f.value;x[f.dataset.f]=f.dataset.f==="von"?v:+v})});
-      if(neu){dlg.dataset.name=$("#kname").value;r.modus=dlg.querySelector('input[name="kmodus"]:checked').value;r.start=$("#kstart").value?montagVon($("#kstart").value):r.start}};
+      if(neu)dlg.dataset.name=$("#kname").value};
     $("#kgeteilt").onchange=()=>{lesen();geteilt=$("#kgeteilt").checked;stunden.forEach((x,i)=>x.gruppe=geteilt?(i%2?2:1):0);zeigen()};
-    if(neu)dlg.querySelectorAll('input[name="kmodus"]').forEach(i=>i.onchange=()=>{lesen();zeigen()});
     $("#kplus").onclick=()=>{lesen();const l=stunden[stunden.length-1];stunden.push({...l,gruppe:geteilt?(l.gruppe===1?2:1):0});zeigen()};
     dlg.querySelectorAll("[data-weg]").forEach(b=>b.onclick=()=>{lesen();stunden.splice(+b.dataset.weg,1);zeigen()});
     $("#kzu").onclick=()=>{dlg.close();delete dlg.dataset.name;lehrerZeigen()};
@@ -875,7 +864,6 @@ function klasseDialog(kl){
         for(let y=x+1;y<stunden.length;y++)if(ueber(a,stunden[y]))return zeigen(`Zwei Stunden am ${TAGNAME[a.tag]} überschneiden sich (${a.von} und ${stunden[y].von}).`);
         const b=STUNDENPLAN.find(o=>o.klasse!==name&&ueber(a,o));
         if(b)return zeigen(`${TAGNAME[a.tag]} ${a.von} überschneidet sich mit deiner Klasse ${b.klasse} (${b.von}–${uhr(hm(b.von)+b.min)}).`)}
-      if(neu&&r.modus==="woche"&&!r.start)return zeigen("Bitte die Startwoche eingeben.");
       $("#kok").disabled=true;
       let erg;try{erg=await db.lKlasseSpeichern(name,{modus:r.modus,start:r.start,stunden},neu)}catch(e){return zeigen("Das hat nicht geklappt: "+(e.message||e))}
       if(erg?.fehler==="vergeben")return zeigen(`Die Klasse ${name} gibt es schon. Wenn sie einer anderen Lehrkraft gehört, sprecht euch ab.`);
@@ -884,7 +872,7 @@ function klasseDialog(kl){
   delete dlg.dataset.name;zeigen();dlg.showModal()}
 
 function lehrerZeigen(){
-  if(!lKlasse){$("#lb").innerHTML=`<div class="block"><h2 style="margin-top:0">Willkommen!</h2><p>Du hast noch keine Klasse. Leg deine erste Klasse an: Name, wann Unterricht ist, fertig.</p><button class="btn" id="kneu">+ Klasse anlegen</button></div>`;$("#kneu").onclick=()=>klasseDialog(null);return}
+  if(!lKlasse){$("#lb").innerHTML=`<div class="block"><h2 style="margin-top:0">Willkommen!</h2><p>Du hast noch keine Klasse. Leg deine erste Klasse an: Name, wann Unterricht ist, fertig.</p><button class="btn" id="kneu">Neue Klasse anlegen</button></div>`;$("#kneu").onclick=()=>klasseDialog(null);return}
   const d=lDaten,kl=lKlasse;
   const kinder=d.kinder.filter(k=>k.klasse===kl);
   const fg=d.freigaben[kl]||{},nun=Date.now();
@@ -904,13 +892,13 @@ function lehrerZeigen(){
       <td class="small">${(()=>{const lk=(s.lernzeit||{}).karten||{},ab=Object.keys(lk).filter(n=>lk[n].am).sort();return ab.length?ab.map(n=>`<span class="lz-chip" title="abgegeben am ${new Date(lk[n].am).toLocaleDateString("de-DE")}">${n}</span>`).join(" "):`<span class="muted">–</span>`})()}</td>
       <td><button class="link" data-a="mehr" data-id="${k.id}" aria-label="Mehr">⋯</button></td></tr>`};
   $("#lb").innerHTML=`
-  <div class="tabs noprint">${KLASSEN.map(k=>`<button class="${k===kl?"an":""}" data-kl="${esc(k)}">${esc(k)} <span class="muted small">${d.kinder.filter(x=>x.klasse===k).length}</span></button>`).join("")}<button class="tab-neu" id="kneu" title="Neue Klasse anlegen">+ Klasse</button></div>
+  <div class="tabs noprint">${KLASSEN.map(k=>`<button class="${k===kl?"an":""}" data-kl="${esc(k)}">${esc(k)} <span class="muted small">${d.kinder.filter(x=>x.klasse===k).length}</span></button>`).join("")}<button class="btn-rand" id="kneu"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Neue Klasse</button></div>
   <div class="block frei-box ${offen?"offen":""}">
     <div><h2 style="margin:0">${offen?`${kl} ist offen`:`${kl} ist zu`}</h2><p class="muted small" style="margin:2px 0 0">${esc(info)}</p>
       <p class="small" style="margin:6px 0 0">Unterricht: ${esc(unterrichtText(kl))} <button class="link" id="kaendern">ändern</button></p></div>
     <div class="row">${hand?`<button class="btn ghost" id="plan">Wieder nach Stundenplan</button>`:""}<button class="btn" id="frei">${offen?"Jetzt schließen":`Jetzt öffnen (${FREIGABE_MIN} Min.)`}</button></div>
   </div>
-  ${regelBox(kl)}
+  ${stationenBox(kl)}
   ${(()=>{const heute=new Date().toDateString(),zeilen=[];
     kinder.forEach(k=>{const t=tierInfo(k.tier),s=d.staende[k.id]||{};
       PFAD().forEach(st=>{const p=s[st.id];if(!p)return;
@@ -959,7 +947,7 @@ function lehrerZeigen(){
   document.querySelectorAll("[data-kl]").forEach(b=>b.onclick=()=>{lKlasse=b.dataset.kl;lsSet("if5-lklasse",lKlasse);lehrerZeigen()});
   $("#frei").onclick=()=>lAktion(()=>db.lFreigabe(kl,offen?{zu_bis:Date.now()+FREIGABE_MIN*60000}:{offen_bis:Date.now()+FREIGABE_MIN*60000}));
   if($("#plan"))$("#plan").onclick=()=>lAktion(()=>db.lFreigabe(kl,{}));
-  regelBoxAktiv(kl);
+  stationenBoxAktiv(kl);
   $("#kneu").onclick=()=>klasseDialog(null);$("#kaendern").onclick=()=>klasseDialog(kl);
   document.querySelectorAll(".vn").forEach(i=>{i.oninput=()=>{const v=i.value.trim();if(v)namen[i.dataset.id]=v;else delete namen[i.dataset.id];namenMerken()};i.onchange=()=>lehrerZeigen()});
   document.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{const id=b.dataset.id,a=b.dataset.a;

@@ -144,10 +144,10 @@ const db={
   },
   async lAlles(){
     if(CLOUD){
-      const [k,s,f,a,rg]=await Promise.all([sb.from("kinder").select("*").order("erstellt"),sb.from("staende").select("kind_id,station,prog"),sb.from("freigaben").select("*"),sb.from("abschluesse").select("*").order("fertig_am"),sb.from("klassen").select("klasse,modus,start")]);
+      const [k,s,f,a,rg]=await Promise.all([sb.from("kinder").select("*").order("erstellt"),sb.from("staende").select("kind_id,station,prog"),sb.from("freigaben").select("*"),sb.from("abschluesse").select("*").order("fertig_am"),sb.from("klassen").select("klasse,modus,start,stationen")]);
       const sp=await sb.from("stundenplan").select("klasse,tag,von,min,gruppe");
       if(rg.error)throw rg.error;if(sp.error)throw sp.error;
-      const regeln={};rg.data.forEach(r=>regeln[r.klasse]={modus:r.modus,start:r.start});
+      const regeln={};rg.data.forEach(r=>regeln[r.klasse]={modus:r.modus,start:r.start,stationen:r.stationen||{}});
       const plan={klassen:rg.data,plan:sp.data};
       for(const r of [k,s,f])if(r.error)throw r.error;
       const staende={};s.data.forEach(r=>{(staende[r.kind_id]=staende[r.kind_id]||{})[r.station]=r.prog});
@@ -195,10 +195,10 @@ const db={
     if(CLOUD){const {error}=await sb.from("kinder").delete().eq("id",id);if(error)throw error;return}
     const d=vdb.lesen();d.kinder=d.kinder.filter(x=>x.id!==id);delete d.staende[id];vdb.schreiben(d);
   },
-  /* Wie die Stationen in einer Klasse öffnen: {modus:"woche"|"frei"|"tag", start:"JJJJ-MM-TT" (Montag)} */
-  async lRegel(klasse,r){
-    if(CLOUD){const {error}=await sb.from("klassen").update({modus:r.modus,start:r.start||null,geaendert:new Date().toISOString()}).eq("klasse",klasse);if(error)throw error;return}
-    const d=vdb.lesen();d.klassen[klasse]={modus:r.modus,start:r.start||null};vdb.schreiben(d);
+  /* Schalter der Lehrkraft für einzelne Stationen: {stationId: true (offen) | false (zu)} */
+  async lStationen(klasse,obj){
+    if(CLOUD){const {error}=await sb.from("klassen").update({stationen:obj,geaendert:new Date().toISOString()}).eq("klasse",klasse);if(error)throw error;return}
+    const d=vdb.lesen();d.klassen[klasse]={...d.klassen[klasse],stationen:obj};vdb.schreiben(d);
   },
   /* Klasse anlegen (neu=true) oder ihren Unterricht ändern. k={modus,start,stunden:[{tag,von,min,gruppe}]}.
      Antwort: true oder {fehler:"vergeben"} (Name gibt es schon, auch bei einer anderen Lehrkraft) */

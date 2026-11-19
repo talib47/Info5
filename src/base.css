@@ -917,3 +917,24 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
 .zu-zeile{display:flex;gap:12px;padding:8px 0;border-top:1px solid var(--line)}
 .zu-zeile b{min-width:6.5em}
 .kl-karte.auf{flex-direction:row;align-items:center;min-height:96px}
+/* Lehrer-Ansicht: Knopf „Neue Klasse“ (ruhig, mit Rand) */
+.btn-rand{display:inline-flex;align-items:center;gap:8px;margin-left:auto;min-height:44px;padding:0 16px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;font-weight:650;cursor:pointer}
+.btn-rand:hover{border-color:var(--accent);color:var(--accent)}
+.tabs{align-items:center}
+/* Lehrer-Ansicht: Stationen mit Schaltern */
+.st-box summary{cursor:pointer}
+.st-liste{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:4px 18px}
+.st-zeile{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.st-zeile .nr{width:1.6em;text-align:right;color:var(--muted);font-size:.85rem}
+.st-t{flex:1;display:flex;flex-direction:column;min-width:0}
+.st-t b{font-size:.95rem}
+.st-t small{color:var(--muted);font-size:.8rem}
+.st-zeile.hand .st-t small{color:var(--accent)}
+.st-t small .link{font-size:.8rem;padding:0}
+.schalter{flex:0 0 auto;width:46px;height:28px;border-radius:14px;border:0;padding:3px;background:#C5CCD8;cursor:pointer;transition:background .15s}
+.schalter span{display:block;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s}
+.schalter[aria-checked="true"]{background:var(--good)}
+.schalter[aria-checked="true"] span{transform:translateX(18px)}
+.schalter:disabled{opacity:.5}
+@media (prefers-reduced-motion:reduce){.schalter,.schalter span{transition:none}}
+.kfeld input::placeholder{text-transform:none}
