@@ -50,7 +50,10 @@ function offenAus(klasse,fg){const n=Date.now();fg=fg||{};
 /* ---------- Vorschau-Datenbank im Browser (bildet die Supabase-Funktionen nach) ---------- */
 const MIN75=75*60000;
 const vdb={
-  lesen(){return lsGet("if5-vdb")||{kinder:[],staende:{},freigaben:{}}},
+  lesen(){const d=lsGet("if5-vdb")||{kinder:[],staende:{},freigaben:{}};
+    /* Erste Füllung der Vorschau: Klassen und Stundenplan aus START_KLASSEN / START_PLAN */
+    if(!d.klassen){d.klassen={};START_KLASSEN.forEach(k=>d.klassen[k]={...STANDARD_REGEL,...((d.regeln||{})[k]||{})});d.plan=START_PLAN.map(x=>({...x}));delete d.regeln}
+    return d},
   schreiben(d){lsSet("if5-vdb",d)},
 };
 const jetztMs=()=>Date.now();
@@ -93,6 +96,11 @@ const db={
     const d=vdb.lesen();const k=d.kinder.find(x=>x.token===token);if(!k)return false;
     (d.staende[k.id]=d.staende[k.id]||{})[station]=prog;k.aktiv=jetztMs();vdb.schreiben(d);return true;
   },
+  /* Klassen (mit Regel „Stationen öffnen“) und Stundenplan aller Klassen – ohne Namen, für die Anmeldeseite der Kinder */
+  async plan(){
+    if(CLOUD){const {data,error}=await sb.rpc("plan_alle");if(error)throw error;return data}
+    const d=vdb.lesen();return{klassen:Object.entries(d.klassen).map(([klasse,r])=>({klasse,...r})),plan:d.plan};
+  },
   async abmelden(token){
     if(CLOUD){await sb.rpc("kind_abmelden",{p_token:token});return}
     const d=vdb.lesen();const k=d.kinder.find(x=>x.token===token);if(k){k.token=null;k.geraet=null;vdb.schreiben(d)}
@@ -128,25 +136,28 @@ const db={
     const {error}=await sb.from("lehrer_daten").upsert({user_id:u.user.id,inhalt:btoa(s),geaendert:new Date().toISOString()});if(error)throw error;return true;
   },
   async lAbmelden(){if(CLOUD)await sb.auth.signOut();localStorage.removeItem("if5-schluessel")},
-  /* Stundenplan und Ferien aus src/app.js zum Server bringen (beim Öffnen der Lehrer-Ansicht) */
+  /* Ferien aus src/app.js zum Server bringen (beim Öffnen der Lehrer-Ansicht). Den Stundenplan pflegt jede Lehrkraft selbst. */
   async lPlanUebertragen(){
     if(!CLOUD)return;
-    const r1=await sb.from("stundenplan").delete().neq("tag",-1);if(r1.error)throw r1.error;
-    const r2=await sb.from("stundenplan").insert(STUNDENPLAN.map(s=>({klasse:s.klasse,tag:s.tag,von:s.von,min:s.min,puffer:PUFFER})));if(r2.error)throw r2.error;
     const r3=await sb.from("ferien").delete().gte("von","1900-01-01");if(r3.error)throw r3.error;
     const r4=await sb.from("ferien").insert(FERIEN.map(([von,bis])=>({von,bis})));if(r4.error)throw r4.error;
   },
   async lAlles(){
     if(CLOUD){
-      const [k,s,f,a]=await Promise.all([sb.from("kinder").select("*").order("erstellt"),sb.from("staende").select("kind_id,station,prog"),sb.from("freigaben").select("*"),sb.from("abschluesse").select("*").order("fertig_am")]);
+      const [k,s,f,a,rg]=await Promise.all([sb.from("kinder").select("*").order("erstellt"),sb.from("staende").select("kind_id,station,prog"),sb.from("freigaben").select("*"),sb.from("abschluesse").select("*").order("fertig_am"),sb.from("klassen").select("klasse,modus,start")]);
+      const sp=await sb.from("stundenplan").select("klasse,tag,von,min,gruppe");
+      if(rg.error)throw rg.error;if(sp.error)throw sp.error;
+      const regeln={};rg.data.forEach(r=>regeln[r.klasse]={modus:r.modus,start:r.start});
+      const plan={klassen:rg.data,plan:sp.data};
       for(const r of [k,s,f])if(r.error)throw r.error;
       const staende={};s.data.forEach(r=>{(staende[r.kind_id]=staende[r.kind_id]||{})[r.station]=r.prog});
       const freigaben={};f.data.forEach(r=>freigaben[r.klasse]={offen_bis:r.offen_bis?new Date(r.offen_bis).getTime():0,zu_bis:r.zu_bis?new Date(r.zu_bis).getTime():0});
       return{kinder:k.data.map(r=>({id:r.id,klasse:r.klasse,tier:r.tier,gruppe:r.gruppe||null,
-        besetzt:!!(r.token&&Date.now()-new Date(r.aktiv_seit).getTime()<MIN75),aktiv:r.aktiv_seit?new Date(r.aktiv_seit).getTime():0})),staende,freigaben,abschluesse:a.error?[]:a.data};
+        besetzt:!!(r.token&&Date.now()-new Date(r.aktiv_seit).getTime()<MIN75),aktiv:r.aktiv_seit?new Date(r.aktiv_seit).getTime():0})),staende,freigaben,regeln,plan,abschluesse:a.error?[]:a.data};
     }
     const d=vdb.lesen();
-    return{kinder:d.kinder.map(k=>({...k,besetzt:vBesetzt(k)})),staende:d.staende,freigaben:d.freigaben};
+    return{kinder:d.kinder.map(k=>({...k,besetzt:vBesetzt(k)})),staende:d.staende,freigaben:d.freigaben,regeln:d.klassen,
+      plan:{klassen:Object.entries(d.klassen).map(([klasse,r])=>({klasse,...r})),plan:d.plan}};
   },
   /* Die Lehrkraft legt die Kinder an (Tier zuteilen); Kinder können sich nicht selbst neu anlegen */
   async lKindAnlegen(klasse,tier){
@@ -183,6 +194,22 @@ const db={
   async lKindLoeschen(id){
     if(CLOUD){const {error}=await sb.from("kinder").delete().eq("id",id);if(error)throw error;return}
     const d=vdb.lesen();d.kinder=d.kinder.filter(x=>x.id!==id);delete d.staende[id];vdb.schreiben(d);
+  },
+  /* Wie die Stationen in einer Klasse öffnen: {modus:"woche"|"frei"|"tag", start:"JJJJ-MM-TT" (Montag)} */
+  async lRegel(klasse,r){
+    if(CLOUD){const {error}=await sb.from("klassen").update({modus:r.modus,start:r.start||null,geaendert:new Date().toISOString()}).eq("klasse",klasse);if(error)throw error;return}
+    const d=vdb.lesen();d.klassen[klasse]={modus:r.modus,start:r.start||null};vdb.schreiben(d);
+  },
+  /* Klasse anlegen (neu=true) oder ihren Unterricht ändern. k={modus,start,stunden:[{tag,von,min,gruppe}]}.
+     Antwort: true oder {fehler:"vergeben"} (Name gibt es schon, auch bei einer anderen Lehrkraft) */
+  async lKlasseSpeichern(klasse,k,neu){
+    const zeilen=k.stunden.map(x=>({klasse,tag:x.tag,von:x.von,min:x.min,gruppe:x.gruppe||null,puffer:PUFFER}));
+    if(CLOUD){
+      if(neu){const r=await sb.rpc("klasse_anlegen",{p_klasse:klasse,p_modus:k.modus,p_start:k.start||null,p_stunden:zeilen});if(r.error)throw r.error;return r.data===true?true:{fehler:"vergeben"}}
+      const r=await sb.rpc("klasse_unterricht",{p_klasse:klasse,p_stunden:zeilen});if(r.error)throw r.error;return true}
+    const d=vdb.lesen();
+    if(neu){if(Object.keys(d.klassen).some(x=>x.toLowerCase()===klasse.toLowerCase()))return{fehler:"vergeben"};d.klassen[klasse]={modus:k.modus,start:k.start||null}}
+    d.plan=d.plan.filter(x=>x.klasse!==klasse).concat(zeilen.map(({puffer,...x})=>({...x,gruppe:x.gruppe||0})));vdb.schreiben(d);return true;
   },
   /* Hand-Steuerung: {offen_bis} öffnet, {zu_bis} schließt, {} = wieder nach Stundenplan */
   async lFreigabe(klasse,f){

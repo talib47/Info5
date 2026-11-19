@@ -152,3 +152,23 @@ create policy lu_lehrkraft on lehrer_uebergabe for all to authenticated using (i
 
 -- Halbgruppe (1 oder 2) wie im Notenbuch; die Lehrkraft legt sie in der Lehrer-Ansicht fest.
 alter table kinder add column if not exists gruppe smallint check (gruppe in (1,2));
+
+-- Wie die Stationen pro Klasse öffnen (Lehrer-Ansicht → „Stationen öffnen“):
+-- woche = Station 1 in der Woche ab start (Montag), danach eine pro Schulwoche · frei = alle offen · tag = höchstens eine neue pro Tag.
+-- Klassen ohne Eintrag: wochenweise ab 09.11.2026 (STANDARD_REGEL in app.js). Kinder lesen die Regel nur über klasse_regel().
+create table if not exists pfad_regeln(
+  klasse text primary key,
+  modus text not null check (modus in ('woche','frei','tag')),
+  start date,
+  geaendert timestamptz not null default now(),
+  check (modus<>'woche' or start is not null));
+alter table pfad_regeln enable row level security;
+drop policy if exists l_alles on pfad_regeln;
+create policy l_alles on pfad_regeln for all to authenticated using (ist_lehrkraft()) with check (ist_lehrkraft());
+create or replace function klasse_regel(p_klasse text) returns json
+language sql stable security definer set search_path=public as $$
+  select json_build_object('modus',modus,'start',start) from pfad_regeln where klasse=p_klasse $$;
+revoke all on function klasse_regel(text) from public;
+grant execute on function klasse_regel(text) to anon, authenticated;
+insert into pfad_regeln(klasse,modus,start) values ('5B','woche','2026-11-09'),('5D','woche','2026-11-09'),('5E','woche','2026-11-09')
+  on conflict (klasse) do nothing;

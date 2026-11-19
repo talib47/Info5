@@ -1,7 +1,7 @@
 /* Informatik 5: Offline-Kopie der Seite. Netz zuerst (immer beim Server nachfragen, höchstens 3 Sekunden), sonst gespeicherte Kopie.
    Alle Apps teilen sich talib47.github.io: hier werden nur Caches mit dem Präfix „if5-“ gelöscht. */
-const CACHE="if5-v5";
-const CORE=["./","index.html","manifest.webmanifest","icon.svg","favicon.ico","fonts/ahl-latin.woff2","fonts/ahm-latin.woff2","vendor/supabase.js"];
+const CACHE="if5-v6";
+const CORE=["./","index.html","lehrer.html","manifest-lehrer.webmanifest","manifest.webmanifest","icon.svg","favicon.ico","fonts/ahl-latin.woff2","fonts/ahm-latin.woff2","vendor/supabase.js"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>Promise.all(CORE.map(u=>c.add(u).catch(()=>{})))));self.skipWaiting()});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith("if5-")&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener("fetch",e=>{
@@ -9,10 +9,10 @@ self.addEventListener("fetch",e=>{
   const lib=u.hostname==="cdn.jsdelivr.net",same=u.origin===location.origin&&u.pathname.startsWith(new URL(self.registration.scope).pathname);
   if(r.method!=="GET"||(!same&&!lib)||(same&&u.pathname.endsWith("version.txt")))return;
   e.respondWith((async()=>{
-    const c=await caches.open(CACHE);
-    const net=(r.mode==="navigate"?fetch(r.url,{cache:"no-cache",credentials:"same-origin"}):fetch(r,{cache:"no-cache"})).then(res=>{if(res&&res.ok)c.put(r.mode==="navigate"?"index.html":r,res.clone());return res});
+    const c=await caches.open(CACHE),seite=u.pathname.endsWith("lehrer.html")?"lehrer.html":"index.html";
+    const net=(r.mode==="navigate"?fetch(r.url,{cache:"no-cache",credentials:"same-origin"}):fetch(r,{cache:"no-cache"})).then(res=>{if(res&&res.ok)c.put(r.mode==="navigate"?seite:r,res.clone());return res});
     const t=new Promise(res=>setTimeout(()=>res(null),3000));
     try{const res=await Promise.race([net,t]);if(res)return res}catch(err){}
-    return (await c.match(r.mode==="navigate"?"index.html":r,{ignoreSearch:true}))||net;
+    return (await c.match(r.mode==="navigate"?seite:r,{ignoreSearch:true}))||net;
   })());
 });

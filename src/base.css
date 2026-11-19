@@ -875,3 +875,45 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
 .schritt-t.aus{opacity:.45}
 .schritt-n{flex:none;display:inline-grid;place-items:center;width:1.6em;height:1.6em;border-radius:50%;border:2px solid currentColor;font-size:.85em;font-weight:700}
 .eva-t td.leer{color:var(--muted);border:2px dashed var(--line);font-weight:400}
+/* Lehrer-Ansicht: Stationen öffnen (Regel pro Klasse) */
+.regel-box{border-left:6px solid var(--line,#ccc)}
+.regel-wahl{display:flex;flex-direction:column;gap:8px}
+.regel-opt{display:flex;align-items:center;gap:8px;flex-wrap:wrap;cursor:pointer}
+.regel-opt input[type=radio]{width:18px;height:18px;margin:0}
+.regel-opt input[type=date]{font:inherit;padding:4px 8px;border:1px solid #b9c0cc;border-radius:8px}
+.regel-opt input[type=date]:disabled{opacity:.45}
+/* Lehrer-Ansicht: Klasse anlegen / Unterricht ändern */
+.tab-neu{border:1.5px dashed var(--line);background:transparent;color:var(--ink);border-radius:10px;padding:0 14px;font:inherit;font-weight:700;cursor:pointer;min-height:44px}
+.tab-neu:hover{border-color:var(--ink)}
+.kdlg{width:min(560px,94vw);border:0;border-radius:16px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.25);background:var(--surface);color:var(--ink)}
+.kdlg::backdrop{background:rgba(20,26,36,.45)}
+.kfeld{display:flex;flex-direction:column;gap:6px}
+.kfeld input{font:inherit;padding:10px 12px;border:1px solid #b9c0cc;border-radius:10px;max-width:220px;text-transform:uppercase}
+.kstd{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 8px}
+.kstd select,.kstd input{font:inherit;padding:8px 10px;border:1px solid #b9c0cc;border-radius:10px;background:var(--surface);color:var(--ink)}
+.kweg{font-size:1.1rem;padding:4px 8px}
+.kweg:disabled{opacity:.3}
+.kstd select,.kstd input{width:auto;flex:0 0 auto;min-height:44px;margin:0}
+.kstd select[data-f="tag"]{min-width:9.5em}
+.kdlg{max-height:92vh;overflow:auto}
+.kdlg{width:min(640px,94vw)}
+.kstd select,.kstd input{padding:6px 8px;font-size:1rem}
+.kstd select[data-f="tag"]{min-width:0}
+/* Startseite der Kinder */
+.kl-karten{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:0 0 16px}
+.kl-karte{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:14px;min-height:130px;padding:18px;border:0;border-radius:var(--r-m);background:var(--surface);box-shadow:var(--lift);color:var(--ink);text-align:left;font:inherit;cursor:pointer;transition:transform .12s}
+.kl-karte:active{transform:scale(.97)}
+.kl-name{font:600 2.5rem/1 var(--serif);color:var(--accent)}
+.kl-status{font-size:.95rem;color:var(--muted);line-height:1.35}
+.kl-status b{color:var(--ink)}
+.kl-karte.auf{grid-column:1/-1;min-height:150px;box-shadow:0 0 0 2.5px var(--good)}
+.kl-karte.auf .kl-status{color:var(--good);font-weight:700;font-size:1.1rem;display:flex;align-items:center;gap:8px}
+.punkt{width:12px;height:12px;border-radius:50%;background:var(--good);display:inline-block;animation:puls 1.6s ease-in-out infinite}
+@keyframes puls{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--good) 50%,transparent)}50%{box-shadow:0 0 0 8px transparent}}
+@media (prefers-reduced-motion:reduce){.punkt{animation:none}}
+.pfad-vorschau summary{cursor:pointer}
+.pv-reihe{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.pv-st{display:flex;align-items:center;gap:8px;font-size:.9rem;padding:8px;border-radius:10px;background:var(--tint);opacity:.85}
+.zu-zeile{display:flex;gap:12px;padding:8px 0;border-top:1px solid var(--line)}
+.zu-zeile b{min-width:6.5em}
+.kl-karte.auf{flex-direction:row;align-items:center;min-height:96px}

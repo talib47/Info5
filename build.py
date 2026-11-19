@@ -35,4 +35,8 @@ html=f'''<!doctype html>
 </body>
 </html>
 '''
-open('index.html','w').write(html);open('version.txt','w').write(VER+'\n');print(VER)
+open('index.html','w').write(html);open('version.txt','w').write(VER+'\n')
+# Lehrer-Seite: gleiche App, eigenes Manifest (Startbildschirm öffnet die Lehrer-Ansicht)
+open('lehrer.html','w').write(html.replace('<link rel="manifest" href="manifest.webmanifest">','<link rel="manifest" href="manifest-lehrer.webmanifest">')
+  .replace('<title>Informatik 5</title>','<title>Informatik 5 · Lehrkraft</title>').replace('content="Informatik 5">','content="IF5 Lehrkraft">'))
+print(VER)
