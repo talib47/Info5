@@ -1015,7 +1015,7 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="33f9747db9";
+const VERSION="65b2a8fb22";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -1254,7 +1254,7 @@ function station(s){STATIONEN.push(s)}
 const KAPITEL_NAME={fit:"Fit am Computer",netz:"Sicher im Netz",daten:"Daten und Codes",algo:"Algorithmen",ki:"Automaten und KI",ich:"Ich und meine Daten"};
 const KAPITEL={fit:"🖥️ Fit am Computer",netz:"🛡️ Sicher im Netz",daten:"🔢 Daten & Codes",algo:"🤖 Algorithmen",ki:"🧠 Automaten & KI",ich:"👣 Ich & meine Daten"};
 /* Höchstens eine NEUE Station pro Tag (sonst laufen schnelle Kinder der Klasse weit davon) */
-const EINE_PRO_TAG=true;
+const EINE_PRO_TAG=false;
 /* Ränge nach gesammelten Sternen (= Punkte aller Stationen) */
 const RAENGE=[[0,"🌱","Neuling"],[150,"🖱️","Klick-Kenner"],[400,"💾","Daten-Detektiv"],[750,"🔐","Code-Knacker"],[1100,"🤖","Robo-Meister"],[1500,"🧠","Informatik-Ass"],[1900,"🏆","Informatik-Legende"]];
 
@@ -1290,7 +1290,7 @@ const PFAD=()=>STATIONEN.filter(s=>!s.spiel),SPIELE=()=>STATIONEN.filter(s=>s.sp
 const sterne=()=>PFAD().reduce((a,s)=>a+summe(meineStaende()[s.id]),0);
 const rang=n=>{let r=RAENGE[0];for(const x of RAENGE)if(n>=x[0])r=x;return r};
 const naechsterRang=n=>RAENGE.find(x=>x[0]>n);
-/* Status einer Station im Lernpfad: fertig | offen | zu (vorherige fehlt) | morgen (heute schon eine geschafft) */
+/* Status einer Station im Lernpfad: fertig | offen | zu (vorherige fehlt) | morgen (Woche der Station noch nicht da) */
 function status(st){
   const s=meineStaende(),p=s[st.id];
   if(p?.fertig)return"fertig";
@@ -1301,6 +1301,8 @@ function status(st){
   if(!p&&stoppZeit())return"schluss";
   if(p)return"offen";
   /* Eine NEUE Station pro Tag. Wer eine angefangene Station von einem früheren Tag heute erst fertig macht, darf heute noch die nächste beginnen. */
+  /* Jede Station hat ihre Woche: Sie öffnet ab dem Montag ihrer Schulwoche (Station 1 ab ST_START). Wer gefehlt hat, holt nach. */
+  if(!VS&&ST_AB_GET()[i]&&ST_AB_GET()[i]>isoTag(new Date()))return"morgen";
   if(EINE_PRO_TAG&&tagVon(vor.fertig)===heuteTag()&&tagVon(vor.start||vor.fertig)===heuteTag())return"morgen";
   return"offen";
 }
@@ -1403,12 +1405,17 @@ const LERNZEIT={
    In der Vorschau (Lehrer) sind alle Karten offen. */
 const LZ_START="2026-11-16";
 const isoTag=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-const LZ_AB=(()=>{const ferien=t=>FERIEN.some(([a,b])=>t>=a&&t<=b),ab={},nrs=Object.keys(LERNZEIT).sort();
-  const d=new Date(LZ_START+"T12:00:00");let i=0;
-  for(let w=0;w<120&&i<nrs.length;w++,d.setDate(d.getDate()+7)){
+/* Montage der Schulwochen ab start (Datum „JJJJ-MM-TT“, ein Montag): die ersten n Stück */
+function schulWochen(start,n){const ferien=t=>FERIEN.some(([a,b])=>t>=a&&t<=b),ab=[];
+  const d=new Date(start+"T12:00:00");
+  for(let w=0;w<120&&ab.length<n;w++,d.setDate(d.getDate()+7)){
     let schule=0;for(let k=0;k<5;k++){const t=new Date(d);t.setDate(d.getDate()+k);if(!ferien(isoTag(t)))schule++}
-    if(schule>=3)ab[nrs[i++]]=isoTag(d)}
-  return ab})();
+    if(schule>=3)ab.push(isoTag(d))}
+  return ab}
+const LZ_AB=(()=>{const nrs=Object.keys(LERNZEIT).sort(),w=schulWochen(LZ_START,nrs.length),ab={};nrs.forEach((n,i)=>ab[n]=w[i]);return ab})();
+/* Stationen im Lernpfad: Station 1 in der Woche ab ST_START, danach jede Schulwoche eine (gleiche Regel wie bei den Karten). */
+const ST_START="2026-11-09";
+let ST_AB_CACHE=null;const ST_AB_GET=()=>ST_AB_CACHE||(ST_AB_CACHE=schulWochen(ST_START,PFAD().length));
 const lzOffen=nr=>VS||!LZ_AB[nr]||LZ_AB[nr]<=isoTag(new Date());
 const LZ_VERSUCHE=3;
 let vLern={karten:{}};
@@ -1989,7 +1996,7 @@ function lehrerZeigen(){
   </div>
   <details class="block plan"><summary><b>Lernpfad & Lehrplan</b> <span class="muted small">– alle ${PFAD().length} Stationen mit Bezug zum Kernlehrplan NRW</span></summary>
     <ol>${PFAD().map(st=>`<li><b>${esc(st.titel)}</b> <span class="chip">${KAPITEL_NAME[st.kapitel]||""}</span><br><span class="small">${esc(st.kurz)}</span>${st.klp?`<br><span class="muted small">KLP: ${esc(st.klp)}</span>`:""}</li>`).join("")}</ol>
-    <p class="muted small">Ablauf: Jede Station ist eine Doppelstunde (60 Min.). Die Kinder gehen den Lernpfad der Reihe nach, höchstens eine neue Station pro Tag. Der Spielplatz (Bonus-Spiele, ohne Note) öffnet nur mit einem + in der Station von heute.</p></details>
+    <p class="muted small">Ablauf: Jede Station ist eine Doppelstunde (60 Min.). Die Kinder gehen den Lernpfad der Reihe nach. Jede Schulwoche öffnet ab Montag eine neue Station; wer gefehlt hat, kann nachholen. Der Spielplatz (Bonus-Spiele, ohne Note) öffnet nur mit einem + in der Station von heute.</p></details>
   <p class="muted small" style="margin-top:14px">${!db.online?"<b>Vorschau-Modus:</b> Alles liegt nur in diesem Browser."
     :db.hatSchluessel()?"<b>Sicherung:</b> Jede fertige Station wird zusätzlich in ein Protokoll geschrieben, das sich nicht löschen lässt. Die Datenbank sichert sich stündlich selbst (60 Tage zurück). Eine Kopie aller Noten liegt zusätzlich in diesem Browser; die Notfall-Datei lädst du bei Bedarf mit dem Knopf herunter. Die Namen sehen nur du und dieses Konto. Sie werden mit deinem Passwort verschlüsselt gesichert und sind nach der Anmeldung auf jedem Gerät da. Kinder sehen nur Tiere."+(namenStand==="fehler"?" <b>Die Sicherung hat gerade nicht geklappt.</b>":"")
     :"<b>Melde dich einmal ab und wieder an</b>, dann werden die Namen verschlüsselt bei deinem Konto gesichert. Bis dahin liegen sie nur in diesem Browser."}</p>`;

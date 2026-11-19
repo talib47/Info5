@@ -25,7 +25,7 @@ Quelltext in `src/`. Nach jeder Änderung `python3 build.py` ausführen und `ind
 
 ## Lernpfad (17 Stationen à 60 Minuten)
 
-Die Kinder gehen die Stationen der Reihe nach. Pro Tag öffnet sich höchstens **eine neue** Station (`EINE_PRO_TAG` in `src/app.js`), damit schnelle Kinder der Klasse nicht davonlaufen. Wer heute fertig ist, darf auf den **🎮 Spielplatz** (Bonus-Spiele ohne Note, Stand nur auf dem Gerät). Für jede Station gibt es ein Abzeichen 🥇🥈🥉 (= Note + / o / −), die gesammelten Punkte ergeben Sterne und einen Rang.
+Die Kinder gehen die Stationen der Reihe nach. Jede Schulwoche öffnet ab Montag **eine neue** Station (`ST_START` in `src/app.js`, Ferien wie bei den Lernzeit-Karten). Wer gefehlt hat, kann ältere Stationen nachholen. Wer heute fertig ist, darf auf den **🎮 Spielplatz** (Bonus-Spiele ohne Note, Stand nur auf dem Gerät). Für jede Station gibt es ein Abzeichen 🥇🥈🥉 (= Note + / o / −), die gesammelten Punkte ergeben Sterne und einen Rang.
 
 | Nr. | Station | Kapitel | Kernlehrplan NRW (Inhaltsfeld) |
 |---|---|---|---|
