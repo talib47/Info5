@@ -1088,7 +1088,7 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="615f86820d";
+const VERSION="31f3286ee8";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -1406,30 +1406,31 @@ const PFAD=()=>STATIONEN.filter(s=>!s.spiel),SPIELE=()=>STATIONEN.filter(s=>s.sp
 const sterne=()=>PFAD().reduce((a,s)=>a+summe(meineStaende()[s.id]),0);
 const rang=n=>{let r=RAENGE[0];for(const x of RAENGE)if(n>=x[0])r=x;return r};
 const naechsterRang=n=>RAENGE.find(x=>x[0]>n);
-/* Status einer Station im Lernpfad: fertig | offen | zu (vorherige fehlt) | morgen (Woche der Station noch nicht da) */
+/* Status einer Station im Lernpfad: fertig | offen | zu (vorherige fehlt) | morgen (noch nicht dran) | vorbei (Woche vorbei) | schluss (Stunde gleich zu Ende)
+   WOCHEN-NEUSTART (seit 23.11.2026, Regel „woche“): Jede Station gehört zu genau einer Schulwoche. Nur in dieser Woche ist sie offen –
+   ohne Rücksicht darauf, ob die Station davor fertig ist. Danach ist sie zu („vorbei“); was nicht fertig wurde, bekommt die
+   vorläufige (gnädige) Note, die die Kinder nicht sehen. Fällt die Stunde in einer Woche aus, bleibt die Station ohne Note,
+   und nächste Woche geht es mit der nächsten Station weiter – alle Klassen bleiben im gleichen Takt.
+   Schalter der Lehrkraft: false = zu; true = offen (eine alte Station wieder öffnen oder die nächste früher – früher nur,
+   wenn die Station davor fertig ist). */
+const wocheVon=(rg,i)=>{const ab=stAb(rg.start);return{von:ab[i]||null,bis:ab[i+1]||null}};
+const inWoche=(rg,i)=>{if(rg.modus!=="woche")return true;const {von,bis}=wocheVon(rg,i),h=isoTag(new Date());return!!von&&von<=h&&(!bis||h<bis)};
 function status(st){
   const s=meineStaende(),p=s[st.id];
-  if(p?.fertig&&!p.gestoppt)return"fertig";   // per Zeitstopp beendet (bis 23.11.2026) = angefangen, nicht fertig
+  if(p?.fertig&&!p.gestoppt)return"fertig";   // per Zeitstopp beendet (bis 23.11.2026) = nicht fertig
   if(VS||st.spiel)return"offen";
-  if(p&&stoppZeit())return"schluss";   // angefangen, aber die Stunde ist gleich vorbei: pausiert bis zur nächsten Stunde
-  const pfad=PFAD(),i=pfad.indexOf(st),rg=regelVon(sitzung?.klasse),schalter=(rg.stationen||{})[st.id];
-  if(i<=0)return!p&&stoppZeit()?"schluss":!p&&schalter===false?"morgen":"offen";
-  const vor=s[pfad[i-1].id];
-  /* Station der Woche (seit 23.11.2026): Ist die Woche einer Station da, darf jedes Kind sie anfangen –
-     auch wenn die Station davor noch nicht fertig ist. Die alte Station bleibt offen zum Nachholen. So bleibt niemand hängen.
-     Vor ihrer Woche (z. B. von der Lehrkraft früher geöffnet) gilt weiter: erst die Station davor fertig machen. */
-  const abW=rg.modus==="woche"?stAb(rg.start)[i]:null,wocheDa=!!abW&&abW<=isoTag(new Date())&&schalter!==false;
-  if(!p&&schalter===false)return"morgen";   // von der Lehrkraft geschlossen
-  if(!vor?.fertig&&!wocheDa)return"zu";
-  if(!p&&stoppZeit())return"schluss";
-  if(p)return"offen";
-  /* Ab hier nur noch NEUE Stationen (fertige und angefangene sind oben schon entschieden).
-     Schalter der Lehrkraft (klassen.stationen) gehen vor: true = offen, false = zu. Sonst gilt die Regel der Klasse. */
-  if(schalter===false)return"morgen";
-  if(schalter===true)return"offen";
-  /* wochenweise: Station öffnet ab dem Montag ihrer Schulwoche (Station 1 in der Startwoche). Wer gefehlt hat, holt nach. */
-  if(rg.modus==="woche"){const ab=stAb(rg.start)[i];if(ab&&ab>isoTag(new Date()))return"morgen"}
-  /* eine pro Tag: Wer eine angefangene Station von einem früheren Tag heute erst fertig macht, darf heute noch die nächste beginnen. */
+  const pfad=PFAD(),i=pfad.indexOf(st),rg=regelVon(sitzung?.klasse),schalter=(rg.stationen||{})[st.id],vor=i>0?s[pfad[i-1].id]:null;
+  if(schalter===false)return p?"vorbei":"morgen";
+  if(rg.modus==="woche"){
+    const {von}=wocheVon(rg,i),h=isoTag(new Date()),jetzt=inWoche(rg,i);
+    if(!jetzt&&schalter!==true)return von&&von>h?"morgen":"vorbei";
+    if(!jetzt&&von&&von>h&&i>0&&unfertig(vor))return"zu";   // früher geöffnet: erst die Station davor
+    return stoppZeit()?"schluss":"offen";
+  }
+  /* Regeln „frei“ und „tag“ (nur für neue Klassen denkbar): der Reihe nach */
+  if(i>0&&unfertig(vor))return p?"offen":"zu";
+  if(stoppZeit())return"schluss";
+  if(p||schalter===true)return"offen";
   if(rg.modus==="tag"&&vor?.fertig&&tagVon(vor.fertig)===heuteTag()&&tagVon(vor.start||vor.fertig)===heuteTag())return"morgen";
   return"offen";
 }
@@ -1461,16 +1462,16 @@ function stoppPruefen(){
   let neu=0,pausiert=0;
   for(const st of PFAD()){const p=staende[st.id];if(!p)continue;
     if(p.verb){delete p.verb;p.verbessert=Date.now();p.erg={...p.erg,p:summe(p),z:zeichenAus(prozent(st,p))}}
-    else if(!p.fertig&&!(p.pause&&tagVon(p.pause)===heuteTag())){p.pause=Date.now();pausiert++}
+    else if(!p.fertig&&!(p.pause&&tagVon(p.pause)===heuteTag())&&status(st)!=="vorbei"){p.pause=Date.now();pausiert++}
     else continue;
     neu++;pushWarte.add(st.id)}
   if(!neu)return;
   staendeLokal();clearTimeout(pushTimer);hochladen();
-  toast(pausiert?"Die Stunde ist gleich vorbei. Dein Stand ist gespeichert. Du bist noch nicht fertig, deshalb gibt es noch keine Note. Nächste Stunde machst du hier weiter.":"Die Zeit ist um.");
+  toast(pausiert?"Die Stunde ist gleich vorbei. Dein Stand ist gespeichert.":"Die Zeit ist um.");
   if(!location.hash.includes("s/spiel"))render();
 }
 /* Welche Teile einer fertigen Station lassen sich verbessern? (nur Teile aus dem eigenen Durchgang, bei denen Punkte fehlen) */
-const verbesserbar=(st,p)=>p?.fertig&&!p.lnote&&!stoppZeit()?st.schritte.map((_,k)=>k).filter(k=>k in (p.punkte||{})&&p.punkte[k]<st.schritte[k].punkte):[];
+const verbesserbar=(st,p)=>p?.fertig&&!p.gestoppt&&!p.lnote&&!stoppZeit()&&(VS||inWoche(regelVon(sitzung?.klasse),PFAD().indexOf(st))||(regelVon(sitzung?.klasse).stationen||{})[st.id]===true)?st.schritte.map((_,k)=>k).filter(k=>k in (p.punkte||{})&&p.punkte[k]<st.schritte[k].punkte):[];
 const kartenHinweis=()=>{const a=spielAb(),kann=heuteFertig().some(x=>verbesserbar(x,meineStaende()[x.id]).length);
   return(a!==null?`Der Spielplatz öffnet um <b>${uhr(a)} Uhr</b>. `:"")+(kann?"Bis dahin kannst du deine Note noch verbessern: Tippe unten im Lernpfad auf deine Station von heute.":"")};
 /* Aufräumen beim Verlassen eines Teils (z. B. Tastatur-Abhörer, Zeitgeber) */
@@ -1803,17 +1804,17 @@ function seiteStart(){
   const n=sterne(),[,,rName]=rang(n),nr=naechsterRang(n);
   /* Oben steht die Station der Woche: die neueste offene, noch nicht fertige Station. Ältere offene, nicht fertige = Nachholen. */
   const offenUnfertig=VS?[]:pfad.filter(x=>unfertig(s[x.id])&&status(x)==="offen");
-  const akt=offenUnfertig[offenUnfertig.length-1]||pfad.find(x=>unfertig(s[x.id]));
+  const akt=offenUnfertig[offenUnfertig.length-1]||pfad.find(x=>unfertig(s[x.id])&&status(x)!=="vorbei");
   const nachholen=offenUnfertig.filter(x=>x!==akt);
   const stAkt=akt?status(akt):null,spOffen=spielplatzOffen();
   const spielListe=`<div class="spiele">${SPIELE().map(x=>`<button class="spiel" data-sp="${x.id}">${pix(x.id,24)}<b>${esc(x.titel)}</b>${spielRekord(x.id)!=null?`<span class="rek" title="Dein Rekord">★ ${spielRekord(x.id)}</span>`:""}</button>`).join("")}</div>`;
   /* Oben steht genau eine Sache: die Station von heute – oder, wenn sie geschafft ist, der Spielplatz als Belohnung */
   const heute=VS?"":!akt?`<div class="heute-karte">${pix("pixel",56,"blau")}<div><p class="eyebrow">Alles geschafft</p><h2>Du hast alle ${pfad.length} Stationen geschafft.</h2><p class="muted">Starke Leistung. Der Spielplatz gehört dir.</p></div></div>`
-    :stAkt==="schluss"?`<div class="heute-karte">${pix(akt.id,56)}<div><p class="eyebrow">Gleich ist Schluss</p><h2>Die Stunde ist gleich vorbei.</h2><p class="muted">${spOffen?"Du hast heute ein + geschafft und darfst spielen. ":""}Dein Stand ist gespeichert. Nächste Stunde geht es weiter mit „${esc(akt.titel)}“.${s[akt.id]?" Eine Note gibt es, wenn du fertig bist. Sonst bestimmt sie deine Lehrkraft.":""}</p></div></div>`
+    :stAkt==="schluss"?`<div class="heute-karte">${pix(akt.id,56)}<div><p class="eyebrow">Gleich ist Schluss</p><h2>Die Stunde ist gleich vorbei.</h2><p class="muted">${spOffen?"Du hast heute ein + geschafft und darfst spielen. ":""}Dein Stand ist gespeichert. Gut gemacht für heute!</p></div></div>`
     :stAkt==="morgen"&&!heuteFertig().length?`<div class="heute-karte">${pix(akt.id,56)}<div><p class="eyebrow">Gleich geht es weiter</p><h2>Deine nächste Station ist noch zu.</h2><p class="muted">„${esc(akt.titel)}“ öffnet bald. Wenn du willst, kannst du eine fertige Station unten im Lernpfad verbessern.</p></div></div>`
     :stAkt==="morgen"?`<div class="heute-karte">${pix(akt.id,56)}<div><p class="eyebrow">Für heute fertig</p><h2>Deine Station ist geschafft.</h2><p class="muted">${spOffen?"Du hast ein + geschafft und darfst spielen.":plusHeute()?kartenHinweis():stoppZeit()?"Die Stunde ist gleich vorbei.":"Für den Spielplatz brauchst du ein +. Du kannst deine Station verbessern: Tippe sie unten im Lernpfad an."} Nächste Stunde geht es weiter mit „${esc(akt.titel)}“</p></div></div>`
     :`<button class="heute-karte" data-id="${akt.id}">${pix(akt.id,56,"blau")}<div><p class="eyebrow">${s[akt.id]?"Hier machst du weiter":"Deine Station heute"}</p><h2>${esc(akt.titel)}</h2><p class="muted">${esc(akt.kurz)}</p></div><span class="btn">${s[akt.id]?"Weitermachen":"Anfangen"}</span></button>`;
-  const nachholBox=VS||!nachholen.length?"":`<div class="nachholen"><b>Nachholen</b> <span class="muted small">wenn du mit deiner Station fertig bist · Eine Note gibt es, wenn du fertig bist. Sonst bestimmt sie deine Lehrkraft.</span><div class="nh-liste">${nachholen.map(x=>`<button class="nh" data-id="${x.id}">${pix(x.id,20)}<span>${pfad.indexOf(x)+1}. ${esc(x.titel)}</span>${s[x.id]?`<small>angefangen</small>`:""}</button>`).join("")}</div></div>`;
+  const nachholBox=VS||!nachholen.length?"":`<div class="nachholen"><b>Wieder offen</b> <span class="muted small">Deine Lehrkraft hat diese Station noch einmal geöffnet.</span><div class="nh-liste">${nachholen.map(x=>`<button class="nh" data-id="${x.id}">${pix(x.id,20)}<span>${pfad.indexOf(x)+1}. ${esc(x.titel)}</span>${s[x.id]?`<small>angefangen</small>`:""}</button>`).join("")}</div></div>`;
   const spielplatz=VS?`<h2 style="margin:28px 0 6px">Spielplatz</h2><p class="muted">Bonus-Spiele ohne Note. Kinder sehen sie erst, wenn die Station von heute geschafft ist.</p><div class="spielplatz">${spielListe}</div>`
     :spOffen?`<div class="spielplatz"><h2>Spielplatz</h2><p class="muted">Deine Belohnung für heute. Hier gibt es keine Note.</p>${spielListe}</div>`:"";
   let kap="";
@@ -1821,7 +1822,8 @@ function seiteStart(){
     const kopf=x.kapitel!==kap?(kap=x.kapitel,`<li class="kap">${KAPITEL_NAME[x.kapitel]||""}</li>`):"";
     const bw=p?.fertig&&!p.gestoppt?bewertung(x,p):null,z=bw?.z;
     const rechts=stt==="fertig"?`<span class="stand">${bw.stern?"⭐ ":""}${bw.note}</span><span class="stempel-k" title="Note ${z}">${z}</span>`
-      :stt==="offen"?`<span class="stand">${VS?"":x===akt?(p?"angefangen":"heute dran"):"nachholen"}</span>`:stt==="morgen"||stt==="schluss"?`<span class="stand">nächste Stunde</span>`:"";
+      :stt==="offen"?`<span class="stand">${VS?"":!inWoche(regelVon(sitzung?.klasse),i)?(p?"angefangen":"extra offen"):p?"angefangen":"diese Woche dran"}</span>`
+      :stt==="vorbei"?`<span class="stand muted">${p?"Woche vorbei":"–"}</span>`:stt==="schluss"?`<span class="stand">nächste Stunde</span>`:stt==="morgen"?`<span class="stand muted">kommt noch</span>`:"";
     return`${kopf}<li><button class="pfad ${stt}" data-id="${x.id}"><span class="nr">${i+1}</span>${pix(x.id,28)}<span class="ptitel"><b>${esc(x.titel)}</b><small>${esc(x.kurz)}</small></span>${rechts}</button></li>`}).join("");
   $("#app").innerHTML=kopf()+`
   ${VS?`<div class="plate"><h1>Alle Stationen ansehen</h1><p>So sehen die Kinder ihren Lernpfad. In der Vorschau ist alles offen, und du kannst jeden Teil frei anklicken. Nichts wird gespeichert.</p><button class="btn ghost" id="vreset">Vorschau zurücksetzen</button></div>`
@@ -1838,7 +1840,8 @@ function seiteStart(){
   kopfAktiv();
   document.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{const x=STATIONEN.find(y=>y.id===b.dataset.id),stt=status(x);
     if(stt==="zu")return toast("Schaff zuerst die Station davor.");
-    if(stt==="morgen")return toast("Diese Station kommt in der nächsten Stunde dran.");
+    if(stt==="vorbei")return toast("Diese Woche ist vorbei. Jetzt ist eine neue Station dran.");
+    if(stt==="morgen")return toast("Diese Station ist noch nicht dran.");
     if(stt==="schluss")return toast("Die Stunde ist gleich vorbei. Nächste Stunde geht es weiter.");
     location.hash=basis()+"s/"+x.id});
   document.querySelectorAll("[data-sp]").forEach(b=>b.onclick=()=>location.hash=basis()+"s/"+b.dataset.sp);
@@ -1873,7 +1876,7 @@ function lernBinden(){
 function seiteStation(st){
   aufraeumen();
   const stt=status(st);
-  if(stt==="zu"||stt==="morgen"||stt==="schluss"){location.hash=home();return}
+  if(stt==="zu"||stt==="morgen"||stt==="schluss"||stt==="vorbei"){location.hash=home();return}
   if(st.spiel&&!spielplatzOffen()){toast(plusHeute()?"🔒 Der Spielplatz öffnet erst am Ende der Stunde.":"🔒 Der Spielplatz öffnet, wenn du heute deine Station mit + geschafft hast.");location.hash=home();return}
   const frei=VS||!!st.spiel;   // frei: „Weiter“ geht immer (Vorschau und Spielplatz)
   if(st.spiel){if(!laufend||laufend.st!==st)spielStat(st.id,g=>g.n++);
@@ -2136,13 +2139,14 @@ function gruppeVon(k){if(k.gruppe)return{g:k.gruppe,erkannt:false};
 const datumDE=iso=>{const [y,m,d]=iso.split("-");return`${d}.${m}.${y}`};
 const regelDerKlasse=kl=>{const r=(lDaten?.regeln||{})[kl];return regelOk(r)?{...r,stationen:r.stationen||{}}:{...STANDARD_REGEL,stationen:{}}};
 function stationenStand(kl){const r=regelDerKlasse(kl),heute=isoTag(new Date()),ab=r.modus==="woche"?stAb(r.start):[];
-  return PFAD().map((st,i)=>{const auto=r.modus!=="woche"||(i===0)||!ab[i]||ab[i]<=heute,ov=r.stationen[st.id],offen=ov===undefined?auto:ov;
-    const info=ov===true&&!auto?`von dir geöffnet (sonst ab ${datumDE(ab[i]).slice(0,6)})`:ov===false?"von dir geschlossen"
-      :auto?(r.modus==="woche"&&ab[i]&&i>0?`offen seit ${datumDE(ab[i]).slice(0,6)}`:"offen"):`öffnet am ${datumDE(ab[i]).slice(0,6)}`;
+  return PFAD().map((st,i)=>{const auto=inWoche(r,i),spaeter=!!ab[i]&&ab[i]>heute,ov=r.stationen[st.id],offen=ov===undefined?auto:ov;
+    const d=ab[i]?datumDE(ab[i]).slice(0,6):"";
+    const info=ov===true&&!auto?(spaeter?`von dir früher geöffnet (sonst ab ${d})`:`von dir wieder geöffnet (Woche ab ${d})`):ov===false?"von dir geschlossen"
+      :auto?(r.modus==="woche"?`diese Woche dran (seit ${d})`:"offen"):spaeter?`dran ab ${d}`:`Woche ab ${d} – vorbei`;
     return{st,i,auto,ov,offen,info}})}
-function stationenBox(kl){const z=stationenStand(kl),n=z.filter(x=>x.offen).length,nae=z.find(x=>!x.offen&&x.ov===undefined);
-  return`<details class="block noprint st-box" id="stbox" ${lsGet("if5-stbox")?"open":""}><summary><b>Stationen</b> <span class="muted small">· ${n} von ${z.length} offen${nae?` · nächste öffnet am ${esc(nae.info.replace("öffnet am ",""))}`:""}</span></summary>
-    <p class="muted small" style="margin:10px 0 12px">Jede Schulwoche öffnet automatisch eine neue Station. Mit dem Schalter öffnest oder schließt du eine Station sofort. Was Kinder schon angefangen oder fertig haben, bleibt.</p>
+function stationenBox(kl){const z=stationenStand(kl),n=z.filter(x=>x.offen).length,nae=z.find(x=>!x.offen&&x.ov===undefined&&x.info.startsWith("dran ab"));
+  return`<details class="block noprint st-box" id="stbox" ${lsGet("if5-stbox")?"open":""}><summary><b>Stationen</b> <span class="muted small">· ${n} von ${z.length} offen${nae?` · nächste ab ${esc(nae.info.replace("dran ab ",""))}`:""}</span></summary>
+    <p class="muted small" style="margin:10px 0 12px">Jede Schulwoche ist genau eine Station dran, für alle Klassen gleich. Danach ist sie zu; was nicht fertig wurde, bekommt die vorläufige Note. Fällt eine Stunde aus, bleibt die Station ohne Note. Mit dem Schalter öffnest du eine Station früher oder noch einmal, oder du schließt sie.</p>
     <ol class="st-liste">${z.map(x=>`<li class="st-zeile${x.ov!==undefined?" hand":""}"><span class="nr">${x.i+1}</span>${pix(x.st.id,24)}<span class="st-t"><b>${esc(x.st.titel)}</b><small>${esc(x.info)}${x.ov!==undefined?` · <button class="link" data-auto="${x.st.id}">zurücksetzen</button>`:""}</small></span>
       <button class="schalter" role="switch" aria-checked="${x.offen}" aria-label="${esc(x.st.titel)} ${x.offen?"schließen":"öffnen"}" data-st="${x.st.id}"><span></span></button></li>`).join("")}</ol></details>`}
 function stationenBoxAktiv(kl){
@@ -2221,7 +2225,7 @@ function lehrerZeigen(){
     const status=k.besetzt?`<span class="chip good">angemeldet</span> <button class="link" data-a="freigeben" data-id="${k.id}">abmelden</button>`:`<span class="muted small">–</span>`;
     const zellen=PFAD().map(st=>{const p=s[st.id];if(!p)return`<td class="muted c">·</td>`;const pz=prozent(st,p);
       return`<td class="c" title="${esc(st.titel)}: ${pz} %${p.fertig?"":" · Teil "+((p.schritt||0)+1)}">${!unfertig(p)||p.lnote?(()=>{const b=bewertung(st,p);return`<button class="chip ${zeichenKlasse(b.z)} gross-z nchip${b.lehrer?" lehrer":""}" data-ln="${k.id}|${st.id}" title="${b.lehrer?"Von dir festgelegt. ":""}Klicken: Note selbst festlegen">${b.note}${b.stern?"⭐":""}${b.lehrer?" ✎":""}</button><span class="pzk">${pz} %${p.gestoppt?" · Zeit um":""}</span>`})():offen?`<button class="nchip offen muted small" data-ln="${k.id}|${st.id}" title="Noch nicht fertig. Klicken: Note selbst festlegen">…${pz}%</button>`
-        :(()=>{const b=bewertung(st,p);return`<button class="chip ${zeichenKlasse(b.z)} gross-z nchip${b.lehrer?" lehrer":""}" data-ln="${k.id}|${st.id}" title="Vorläufige Note: noch nicht fertig. Gnädig berechnet aus dem, was geschafft ist (höchstens 2+, schlechtestens 4). Das Kind sieht sie nicht. Klicken: Note selbst festlegen">${b.note}${b.stern?"⭐":""}</button><span class="pzk">vorl.</span>`})()}</td>`}).join("");
+        :(()=>{const b=bewertung(st,p);return`<button class="chip ${zeichenKlasse(b.z)} gross-z nchip${b.lehrer?" lehrer":""}" data-ln="${k.id}|${st.id}" title="Vorläufige Note: noch nicht fertig. Gnädig berechnet aus dem, was geschafft ist (höchstens 2+, schlechtestens 4). Das Kind sieht sie nicht. Klicken: Note selbst festlegen">${b.note}${b.stern?"⭐":""}</button><span class="pzk">${inWoche(regelDerKlasse(k.klasse),PFAD().indexOf(st))?"vorl.":"n. f."}</span>`})()}</td>`}).join("");
     const gv=gruppeVon(k);
     return`<tr><td class="t"><span class="e">${t.emoji}</span>${esc(t.name)}</td>
       <td><input type="text" class="vn" data-id="${k.id}" value="${esc(namen[k.id]||"")}" placeholder="Wer ist das?" list="dl-${esc(kl)}"></td><td><select class="grw" data-id="${k.id}" title="${gv.erkannt?"Automatisch erkannt. Auswählen, um es festzulegen.":"Halbgruppe"}"><option value="">–</option><option value="1" ${gv.g===1?"selected":""}>1${gv.erkannt&&gv.g===1?" ?":""}</option><option value="2" ${gv.g===2?"selected":""}>2${gv.erkannt&&gv.g===2?" ?":""}</option></select></td><td>${status}</td>${zellen}
@@ -2247,7 +2251,7 @@ function lehrerZeigen(){
     zeilen.sort((a,b)=>(b.hinweis?1:0)-(a.hinweis?1:0)||a.name.localeCompare(b.name,"de"));
     window._noten=zeilen.map(x=>`${x.name}\t${x.st}\t${x.z} (${x.note}${x.stern?" ⭐":""})${x.fertig?"":" vorläufig"}`).join("\n");
     return`<div class="block" style="overflow-x:auto"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Heute</h2>${notenKreis(zeilen.filter(x=>x.fertig||!offen).map(x=>x.note))}<button class="btn ghost noprint" id="kopie" style="min-height:40px;padding:6px 14px">Noten kopieren</button></div>
-      <p class="muted small" style="margin:4px 0 10px">Aktualisiert sich alle 20 Sekunden. Kinder mit Hinweis stehen oben. 5 Minuten vor Schluss pausiert die App alle angefangenen Stationen – ohne Note. Wer nicht fertig ist, bekommt bei dir eine vorläufige Note („vorl.“): gnädig aus dem Geschafften, höchstens 2+, schlechtestens 4. Die Kinder sehen sie nicht. Macht das Kind fertig, gilt die echte Note.</p>
+      <p class="muted small" style="margin:4px 0 10px">Aktualisiert sich alle 20 Sekunden. Kinder mit Hinweis stehen oben. 5 Minuten vor Schluss pausiert die App alle angefangenen Stationen – ohne Note. Wer nicht fertig wird, bekommt bei dir eine gnädige Note aus dem Geschafften (höchstens 2+, schlechtestens 4): „vorl.“, solange die Woche läuft, danach „n. f.“. Die Kinder sehen sie nicht.</p>
       <table class="liste heute-t"><thead><tr><th>Kind</th><th>Station</th><th>Stand</th><th class="c">Minuten</th><th class="c">Fehlversuche</th><th>Hinweis</th><th class="c" title="Mühe-Stern: hebt die Note um eine Stufe">Mühe</th><th class="c" title="Erreichte Punkte in Prozent. „81 → 93“ heißt: nach dem Verbessern">%</th><th class="c" title="Auf die Note klicken, um sie selbst festzulegen">Note</th></tr></thead><tbody>
       ${zeilen.map(x=>`<tr class="${x.hinweis?"auff":""}"><td class="t">${esc(x.name)}</td><td>${esc(x.st)}</td><td>${x.fertig?"fertig":x.teil}</td><td class="c">${x.min}</td><td class="c">${x.fGes}</td><td>${x.hinweis?`<b>${x.hinweis}</b>`:""}</td><td class="c"><button class="stern-btn${x.stern?" an":""}" data-stern="${x.kid}|${x.sid}" title="${x.stern?"Mühe-Stern wieder wegnehmen":"Mühe-Stern geben: Note eine Stufe besser"}">⭐</button></td><td class="c pz">${x.erst!=null?`<span class="muted">${x.erst} → </span>`:""}${x.pz} %</td><td class="c"><button class="chip ${zeichenKlasse(x.z)} gross-z nchip${x.lehrer?" lehrer":""}" data-ln="${x.kid}|${x.sid}" title="${x.lehrer?"Von dir festgelegt. ":x.vorl?"Vorläufig (nicht fertig), gnädig berechnet. Das Kind sieht sie nicht. ":""}Klicken: Note selbst festlegen">${x.note}${x.lehrer?" ✎":""}</button>${x.vorl&&!x.lehrer?`<span class="pzk">vorl.</span>`:""}</td></tr>`).join("")}</tbody></table></div>`})()}
   <div class="block" style="overflow-x:auto"><h2 style="margin-bottom:8px">Alle Stationen</h2>
@@ -2275,7 +2279,7 @@ function lehrerZeigen(){
   </div>
   <details class="block plan"><summary><b>Lernpfad & Lehrplan</b> <span class="muted small">– alle ${PFAD().length} Stationen mit Bezug zum Kernlehrplan NRW</span></summary>
     <ol>${PFAD().map(st=>`<li><b>${esc(st.titel)}</b> <span class="chip">${KAPITEL_NAME[st.kapitel]||""}</span><br><span class="small">${esc(st.kurz)}</span>${st.klp?`<br><span class="muted small">KLP: ${esc(st.klp)}</span>`:""}</li>`).join("")}</ol>
-    <p class="muted small">Ablauf: Jede Station ist eine Doppelstunde (60 Min.). Die Kinder gehen den Lernpfad der Reihe nach. Wie neue Stationen öffnen, stellst du oben unter „Stationen öffnen“ pro Klasse ein; wer gefehlt hat, kann nachholen. Der Spielplatz (Bonus-Spiele, ohne Note) öffnet nur mit einem + in der Station von heute.</p></details>
+    <p class="muted small">Ablauf: Jede Station ist eine Doppelstunde (60 Min.). Jede Schulwoche ist genau eine Station dran, für alle Klassen gleich (Kasten „Stationen“ oben). Was in der Woche nicht fertig wird, bleibt zu und bekommt eine gnädige Note; fällt die Stunde aus, gibt es für diese Station keine Note. Der Spielplatz (Bonus-Spiele, ohne Note) öffnet nur mit einem + in der Station von heute.</p></details>
   <p class="muted small" style="margin-top:14px">${!db.online?"<b>Vorschau-Modus:</b> Alles liegt nur in diesem Browser."
     :db.hatSchluessel()?"<b>Sicherung:</b> Jede fertige Station wird zusätzlich in ein Protokoll geschrieben, das sich nicht löschen lässt. Die Datenbank sichert sich stündlich selbst (60 Tage zurück). Eine Kopie aller Noten liegt zusätzlich in diesem Browser; die Notfall-Datei lädst du bei Bedarf mit dem Knopf herunter. Die Namen sehen nur du und dieses Konto. Sie werden mit deinem Passwort verschlüsselt gesichert und sind nach der Anmeldung auf jedem Gerät da. Kinder sehen nur Tiere."+(namenStand==="fehler"?" <b>Die Sicherung hat gerade nicht geklappt.</b>":"")
     :"<b>Melde dich einmal ab und wieder an</b>, dann werden die Namen verschlüsselt bei deinem Konto gesichert. Bis dahin liegen sie nur in diesem Browser."}</p>`;
