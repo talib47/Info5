@@ -948,3 +948,24 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
 .nh{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:6px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
 .nh small{color:var(--muted);font-weight:500}
 .nh:hover{border-color:var(--accent)}
+/* Erinnerung an die Lernzeit-Karte nach dem Anmelden */
+.lz-dlg{width:min(460px,92vw);border:0;border-radius:20px;padding:28px 26px 22px;background:var(--surface);color:var(--ink);box-shadow:0 24px 70px rgba(15,23,42,.3);text-align:center}
+.lz-dlg::backdrop{background:rgba(20,26,36,.5)}
+.lz-dlg[open]{animation:lzrein .25s ease-out}
+@keyframes lzrein{from{transform:translateY(12px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.lz-dlg[open]{animation:none}}
+.lz-dlg-bild{width:84px;height:104px;margin:0 auto 14px;border-radius:10px;background:var(--surface);border:2.5px solid var(--accent);position:relative;transform:rotate(-4deg);box-shadow:6px 6px 0 color-mix(in srgb,var(--accent) 18%,transparent)}
+.lz-dlg-bild::before{content:"";position:absolute;left:12px;right:12px;top:16px;height:44px;background:repeating-linear-gradient(to bottom,color-mix(in srgb,var(--accent) 35%,transparent) 0 2px,transparent 2px 11px)}
+.lz-dlg-bild span{position:absolute;left:0;right:0;bottom:10px;font:700 1.25rem/1 var(--mono,monospace);color:var(--accent)}
+.lz-dlg h2{margin:0 0 6px;font-size:1.35rem}
+.lz-dlg p{margin:0 0 14px}
+.lz-dlg-titel{font-size:1rem}
+.lz-dlg-wahl{display:flex;flex-direction:column;gap:6px;text-align:left;margin:0 0 12px;font-weight:600}
+.lz-dlg-wahl select{font:inherit;padding:10px;border:1px solid #b9c0cc;border-radius:10px}
+.lz-dlg-felder{display:flex;flex-direction:column;gap:10px;text-align:left}
+.lz-dlg-felder label{display:flex;flex-direction:column;gap:6px;font-weight:600}
+.lz-dlg-felder input{font:inherit;font-size:1.2rem;padding:12px 14px;border:1.5px solid #b9c0cc;border-radius:12px;text-transform:uppercase;letter-spacing:.04em}
+.lz-dlg-felder input:focus{outline:3px solid color-mix(in srgb,var(--accent) 35%,transparent);border-color:var(--accent)}
+#dlzm.msg{margin-top:12px;text-align:left}
+.lz-dlg-knoepfe{display:flex;gap:10px;justify-content:space-between;margin-top:20px}
+.lz-dlg-knoepfe .btn{flex:1}

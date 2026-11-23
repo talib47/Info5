@@ -964,6 +964,27 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
 .nh{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:6px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
 .nh small{color:var(--muted);font-weight:500}
 .nh:hover{border-color:var(--accent)}
+/* Erinnerung an die Lernzeit-Karte nach dem Anmelden */
+.lz-dlg{width:min(460px,92vw);border:0;border-radius:20px;padding:28px 26px 22px;background:var(--surface);color:var(--ink);box-shadow:0 24px 70px rgba(15,23,42,.3);text-align:center}
+.lz-dlg::backdrop{background:rgba(20,26,36,.5)}
+.lz-dlg[open]{animation:lzrein .25s ease-out}
+@keyframes lzrein{from{transform:translateY(12px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.lz-dlg[open]{animation:none}}
+.lz-dlg-bild{width:84px;height:104px;margin:0 auto 14px;border-radius:10px;background:var(--surface);border:2.5px solid var(--accent);position:relative;transform:rotate(-4deg);box-shadow:6px 6px 0 color-mix(in srgb,var(--accent) 18%,transparent)}
+.lz-dlg-bild::before{content:"";position:absolute;left:12px;right:12px;top:16px;height:44px;background:repeating-linear-gradient(to bottom,color-mix(in srgb,var(--accent) 35%,transparent) 0 2px,transparent 2px 11px)}
+.lz-dlg-bild span{position:absolute;left:0;right:0;bottom:10px;font:700 1.25rem/1 var(--mono,monospace);color:var(--accent)}
+.lz-dlg h2{margin:0 0 6px;font-size:1.35rem}
+.lz-dlg p{margin:0 0 14px}
+.lz-dlg-titel{font-size:1rem}
+.lz-dlg-wahl{display:flex;flex-direction:column;gap:6px;text-align:left;margin:0 0 12px;font-weight:600}
+.lz-dlg-wahl select{font:inherit;padding:10px;border:1px solid #b9c0cc;border-radius:10px}
+.lz-dlg-felder{display:flex;flex-direction:column;gap:10px;text-align:left}
+.lz-dlg-felder label{display:flex;flex-direction:column;gap:6px;font-weight:600}
+.lz-dlg-felder input{font:inherit;font-size:1.2rem;padding:12px 14px;border:1.5px solid #b9c0cc;border-radius:12px;text-transform:uppercase;letter-spacing:.04em}
+.lz-dlg-felder input:focus{outline:3px solid color-mix(in srgb,var(--accent) 35%,transparent);border-color:var(--accent)}
+#dlzm.msg{margin-top:12px;text-align:left}
+.lz-dlg-knoepfe{display:flex;gap:10px;justify-content:space-between;margin-top:20px}
+.lz-dlg-knoepfe .btn{flex:1}
 /* Bausteine der Stationen */
 .paar{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;align-items:start;margin-top:8px}
 .px{display:grid;gap:2px;background:var(--line);border:2px solid var(--line);border-radius:10px;overflow:hidden;width:100%;max-width:340px;aspect-ratio:1;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -1088,7 +1109,7 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="31f3286ee8";
+const VERSION="b90c0f64ad";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -1370,24 +1391,26 @@ const noteAus=p=>NOTEN.find(([g])=>p>=g)[1];
 const notenIndex=p=>NOTEN.findIndex(([g])=>p>=g);
 /* Lehrernote (p.lnote, z. B. "2−"): Die Lehrkraft legt die Note selbst fest. Sie ersetzt Note der App und Stern, bis sie wieder entfernt wird. */
 const zeichenVonIndex=i=>i<=3?"+":i<=8?"o":"−";
-/* Vorläufige Note (seit 23.11.2026) für Stationen, die (noch) nicht fertig sind – auch für die bis 23.11. per Zeitstopp beendeten (p.gestoppt).
-   Gnädig: Bewertet wird nur, wie gut die BEARBEITETEN Teile gelöst sind. Langsamkeit wird nicht bestraft.
-   Höchstens 2+ (weniger als die Hälfte der Station bearbeitet: höchstens 3+), schlechtestens 4. Nichts bearbeitet: keine Note.
-   Kinder sehen sie nie (für sie ist die Station „angefangen“); nur die Lehrer-Ansicht zeigt sie, mit „vorl.“.
-   Macht das Kind die Station fertig, gilt die normale Note. Eine Lehrernote geht immer vor. */
+/* Note – EIN Maßstab für alle (seit 23.11.2026), fertig oder nicht:
+   1. Fertig: Punkte geteilt durch die Punkte der Station (bzw. das Soll, siehe SOLL_ANTEIL) – wie bisher.
+   2. Nicht fertig: Punkte geteilt durch die Punkte der GANZEN Station (die Station ist die Aufgabe der Woche),
+      und höchstens UNFERTIG_BESTE. So schneidet niemand, der weniger gemacht hat, besser ab als jemand, der alles gemacht hat.
+   3. Mühe-Boden für ALLE gleich: Wer mindestens MUEHE_MIN Minuten wirklich an der Station gearbeitet hat, bekommt nicht
+      schlechter als MUEHE_BODEN – egal ob fertig oder nicht. Wer kaum gearbeitet hat, bekommt keinen Boden.
+   Nichts bearbeitet (z. B. Stunde ausgefallen): keine Note.
+   Kinder sehen bei nicht fertigen Stationen keine Note; die Lehrer-Ansicht zeigt sie mit „vorl.“ (Woche läuft) bzw. „n. f.“. */
 const notenStufe=n=>NOTEN.findIndex(([,x])=>x===n);
-const VORL_BESTE=notenStufe("2+"),VORL_BESTE_WENIG=notenStufe("3+"),VORL_SCHLECHTESTE=notenStufe("4");
+const UNFERTIG_BESTE=notenStufe("2−"),MUEHE_BODEN=notenStufe("4"),MUEHE_MIN=30;
 const unfertig=p=>!p?.fertig||!!p.gestoppt;
-function vorlaeufig(st,p){const teile=Object.keys(p?.punkte||{}).filter(k=>st.schritte[k]);if(!teile.length)return null;
-  const mb=teile.reduce((a,k)=>a+(st.schritte[k].punkte||0),0),q=mb?Math.round(summe(p)/mb*100):0,anteil=mb/(maxPunkte(st)||1);
-  let i=notenIndex(q);i=Math.max(i,anteil>=.5?VORL_BESTE:VORL_BESTE_WENIG);i=Math.min(i,VORL_SCHLECHTESTE);return{i,q,anteil}}
 function bewertung(st,p){
-  if(unfertig(p)&&!p?.lnote){const v=vorlaeufig(st,p),pz=prozent(st,p);
-    if(!v)return{pz,note:"–",z:"",stern:false,lehrer:false,vorl:true,leer:true};
-    const i=p?.stern?Math.max(0,v.i-1):v.i;return{pz,note:NOTEN[i][1],z:zeichenVonIndex(i),stern:!!p?.stern,lehrer:false,vorl:true}}
-  const pz=prozent(st,p);let i=notenIndex(pz);if(p?.stern)i=Math.max(0,i-1);
+  const uf=unfertig(p),leer=!Object.keys(p?.punkte||{}).length,pz=uf?Math.min(100,Math.round(summe(p)/(maxPunkte(st)||1)*100)):prozent(st,p);
+  if(uf&&leer&&!p?.lnote)return{pz,note:"–",z:"",stern:false,lehrer:false,vorl:true,leer:true};
+  let i=notenIndex(pz);
+  if(uf)i=Math.max(i,UNFERTIG_BESTE);
+  if((p?.aktiv||0)>=MUEHE_MIN*60000)i=Math.min(i,MUEHE_BODEN);
+  if(p?.stern)i=Math.max(0,i-1);
   const li=p?.lnote?NOTEN.findIndex(([,n])=>n===p.lnote):-1;if(li>=0)i=li;
-  return{pz,note:NOTEN[i][1],z:zeichenVonIndex(i),stern:li<0&&!!p?.stern,lehrer:li>=0}}
+  return{pz,note:NOTEN[i][1],z:zeichenVonIndex(i),stern:li<0&&!!p?.stern,lehrer:li>=0,vorl:uf&&li<0}}
 const zeichenKlasse=z=>z==="+"?"good":z==="o"?"":"bad";
 const zeit=ms=>{const m=Math.round((ms||0)/60000);return m<1?"unter 1 Min.":m+" Min."};
 const maxPunkte=st=>st.schritte.reduce((a,s)=>a+(s.punkte||0),0);
@@ -1548,7 +1571,7 @@ const LZ_AB=(()=>{const nrs=Object.keys(LERNZEIT).sort(),w=schulWochen(LZ_START,
    modus "frei"  = alle offen (immer der Reihe nach)
    modus "tag"   = höchstens eine NEUE Station pro Tag
    Klassen ohne Eintrag: STANDARD_REGEL. Das Kind bekommt die Regel beim Anmelden; sie wird auf dem Gerät zwischengespeichert. */
-const ST_START="2026-11-09";
+const ST_START="2026-11-16";   // Station 1 = Woche ab 16.11.2026 (auf Talibs Wunsch vom 23.11.: diese Woche Station 2)
 const STANDARD_REGEL={modus:"woche",start:ST_START};
 const MODI={woche:"wochenweise ab Startwoche",frei:"alle frei",tag:"eine pro Tag"};
 const regelOk=r=>!!r&&(r.modus==="frei"||r.modus==="tag"||(r.modus==="woche"&&/^\d{4}-\d\d-\d\d$/.test(r.start||"")));
@@ -1792,7 +1815,7 @@ function anmeldeErgebnis(klasse,tier,r,nochmal){
     const un=(lsGet("if5-ungesendet")||[]).find(x=>x.klasse===klasse&&x.tier===tier);
     if(un){Object.entries(un.staende).forEach(([id,p])=>{if(weiterAls(p,staende[id])){staende[id]=p;pushWarte.add(id)}});
       lsSet("if5-ungesendet",(lsGet("if5-ungesendet")||[]).filter(x=>x!==un&&!(x.klasse===klasse&&x.tier===tier)));setTimeout(hochladen,500)}
-    staendeLokal();toast(`Hallo ${t.name}!`);location.hash="";render();planLaden();return}
+    staendeLokal();toast(`Hallo ${t.name}!`);ssSet("if5-lz-erinnern",1);location.hash="";render();planLaden();return}
   const T={besetzt:"Dieses Tier ist schon an einem anderen Platz angemeldet. Sag deiner Lehrkraft Bescheid.",zu:"Die Klasse ist gerade geschlossen.",
     unbekannt:"Dieses Tier gibt es nicht mehr.",vergeben:"Dieses Tier hat sich gerade jemand anderes genommen. Such dir ein anderes aus.",voll:"Die Klasse ist voll. Sag deiner Lehrkraft Bescheid.",netz:"Keine Verbindung. Versuch es noch mal."};
   const m=$("#m");m.className="msg no";m.textContent=T[r.fehler]||"Das hat nicht geklappt.";m.scrollIntoView({block:"center",behavior:"smooth"});
@@ -1847,7 +1870,32 @@ function seiteStart(){
   document.querySelectorAll("[data-sp]").forEach(b=>b.onclick=()=>location.hash=basis()+"s/"+b.dataset.sp);
   if($("#vreset"))$("#vreset").onclick=()=>{vStaende={};laufend=null;vLern={karten:{}};seiteStart();toast("Vorschau zurückgesetzt")};
   lernBinden();
+  if(!VS&&ssGet("if5-lz-erinnern")){ssDel("if5-lz-erinnern");lernErinnern()}
 }
+/* Nach dem Anmelden: freundlich an die Lernzeit-Karte erinnern – nur wenn eine offene Karte noch nicht abgegeben ist.
+   Einmal pro Anmeldung. „Hab ich nicht dabei“ schließt; abgeben geht weiter unten auf der Seite. */
+function lernErinnern(){
+  const p=lernStand().karten||{},offen=Object.keys(LERNZEIT).sort().filter(lzOffen).filter(n=>!p[n]?.am).reverse();
+  if(!offen.length||stoppZeit())return;
+  let nr=offen[0];const dlg=document.createElement("dialog");dlg.className="lz-dlg";document.body.append(dlg);
+  const zeigen=()=>{dlg.innerHTML=`<div class="lz-dlg-bild" aria-hidden="true"><span>${nr}</span></div>
+    <h2>Hast du deine Lernzeit-Karte dabei?</h2>
+    <p class="muted">Tippe ein, was in deinem Lösungsfeld steht. Das dauert nur eine Minute.</p>
+    ${offen.length>1?`<label class="lz-dlg-wahl">Karte <select id="dlzk">${offen.map(n=>`<option value="${n}" ${n===nr?"selected":""}>${n} · ${esc(LERNZEIT[n].titel)}</option>`).join("")}</select></label>`:`<p class="lz-dlg-titel"><b>Karte ${nr}</b> · ${esc(LERNZEIT[nr].titel)}</p>`}
+    <div class="lz-dlg-felder">${lernFelder(nr).replace(/class="lzw/g,'class="dlzw')}</div>
+    <div id="dlzm"></div>
+    <div class="lz-dlg-knoepfe"><button class="btn ghost" id="dlzspaeter">Hab ich nicht dabei</button><button class="btn" id="dlzab">Abgeben</button></div>`;
+    if($("#dlzk"))$("#dlzk").onchange=()=>{nr=$("#dlzk").value;zeigen()};
+    const los=()=>{const w=[...dlg.querySelectorAll(".dlzw")].map(x=>x.value),m=$("#dlzm");
+      if(w.some(x=>!x.trim())){m.className="msg no";m.textContent=w.length===1?"Tippe deine Lösung ein.":"Füll alle Felder aus.";return}
+      const r=lernAbgeben(nr,w),e=(lernStand().karten||{})[nr]||{};
+      if(r==="ok"){dlg.close();dlg.remove();toast(`Super! Karte ${nr} ist abgegeben.`);seiteStart();return}
+      m.className="msg no";m.textContent=r==="gesperrt"?`Das waren ${LZ_VERSUCHE} falsche Versuche. Schau morgen noch mal auf deine Karte.`
+        :`${w.length===1?"Das stimmt noch nicht.":"Mindestens eine Lösung stimmt noch nicht."} Schau auf deine Karte. Noch ${LZ_VERSUCHE-(e.falsch||0)} ${LZ_VERSUCHE-(e.falsch||0)===1?"Versuch":"Versuche"} heute.`};
+    $("#dlzab").onclick=los;dlg.querySelectorAll(".dlzw").forEach(x=>x.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();los()}});
+    $("#dlzspaeter").onclick=()=>{dlg.close();dlg.remove()};
+    const f=dlg.querySelector(".dlzw");if(f)setTimeout(()=>f.focus(),50)};
+  dlg.addEventListener("cancel",()=>dlg.remove());zeigen();dlg.showModal()}
 function lernBlock(){
   const p=lernStand().karten||{},nrs=Object.keys(LERNZEIT).sort().filter(lzOffen),offen=nrs.filter(n=>!p[n]?.am),fertig=nrs.filter(n=>p[n]?.am);
   return`<div class="lz-block" id="lz">
@@ -2101,7 +2149,7 @@ function notfallCsv(){const d=lDaten;if(!d)return"";
   const kopf=["Klasse","Name","Tier","Station","Stand","Note","Note 1–6","Punkte","von","Fehlversuche","Minuten","Fertig am"];
   const z=[];const schon=new Set();
   (d.abschluesse||[]).forEach(a=>{schon.add(a.kind_id+"|"+a.station+"|"+new Date(a.fertig_am).getTime());
-    z.push([a.klasse,namen[a.kind_id]||"",a.tier,titel[a.station]||a.station,tierVon[a.kind_id]?"fertig":"fertig (Kind gelöscht)",...(()=>{const pk=d.staende[a.kind_id]?.[a.station];if((pk?.stern||pk?.lnote||pk?.gestoppt)&&pk.fertig&&new Date(a.fertig_am).getTime()===pk.fertig){const st=STATIONEN.find(s=>s.id===a.station);if(st){const b=bewertung(st,pk);return[b.z,b.note+(b.lehrer?" (Lehrernote)":b.vorl?" (vorläufig)":" ⭐")]}}
+    z.push([a.klasse,namen[a.kind_id]||"",a.tier,titel[a.station]||a.station,tierVon[a.kind_id]?"fertig":"fertig (Kind gelöscht)",...(()=>{const pk=d.staende[a.kind_id]?.[a.station];if(pk&&pk.fertig&&new Date(a.fertig_am).getTime()===pk.fertig){const st=STATIONEN.find(s=>s.id===a.station);if(st){const b=bewertung(st,pk);return[b.z,b.note+(b.lehrer?" (Lehrernote)":b.vorl?" (nicht fertig)":b.stern?" ⭐":"")]}}
         if(pk&&(unfertig(pk)||pk.fertig!==new Date(a.fertig_am).getTime()))return["","(ersetzt, siehe aktuelle Zeile)"];
       return[a.note,a.max?noteAus(Math.round(a.punkte*100/a.max)):""]})(),a.punkte,a.max,a.fehlversuche,a.minuten,new Date(a.fertig_am).toLocaleString("de-DE")])});
   d.kinder.forEach(k=>Object.entries(d.staende[k.id]||{}).forEach(([id,p])=>{const st=STATIONEN.find(s=>s.id===id);if(!st||st.spiel)return;
@@ -2146,7 +2194,7 @@ function stationenStand(kl){const r=regelDerKlasse(kl),heute=isoTag(new Date()),
     return{st,i,auto,ov,offen,info}})}
 function stationenBox(kl){const z=stationenStand(kl),n=z.filter(x=>x.offen).length,nae=z.find(x=>!x.offen&&x.ov===undefined&&x.info.startsWith("dran ab"));
   return`<details class="block noprint st-box" id="stbox" ${lsGet("if5-stbox")?"open":""}><summary><b>Stationen</b> <span class="muted small">· ${n} von ${z.length} offen${nae?` · nächste ab ${esc(nae.info.replace("dran ab ",""))}`:""}</span></summary>
-    <p class="muted small" style="margin:10px 0 12px">Jede Schulwoche ist genau eine Station dran, für alle Klassen gleich. Danach ist sie zu; was nicht fertig wurde, bekommt die vorläufige Note. Fällt eine Stunde aus, bleibt die Station ohne Note. Mit dem Schalter öffnest du eine Station früher oder noch einmal, oder du schließt sie.</p>
+    <p class="muted small" style="margin:10px 0 12px">Jede Schulwoche ist genau eine Station dran, für alle Klassen gleich. Danach ist sie zu; was nicht fertig wurde, wird nach dem Geschafften benotet. Fällt eine Stunde aus, bleibt die Station ohne Note. Mit dem Schalter öffnest du eine Station früher oder noch einmal, oder du schließt sie.</p>
     <ol class="st-liste">${z.map(x=>`<li class="st-zeile${x.ov!==undefined?" hand":""}"><span class="nr">${x.i+1}</span>${pix(x.st.id,24)}<span class="st-t"><b>${esc(x.st.titel)}</b><small>${esc(x.info)}${x.ov!==undefined?` · <button class="link" data-auto="${x.st.id}">zurücksetzen</button>`:""}</small></span>
       <button class="schalter" role="switch" aria-checked="${x.offen}" aria-label="${esc(x.st.titel)} ${x.offen?"schließen":"öffnen"}" data-st="${x.st.id}"><span></span></button></li>`).join("")}</ol></details>`}
 function stationenBoxAktiv(kl){
@@ -2225,7 +2273,7 @@ function lehrerZeigen(){
     const status=k.besetzt?`<span class="chip good">angemeldet</span> <button class="link" data-a="freigeben" data-id="${k.id}">abmelden</button>`:`<span class="muted small">–</span>`;
     const zellen=PFAD().map(st=>{const p=s[st.id];if(!p)return`<td class="muted c">·</td>`;const pz=prozent(st,p);
       return`<td class="c" title="${esc(st.titel)}: ${pz} %${p.fertig?"":" · Teil "+((p.schritt||0)+1)}">${!unfertig(p)||p.lnote?(()=>{const b=bewertung(st,p);return`<button class="chip ${zeichenKlasse(b.z)} gross-z nchip${b.lehrer?" lehrer":""}" data-ln="${k.id}|${st.id}" title="${b.lehrer?"Von dir festgelegt. ":""}Klicken: Note selbst festlegen">${b.note}${b.stern?"⭐":""}${b.lehrer?" ✎":""}</button><span class="pzk">${pz} %${p.gestoppt?" · Zeit um":""}</span>`})():offen?`<button class="nchip offen muted small" data-ln="${k.id}|${st.id}" title="Noch nicht fertig. Klicken: Note selbst festlegen">…${pz}%</button>`
-        :(()=>{const b=bewertung(st,p);return`<button class="chip ${zeichenKlasse(b.z)} gross-z nchip${b.lehrer?" lehrer":""}" data-ln="${k.id}|${st.id}" title="Vorläufige Note: noch nicht fertig. Gnädig berechnet aus dem, was geschafft ist (höchstens 2+, schlechtestens 4). Das Kind sieht sie nicht. Klicken: Note selbst festlegen">${b.note}${b.stern?"⭐":""}</button><span class="pzk">${inWoche(regelDerKlasse(k.klasse),PFAD().indexOf(st))?"vorl.":"n. f."}</span>`})()}</td>`}).join("");
+        :(()=>{const b=bewertung(st,p);return`<button class="chip ${zeichenKlasse(b.z)} gross-z nchip${b.lehrer?" lehrer":""}" data-ln="${k.id}|${st.id}" title="Nicht fertig: Note nach demselben Maßstab wie alle (höchstens 2−; mit mind. 30 Min. Arbeit nicht schlechter als 4). Das Kind sieht sie nicht. Klicken: Note selbst festlegen">${b.note}${b.stern?"⭐":""}</button><span class="pzk">${inWoche(regelDerKlasse(k.klasse),PFAD().indexOf(st))?"vorl.":"n. f."}</span>`})()}</td>`}).join("");
     const gv=gruppeVon(k);
     return`<tr><td class="t"><span class="e">${t.emoji}</span>${esc(t.name)}</td>
       <td><input type="text" class="vn" data-id="${k.id}" value="${esc(namen[k.id]||"")}" placeholder="Wer ist das?" list="dl-${esc(kl)}"></td><td><select class="grw" data-id="${k.id}" title="${gv.erkannt?"Automatisch erkannt. Auswählen, um es festzulegen.":"Halbgruppe"}"><option value="">–</option><option value="1" ${gv.g===1?"selected":""}>1${gv.erkannt&&gv.g===1?" ?":""}</option><option value="2" ${gv.g===2?"selected":""}>2${gv.erkannt&&gv.g===2?" ?":""}</option></select></td><td>${status}</td>${zellen}
@@ -2251,9 +2299,9 @@ function lehrerZeigen(){
     zeilen.sort((a,b)=>(b.hinweis?1:0)-(a.hinweis?1:0)||a.name.localeCompare(b.name,"de"));
     window._noten=zeilen.map(x=>`${x.name}\t${x.st}\t${x.z} (${x.note}${x.stern?" ⭐":""})${x.fertig?"":" vorläufig"}`).join("\n");
     return`<div class="block" style="overflow-x:auto"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Heute</h2>${notenKreis(zeilen.filter(x=>x.fertig||!offen).map(x=>x.note))}<button class="btn ghost noprint" id="kopie" style="min-height:40px;padding:6px 14px">Noten kopieren</button></div>
-      <p class="muted small" style="margin:4px 0 10px">Aktualisiert sich alle 20 Sekunden. Kinder mit Hinweis stehen oben. 5 Minuten vor Schluss pausiert die App alle angefangenen Stationen – ohne Note. Wer nicht fertig wird, bekommt bei dir eine gnädige Note aus dem Geschafften (höchstens 2+, schlechtestens 4): „vorl.“, solange die Woche läuft, danach „n. f.“. Die Kinder sehen sie nicht.</p>
+      <p class="muted small" style="margin:4px 0 10px">Aktualisiert sich alle 20 Sekunden. Kinder mit Hinweis stehen oben. 5 Minuten vor Schluss pausiert die App alle angefangenen Stationen – ohne Note. Alle Noten nach einem Maßstab: Punkte im Verhältnis zur ganzen Station. Nicht fertig: höchstens 2−. Wer mind. 30 Minuten gearbeitet hat, bekommt nicht schlechter als 4 – fertig oder nicht. Nicht fertige Noten siehst nur du („vorl.“, solange die Woche läuft, danach „n. f.“).</p>
       <table class="liste heute-t"><thead><tr><th>Kind</th><th>Station</th><th>Stand</th><th class="c">Minuten</th><th class="c">Fehlversuche</th><th>Hinweis</th><th class="c" title="Mühe-Stern: hebt die Note um eine Stufe">Mühe</th><th class="c" title="Erreichte Punkte in Prozent. „81 → 93“ heißt: nach dem Verbessern">%</th><th class="c" title="Auf die Note klicken, um sie selbst festzulegen">Note</th></tr></thead><tbody>
-      ${zeilen.map(x=>`<tr class="${x.hinweis?"auff":""}"><td class="t">${esc(x.name)}</td><td>${esc(x.st)}</td><td>${x.fertig?"fertig":x.teil}</td><td class="c">${x.min}</td><td class="c">${x.fGes}</td><td>${x.hinweis?`<b>${x.hinweis}</b>`:""}</td><td class="c"><button class="stern-btn${x.stern?" an":""}" data-stern="${x.kid}|${x.sid}" title="${x.stern?"Mühe-Stern wieder wegnehmen":"Mühe-Stern geben: Note eine Stufe besser"}">⭐</button></td><td class="c pz">${x.erst!=null?`<span class="muted">${x.erst} → </span>`:""}${x.pz} %</td><td class="c"><button class="chip ${zeichenKlasse(x.z)} gross-z nchip${x.lehrer?" lehrer":""}" data-ln="${x.kid}|${x.sid}" title="${x.lehrer?"Von dir festgelegt. ":x.vorl?"Vorläufig (nicht fertig), gnädig berechnet. Das Kind sieht sie nicht. ":""}Klicken: Note selbst festlegen">${x.note}${x.lehrer?" ✎":""}</button>${x.vorl&&!x.lehrer?`<span class="pzk">vorl.</span>`:""}</td></tr>`).join("")}</tbody></table></div>`})()}
+      ${zeilen.map(x=>`<tr class="${x.hinweis?"auff":""}"><td class="t">${esc(x.name)}</td><td>${esc(x.st)}</td><td>${x.fertig?"fertig":x.teil}</td><td class="c">${x.min}</td><td class="c">${x.fGes}</td><td>${x.hinweis?`<b>${x.hinweis}</b>`:""}</td><td class="c"><button class="stern-btn${x.stern?" an":""}" data-stern="${x.kid}|${x.sid}" title="${x.stern?"Mühe-Stern wieder wegnehmen":"Mühe-Stern geben: Note eine Stufe besser"}">⭐</button></td><td class="c pz">${x.erst!=null?`<span class="muted">${x.erst} → </span>`:""}${x.pz} %</td><td class="c"><button class="chip ${zeichenKlasse(x.z)} gross-z nchip${x.lehrer?" lehrer":""}" data-ln="${x.kid}|${x.sid}" title="${x.lehrer?"Von dir festgelegt. ":x.vorl?"Nicht fertig: Note nach demselben Maßstab wie alle. Das Kind sieht sie nicht. ":""}Klicken: Note selbst festlegen">${x.note}${x.lehrer?" ✎":""}</button>${x.vorl&&!x.lehrer?`<span class="pzk">vorl.</span>`:""}</td></tr>`).join("")}</tbody></table></div>`})()}
   <div class="block" style="overflow-x:auto"><h2 style="margin-bottom:8px">Alle Stationen</h2>
     ${kinder.length?`<table class="liste"><thead><tr><th>Tier</th><th>Vorname <span class="muted small">(nur hier)</span></th><th title="Halbgruppe">Gr.</th><th>Status</th>${PFAD().map((st,i)=>`<th class="c" title="${esc(st.titel)}">${i+1}</th>`).join("")}<th title="Abgegebene Lernzeit-Karten">Lernzeit</th><th></th></tr></thead>${[1,2,0].map(g=>{const ks=kinder.filter(k=>gruppeVon(k).g===g).sort((a,b)=>(namen[a.id]||"~"+a.tier).localeCompare(namen[b.id]||"~"+b.tier,"de"));if(!ks.length)return"";
       return`<tbody><tr class="grkopf"><th colspan="${PFAD().length+6}">${g?esc(gruppenText(kl,g)):"Ohne Gruppe"} <span class="muted small">· ${ks.length} Kinder</span></th></tr>${ks.map(zeile).join("")}</tbody>`}).join("")}</table>`
@@ -2279,7 +2327,7 @@ function lehrerZeigen(){
   </div>
   <details class="block plan"><summary><b>Lernpfad & Lehrplan</b> <span class="muted small">– alle ${PFAD().length} Stationen mit Bezug zum Kernlehrplan NRW</span></summary>
     <ol>${PFAD().map(st=>`<li><b>${esc(st.titel)}</b> <span class="chip">${KAPITEL_NAME[st.kapitel]||""}</span><br><span class="small">${esc(st.kurz)}</span>${st.klp?`<br><span class="muted small">KLP: ${esc(st.klp)}</span>`:""}</li>`).join("")}</ol>
-    <p class="muted small">Ablauf: Jede Station ist eine Doppelstunde (60 Min.). Jede Schulwoche ist genau eine Station dran, für alle Klassen gleich (Kasten „Stationen“ oben). Was in der Woche nicht fertig wird, bleibt zu und bekommt eine gnädige Note; fällt die Stunde aus, gibt es für diese Station keine Note. Der Spielplatz (Bonus-Spiele, ohne Note) öffnet nur mit einem + in der Station von heute.</p></details>
+    <p class="muted small">Ablauf: Jede Station ist eine Doppelstunde (60 Min.). Jede Schulwoche ist genau eine Station dran, für alle Klassen gleich (Kasten „Stationen“ oben). Was in der Woche nicht fertig wird, bleibt zu und wird nach dem Geschafften benotet (gleicher Maßstab für alle); fällt die Stunde aus, gibt es für diese Station keine Note. Der Spielplatz (Bonus-Spiele, ohne Note) öffnet nur mit einem + in der Station von heute.</p></details>
   <p class="muted small" style="margin-top:14px">${!db.online?"<b>Vorschau-Modus:</b> Alles liegt nur in diesem Browser."
     :db.hatSchluessel()?"<b>Sicherung:</b> Jede fertige Station wird zusätzlich in ein Protokoll geschrieben, das sich nicht löschen lässt. Die Datenbank sichert sich stündlich selbst (60 Tage zurück). Eine Kopie aller Noten liegt zusätzlich in diesem Browser; die Notfall-Datei lädst du bei Bedarf mit dem Knopf herunter. Die Namen sehen nur du und dieses Konto. Sie werden mit deinem Passwort verschlüsselt gesichert und sind nach der Anmeldung auf jedem Gerät da. Kinder sehen nur Tiere."+(namenStand==="fehler"?" <b>Die Sicherung hat gerade nicht geklappt.</b>":"")
     :"<b>Melde dich einmal ab und wieder an</b>, dann werden die Namen verschlüsselt bei deinem Konto gesichert. Bis dahin liegen sie nur in diesem Browser."}</p>`;
