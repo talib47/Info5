@@ -938,3 +938,7 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
 .schalter:disabled{opacity:.5}
 @media (prefers-reduced-motion:reduce){.schalter,.schalter span{transition:none}}
 .kfeld input::placeholder{text-transform:none}
+/* Station: Knopf „Übersicht“ in der Leiste */
+.leiste .haus{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 12px;margin-right:6px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;font-weight:650;cursor:pointer;flex:0 0 auto}
+.leiste .haus:hover{border-color:var(--accent);color:var(--accent)}
+@media (max-width:560px){.leiste .haus span{display:none}}
