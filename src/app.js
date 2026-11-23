@@ -98,7 +98,12 @@ function status(st){
   const pfad=PFAD(),i=pfad.indexOf(st),rg=regelVon(sitzung?.klasse),schalter=(rg.stationen||{})[st.id];
   if(i<=0)return!p&&stoppZeit()?"schluss":!p&&schalter===false?"morgen":"offen";
   const vor=s[pfad[i-1].id];
-  if(!vor?.fertig)return"zu";
+  /* Station der Woche (seit 23.11.2026): Ist die Woche einer Station da, darf jedes Kind sie anfangen –
+     auch wenn die Station davor noch nicht fertig ist. Die alte Station bleibt offen zum Nachholen. So bleibt niemand hängen.
+     Vor ihrer Woche (z. B. von der Lehrkraft früher geöffnet) gilt weiter: erst die Station davor fertig machen. */
+  const abW=rg.modus==="woche"?stAb(rg.start)[i]:null,wocheDa=!!abW&&abW<=isoTag(new Date())&&schalter!==false;
+  if(!p&&schalter===false)return"morgen";   // von der Lehrkraft geschlossen
+  if(!vor?.fertig&&!wocheDa)return"zu";
   if(!p&&stoppZeit())return"schluss";
   if(p)return"offen";
   /* Ab hier nur noch NEUE Stationen (fertige und angefangene sind oben schon entschieden).
@@ -108,7 +113,7 @@ function status(st){
   /* wochenweise: Station öffnet ab dem Montag ihrer Schulwoche (Station 1 in der Startwoche). Wer gefehlt hat, holt nach. */
   if(rg.modus==="woche"){const ab=stAb(rg.start)[i];if(ab&&ab>isoTag(new Date()))return"morgen"}
   /* eine pro Tag: Wer eine angefangene Station von einem früheren Tag heute erst fertig macht, darf heute noch die nächste beginnen. */
-  if(rg.modus==="tag"&&tagVon(vor.fertig)===heuteTag()&&tagVon(vor.start||vor.fertig)===heuteTag())return"morgen";
+  if(rg.modus==="tag"&&vor?.fertig&&tagVon(vor.fertig)===heuteTag()&&tagVon(vor.start||vor.fertig)===heuteTag())return"morgen";
   return"offen";
 }
 /* Der Spielplatz ist die Belohnung für gute Arbeit: Er öffnet nur, wenn die Station von heute ein + hat (Schnell-Durchklicken lohnt sich nicht). */
@@ -479,7 +484,10 @@ function anmeldeErgebnis(klasse,tier,r,nochmal){
 function seiteStart(){
   const s=meineStaende(),pfad=PFAD(),fertig=pfad.filter(x=>s[x.id]?.fertig).length;
   const n=sterne(),[,,rName]=rang(n),nr=naechsterRang(n);
-  const akt=pfad.find(x=>!s[x.id]?.fertig);
+  /* Oben steht die Station der Woche: die neueste offene, noch nicht fertige Station. Ältere offene, nicht fertige = Nachholen. */
+  const offenUnfertig=VS?[]:pfad.filter(x=>!s[x.id]?.fertig&&status(x)==="offen");
+  const akt=offenUnfertig[offenUnfertig.length-1]||pfad.find(x=>!s[x.id]?.fertig);
+  const nachholen=offenUnfertig.filter(x=>x!==akt);
   const stAkt=akt?status(akt):null,spOffen=spielplatzOffen();
   const spielListe=`<div class="spiele">${SPIELE().map(x=>`<button class="spiel" data-sp="${x.id}">${pix(x.id,24)}<b>${esc(x.titel)}</b>${spielRekord(x.id)!=null?`<span class="rek" title="Dein Rekord">★ ${spielRekord(x.id)}</span>`:""}</button>`).join("")}</div>`;
   /* Oben steht genau eine Sache: die Station von heute – oder, wenn sie geschafft ist, der Spielplatz als Belohnung */
@@ -488,6 +496,7 @@ function seiteStart(){
     :stAkt==="morgen"&&!heuteFertig().length?`<div class="heute-karte">${pix(akt.id,56)}<div><p class="eyebrow">Gleich geht es weiter</p><h2>Deine nächste Station ist noch zu.</h2><p class="muted">„${esc(akt.titel)}“ öffnet bald. Wenn du willst, kannst du eine fertige Station unten im Lernpfad verbessern.</p></div></div>`
     :stAkt==="morgen"?`<div class="heute-karte">${pix(akt.id,56)}<div><p class="eyebrow">Für heute fertig</p><h2>Deine Station ist geschafft.</h2><p class="muted">${spOffen?"Du hast ein + geschafft und darfst spielen.":plusHeute()?kartenHinweis():stoppZeit()?"Die Stunde ist gleich vorbei.":"Für den Spielplatz brauchst du ein +. Du kannst deine Station verbessern: Tippe sie unten im Lernpfad an."} Nächste Stunde geht es weiter mit „${esc(akt.titel)}“</p></div></div>`
     :`<button class="heute-karte" data-id="${akt.id}">${pix(akt.id,56,"blau")}<div><p class="eyebrow">${s[akt.id]?"Hier machst du weiter":"Deine Station heute"}</p><h2>${esc(akt.titel)}</h2><p class="muted">${esc(akt.kurz)}</p></div><span class="btn">${s[akt.id]?"Weitermachen":"Anfangen"}</span></button>`;
+  const nachholBox=VS||!nachholen.length?"":`<div class="nachholen"><b>Nachholen</b> <span class="muted small">wenn du mit deiner Station fertig bist</span><div class="nh-liste">${nachholen.map(x=>`<button class="nh" data-id="${x.id}">${pix(x.id,20)}<span>${pfad.indexOf(x)+1}. ${esc(x.titel)}</span>${s[x.id]?`<small>angefangen</small>`:""}</button>`).join("")}</div></div>`;
   const spielplatz=VS?`<h2 style="margin:28px 0 6px">Spielplatz</h2><p class="muted">Bonus-Spiele ohne Note. Kinder sehen sie erst, wenn die Station von heute geschafft ist.</p><div class="spielplatz">${spielListe}</div>`
     :spOffen?`<div class="spielplatz"><h2>Spielplatz</h2><p class="muted">Deine Belohnung für heute. Hier gibt es keine Note.</p>${spielListe}</div>`:"";
   let kap="";
@@ -495,12 +504,13 @@ function seiteStart(){
     const kopf=x.kapitel!==kap?(kap=x.kapitel,`<li class="kap">${KAPITEL_NAME[x.kapitel]||""}</li>`):"";
     const bw=p?.fertig?bewertung(x,p):null,z=bw?.z;
     const rechts=stt==="fertig"?`<span class="stand">${bw.stern?"⭐ ":""}${bw.note}</span><span class="stempel-k" title="Note ${z}">${z}</span>`
-      :stt==="offen"?`<span class="stand">${p?"angefangen":"heute dran"}</span>`:stt==="morgen"||stt==="schluss"?`<span class="stand">nächste Stunde</span>`:"";
+      :stt==="offen"?`<span class="stand">${VS?"":x===akt?(p?"angefangen":"heute dran"):"nachholen"}</span>`:stt==="morgen"||stt==="schluss"?`<span class="stand">nächste Stunde</span>`:"";
     return`${kopf}<li><button class="pfad ${stt}" data-id="${x.id}"><span class="nr">${i+1}</span>${pix(x.id,28)}<span class="ptitel"><b>${esc(x.titel)}</b><small>${esc(x.kurz)}</small></span>${rechts}</button></li>`}).join("");
   $("#app").innerHTML=kopf()+`
   ${VS?`<div class="plate"><h1>Alle Stationen ansehen</h1><p>So sehen die Kinder ihren Lernpfad. In der Vorschau ist alles offen, und du kannst jeden Teil frei anklicken. Nichts wird gespeichert.</p><button class="btn ghost" id="vreset">Vorschau zurücksetzen</button></div>`
     :`<div class="gruss"><span>Hallo <b>${ich()}</b></span><span><b>${n}</b> Punkte, <b>${fertig}</b> von ${pfad.length} Stationen, Rang <b>${rName}</b></span></div>`}
   ${heute}
+  ${nachholBox}
   ${VS?"":spielplatz}
   ${lernBlock()}
   <h2 style="margin:8px 0 0">${VS?"Lernpfad":"Dein Lernpfad"}</h2>

@@ -942,3 +942,9 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
 .leiste .haus{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 12px;margin-right:6px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;font-weight:650;cursor:pointer;flex:0 0 auto}
 .leiste .haus:hover{border-color:var(--accent);color:var(--accent)}
 @media (max-width:560px){.leiste .haus span{display:none}}
+/* Startseite: Nachholen (ältere, nicht fertige Stationen) */
+.nachholen{margin:-4px 0 18px;padding:12px 14px;border-radius:var(--r-m);background:var(--tint)}
+.nh-liste{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.nh{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:6px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+.nh small{color:var(--muted);font-weight:500}
+.nh:hover{border-color:var(--accent)}
