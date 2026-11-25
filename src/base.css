@@ -969,3 +969,13 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
 #dlzm.msg{margin-top:12px;text-align:left}
 .lz-dlg-knoepfe{display:flex;gap:10px;justify-content:space-between;margin-top:20px}
 .lz-dlg-knoepfe .btn{flex:1}
+/* Stationen: kleine Schalter pro Gruppe */
+.st-gr{display:flex;gap:6px;flex:0 0 auto}
+.gr-pille{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 10px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);color:var(--muted);font:inherit;font-size:.82rem;font-weight:650;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.gr-pille i{width:9px;height:9px;border-radius:50%;background:#C5CCD8;transition:background .15s}
+.gr-pille.an{border-color:var(--good);color:var(--ink);background:color-mix(in srgb,var(--good) 10%,var(--surface))}
+.gr-pille.an i{background:var(--good)}
+.gr-pille:hover{border-color:var(--accent)}
+.gr-pille:disabled{opacity:.5}
+.st-zeile.jetzt .st-t b{color:var(--accent)}
+@media (prefers-reduced-motion:reduce){.gr-pille,.gr-pille i{transition:none}}

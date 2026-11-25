@@ -985,6 +985,16 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
 #dlzm.msg{margin-top:12px;text-align:left}
 .lz-dlg-knoepfe{display:flex;gap:10px;justify-content:space-between;margin-top:20px}
 .lz-dlg-knoepfe .btn{flex:1}
+/* Stationen: kleine Schalter pro Gruppe */
+.st-gr{display:flex;gap:6px;flex:0 0 auto}
+.gr-pille{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 10px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);color:var(--muted);font:inherit;font-size:.82rem;font-weight:650;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.gr-pille i{width:9px;height:9px;border-radius:50%;background:#C5CCD8;transition:background .15s}
+.gr-pille.an{border-color:var(--good);color:var(--ink);background:color-mix(in srgb,var(--good) 10%,var(--surface))}
+.gr-pille.an i{background:var(--good)}
+.gr-pille:hover{border-color:var(--accent)}
+.gr-pille:disabled{opacity:.5}
+.st-zeile.jetzt .st-t b{color:var(--accent)}
+@media (prefers-reduced-motion:reduce){.gr-pille,.gr-pille i{transition:none}}
 /* Bausteine der Stationen */
 .paar{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;align-items:start;margin-top:8px}
 .px{display:grid;gap:2px;background:var(--line);border:2px solid var(--line);border-radius:10px;overflow:hidden;width:100%;max-width:340px;aspect-ratio:1;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -1109,7 +1119,7 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="b90c0f64ad";
+const VERSION="d973735ea3";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -1437,16 +1447,23 @@ const naechsterRang=n=>RAENGE.find(x=>x[0]>n);
    Schalter der Lehrkraft: false = zu; true = offen (eine alte Station wieder öffnen oder die nächste früher – früher nur,
    wenn die Station davor fertig ist). */
 const wocheVon=(rg,i)=>{const ab=stAb(rg.start);return{von:ab[i]||null,bis:ab[i+1]||null}};
+/* Schalter der Lehrkraft (klassen.stationen): Schlüssel "id" = ganze Klasse, "id@1" / "id@2" = nur Gruppe 1 / 2 (Gruppe geht vor).
+   Werte: false = zu · true = offen (auch eine alte Station noch einmal) · "frueh" = die nächste Station schon vor ihrer Woche;
+   "frueh" läuft von selbst aus: Ist ihre Woche da, gilt der Plan; danach geht es im normalen Takt weiter. */
+const schalterFuer=(st,id,g)=>{const a=g?st?.[id+"@"+g]:undefined;return a!==undefined?a:st?.[id]};
+/* Gruppe des Kindes = Gruppe der Stunde, die gerade läuft (laut Stundenplan, mit Vorlauf). Außerhalb der Stunde: keine. */
+const aktuelleGruppe=kl=>{const b=berlin();const x=STUNDENPLAN.find(s=>s.klasse===kl&&s.tag===b.tag&&b.min>=hm(s.von)-PUFFER&&b.min<hm(s.von)+s.min);return x?.gruppe||0};
 const inWoche=(rg,i)=>{if(rg.modus!=="woche")return true;const {von,bis}=wocheVon(rg,i),h=isoTag(new Date());return!!von&&von<=h&&(!bis||h<bis)};
 function status(st){
   const s=meineStaende(),p=s[st.id];
   if(p?.fertig&&!p.gestoppt)return"fertig";   // per Zeitstopp beendet (bis 23.11.2026) = nicht fertig
   if(VS||st.spiel)return"offen";
-  const pfad=PFAD(),i=pfad.indexOf(st),rg=regelVon(sitzung?.klasse),schalter=(rg.stationen||{})[st.id],vor=i>0?s[pfad[i-1].id]:null;
+  const pfad=PFAD(),i=pfad.indexOf(st),rg=regelVon(sitzung?.klasse),schalter=schalterFuer(rg.stationen,st.id,aktuelleGruppe(sitzung?.klasse)),vor=i>0?s[pfad[i-1].id]:null;
   if(schalter===false)return p?"vorbei":"morgen";
   if(rg.modus==="woche"){
     const {von}=wocheVon(rg,i),h=isoTag(new Date()),jetzt=inWoche(rg,i);
-    if(!jetzt&&schalter!==true)return von&&von>h?"morgen":"vorbei";
+    const frueh=schalter==="frueh"&&!!von&&von>h;
+    if(!jetzt&&schalter!==true&&!frueh)return von&&von>h?"morgen":"vorbei";
     if(!jetzt&&von&&von>h&&i>0&&unfertig(vor))return"zu";   // früher geöffnet: erst die Station davor
     return stoppZeit()?"schluss":"offen";
   }
@@ -1494,7 +1511,7 @@ function stoppPruefen(){
   if(!location.hash.includes("s/spiel"))render();
 }
 /* Welche Teile einer fertigen Station lassen sich verbessern? (nur Teile aus dem eigenen Durchgang, bei denen Punkte fehlen) */
-const verbesserbar=(st,p)=>p?.fertig&&!p.gestoppt&&!p.lnote&&!stoppZeit()&&(VS||inWoche(regelVon(sitzung?.klasse),PFAD().indexOf(st))||(regelVon(sitzung?.klasse).stationen||{})[st.id]===true)?st.schritte.map((_,k)=>k).filter(k=>k in (p.punkte||{})&&p.punkte[k]<st.schritte[k].punkte):[];
+const verbesserbar=(st,p)=>p?.fertig&&!p.gestoppt&&!p.lnote&&!stoppZeit()&&(VS||inWoche(regelVon(sitzung?.klasse),PFAD().indexOf(st))||schalterFuer(regelVon(sitzung?.klasse).stationen,st.id,aktuelleGruppe(sitzung?.klasse))===true)?st.schritte.map((_,k)=>k).filter(k=>k in (p.punkte||{})&&p.punkte[k]<st.schritte[k].punkte):[];
 const kartenHinweis=()=>{const a=spielAb(),kann=heuteFertig().some(x=>verbesserbar(x,meineStaende()[x.id]).length);
   return(a!==null?`Der Spielplatz öffnet um <b>${uhr(a)} Uhr</b>. `:"")+(kann?"Bis dahin kannst du deine Note noch verbessern: Tippe unten im Lernpfad auf deine Station von heute.":"")};
 /* Aufräumen beim Verlassen eines Teils (z. B. Tastatur-Abhörer, Zeitgeber) */
@@ -2186,25 +2203,32 @@ function gruppeVon(k){if(k.gruppe)return{g:k.gruppe,erkannt:false};
    Stimmt der Schalter wieder mit „automatisch“ überein, wird der Eintrag gelöscht. */
 const datumDE=iso=>{const [y,m,d]=iso.split("-");return`${d}.${m}.${y}`};
 const regelDerKlasse=kl=>{const r=(lDaten?.regeln||{})[kl];return regelOk(r)?{...r,stationen:r.stationen||{}}:{...STANDARD_REGEL,stationen:{}}};
-function stationenStand(kl){const r=regelDerKlasse(kl),heute=isoTag(new Date()),ab=r.modus==="woche"?stAb(r.start):[];
-  return PFAD().map((st,i)=>{const auto=inWoche(r,i),spaeter=!!ab[i]&&ab[i]>heute,ov=r.stationen[st.id],offen=ov===undefined?auto:ov;
-    const d=ab[i]?datumDE(ab[i]).slice(0,6):"";
-    const info=ov===true&&!auto?(spaeter?`von dir früher geöffnet (sonst ab ${d})`:`von dir wieder geöffnet (Woche ab ${d})`):ov===false?"von dir geschlossen"
-      :auto?(r.modus==="woche"?`diese Woche dran (seit ${d})`:"offen"):spaeter?`dran ab ${d}`:`Woche ab ${d} – vorbei`;
-    return{st,i,auto,ov,offen,info}})}
-function stationenBox(kl){const z=stationenStand(kl),n=z.filter(x=>x.offen).length,nae=z.find(x=>!x.offen&&x.ov===undefined&&x.info.startsWith("dran ab"));
-  return`<details class="block noprint st-box" id="stbox" ${lsGet("if5-stbox")?"open":""}><summary><b>Stationen</b> <span class="muted small">· ${n} von ${z.length} offen${nae?` · nächste ab ${esc(nae.info.replace("dran ab ",""))}`:""}</span></summary>
-    <p class="muted small" style="margin:10px 0 12px">Jede Schulwoche ist genau eine Station dran, für alle Klassen gleich. Danach ist sie zu; was nicht fertig wurde, wird nach dem Geschafften benotet. Fällt eine Stunde aus, bleibt die Station ohne Note. Mit dem Schalter öffnest du eine Station früher oder noch einmal, oder du schließt sie.</p>
-    <ol class="st-liste">${z.map(x=>`<li class="st-zeile${x.ov!==undefined?" hand":""}"><span class="nr">${x.i+1}</span>${pix(x.st.id,24)}<span class="st-t"><b>${esc(x.st.titel)}</b><small>${esc(x.info)}${x.ov!==undefined?` · <button class="link" data-auto="${x.st.id}">zurücksetzen</button>`:""}</small></span>
-      <button class="schalter" role="switch" aria-checked="${x.offen}" aria-label="${esc(x.st.titel)} ${x.offen?"schließen":"öffnen"}" data-st="${x.st.id}"><span></span></button></li>`).join("")}</ol></details>`}
+const gruppenDerKlasse=kl=>[...new Set(STUNDENPLAN.filter(x=>x.klasse===kl&&x.gruppe).map(x=>x.gruppe))].sort();
+function stationenStand(kl){const r=regelDerKlasse(kl),heute=isoTag(new Date()),ab=r.modus==="woche"?stAb(r.start):[],gr=gruppenDerKlasse(kl);
+  return PFAD().map((st,i)=>{const auto=inWoche(r,i),spaeter=!!ab[i]&&ab[i]>heute,d=ab[i]?datumDE(ab[i]).slice(0,6):"";
+    const wirk=v=>v===undefined?auto:v===false?false:v==="frueh"?(spaeter||auto):true;
+    const teile=(gr.length?gr:[0]).map(g=>{const v=schalterFuer(r.stationen,st.id,g);return{g,v,offen:wirk(v),hand:v!==undefined&&wirk(v)!==auto}});
+    const hand=teile.some(t=>t.hand),eigen=Object.keys(r.stationen).some(key=>key===st.id||key.startsWith(st.id+"@"));
+    const plan=auto?(r.modus==="woche"?`diese Woche dran (seit ${d})`:"offen"):spaeter?`dran ab ${d}`:`Woche ab ${d} – vorbei`;
+    const wer=t=>t.g?`Gr. ${t.g}`:"Klasse";
+    const info=!hand?plan:teile.filter(t=>t.hand).map(t=>`${wer(t)} ${t.offen?(spaeter?"schon offen":"wieder offen"):"geschlossen"}`).join(", ")+(spaeter?` · sonst ab ${d}`:"");
+    return{st,i,auto,spaeter,teile,hand,eigen,offen:teile.some(t=>t.offen),info}})}
+function stationenBox(kl){const z=stationenStand(kl),nae=z.find(x=>x.spaeter),r=regelDerKlasse(kl);
+  return`<details class="block noprint st-box" id="stbox" ${lsGet("if5-stbox")?"open":""}><summary><b>Stationen</b> <span class="muted small">${z.filter(x=>x.auto).map(x=>` · Station ${x.i+1} diese Woche`).join("")}${nae&&r.modus==="woche"?` · Station ${nae.i+1} ab ${esc(datumDE(stAb(r.start)[nae.i]).slice(0,6))}`:""}${z.some(x=>x.hand)?" · von dir angepasst":""}</span></summary>
+    <p class="muted small" style="margin:10px 0 12px">Jede Woche öffnet automatisch die nächste Station. Ist eine Gruppe schneller, öffne ihr die nächste Station schon früher: Kinder, die die Station der Woche fertig haben, dürfen dann weitermachen. Nächste Woche geht es für alle wieder im normalen Takt weiter.</p>
+    <ol class="st-liste">${z.map(x=>`<li class="st-zeile${x.hand?" hand":""}${x.auto?" jetzt":""}"><span class="nr">${x.i+1}</span>${pix(x.st.id,24)}<span class="st-t"><b>${esc(x.st.titel)}</b><small>${esc(x.info)}${x.eigen?` · <button class="link" data-auto="${x.st.id}">wie geplant</button>`:""}</small></span>
+      <span class="st-gr">${x.teile.map(t=>`<button class="gr-pille${t.offen?" an":""}" role="switch" aria-checked="${t.offen}" data-st="${x.st.id}" data-g="${t.g}" aria-label="${esc(x.st.titel)}${t.g?" Gruppe "+t.g:""} ${t.offen?"schließen":"öffnen"}"><i></i>${t.g?"Gr. "+t.g:"offen"}</button>`).join("")}</span></li>`).join("")}</ol></details>`}
 function stationenBoxAktiv(kl){
   const box=$("#stbox");if(!box)return;box.ontoggle=()=>lsSet("if5-stbox",box.open);
   const speichern=async(neu,text)=>{box.querySelectorAll("button").forEach(b=>b.disabled=true);
     try{await db.lStationen(kl,neu);toast(text)}catch(e){toast("Hat nicht geklappt: "+(e.message||e))}await lehrerLaden()};
-  box.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{const x=stationenStand(kl).find(y=>y.st.id===b.dataset.st),neu={...regelDerKlasse(kl).stationen};
-    const ziel=!x.offen;if(ziel===x.auto)delete neu[x.st.id];else neu[x.st.id]=ziel;
-    speichern(neu,`${x.st.titel}: ${ziel?"offen":"zu"}`)});
-  box.querySelectorAll("[data-auto]").forEach(b=>b.onclick=()=>{const neu={...regelDerKlasse(kl).stationen};delete neu[b.dataset.auto];speichern(neu,"Wieder wie geplant")})}
+  box.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{const x=stationenStand(kl).find(y=>y.st.id===b.dataset.st),g=+b.dataset.g,t=x.teile.find(y=>y.g===g),neu={...regelDerKlasse(kl).stationen};
+    const key=g?x.st.id+"@"+g:x.st.id,ziel=!t.offen,klasseV=g?neu[x.st.id]:undefined;
+    const planV=klasseV===undefined?x.auto:(klasseV===false?false:klasseV==="frueh"?(x.spaeter||x.auto):true);
+    if(ziel===planV)delete neu[key];else neu[key]=ziel?(x.spaeter?"frueh":true):false;
+    speichern(neu,`Station ${x.i+1}${g?" · Gruppe "+g:""}: ${ziel?"offen":"zu"}`)});
+  box.querySelectorAll("[data-auto]").forEach(b=>b.onclick=()=>{const neu={...regelDerKlasse(kl).stationen},id=b.dataset.auto;
+    Object.keys(neu).forEach(key=>{if(key===id||key.startsWith(id+"@"))delete neu[key]});speichern(neu,"Wieder wie geplant")})}
 
 /* ---------- Klasse anlegen / Unterricht ändern ----------
    Die Lehrkraft gibt nur Tag, Beginn und Dauer ein. Anmelden ab PUFFER Minuten vorher und Stopp STOPP_MIN Minuten vor Ende rechnet die App selbst. */
