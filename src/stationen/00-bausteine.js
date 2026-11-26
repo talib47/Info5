@@ -143,11 +143,21 @@ function luecken({titel,punkte=15,merke,text,saetze,extra=[],art="Merk-Check"}){
   d.f=d.f||{};let falsch=new Set(),wahl=null;
   const benutzt=()=>new Set(Object.values(d.f));
   const frei=()=>soll.map((_,g)=>g).filter(g=>d.f[g]==null);
+  /* Satz als Reihe aus einzelnen Wörtern und Lücken (seit 26.11.2026): bricht sauber um, nichts überlappt.
+     Satzzeichen direkt nach einer Lücke kleben an der Lücke („Pfad.“), damit sie nicht allein in die nächste Zeile rutschen. */
+  let ziel=null;
+  const lk=x=>`<button class="luecke${d.f[x]!=null?" voll":""}${x===ziel?" dran":""}${falsch.has(x)?" falsch":""}" data-g="${x}" aria-label="Lücke ${x+1}${d.f[x]!=null?": "+esc(woerter[d.f[x]]):" – leer"}">${d.f[x]!=null?esc(woerter[d.f[x]]):x===ziel?"hier":""}</button>`;
+  const satz=t=>{const items=[];
+    t.forEach(x=>{if(typeof x==="number"){items.push(lk(x));return}
+      x.split(/\s+/).forEach((w,k)=>{if(!w)return;
+        if(k===0&&!/^\s/.test(x)&&items.length&&/^[.,!?;:…“”"')]/.test(w))items[items.length-1]=`<span class="lk-paar">${items[items.length-1]}<span>${esc(w)}</span></span>`;
+        else items.push(`<span>${esc(w)}</span>`)})});
+    return`<li><p class="lsatz">${items.join("")}</p></li>`};
   const zeichne=()=>{
-    const b=benutzt(),offen=frei(),ziel=wahl!=null&&d.f[wahl]==null?wahl:offen[0];
+    const b=benutzt(),offen=frei();ziel=wahl!=null&&d.f[wahl]==null?wahl:offen[0];
     el.innerHTML=kopfText(text||"Setz die Wörter aus dem Wortkasten in die Lücken. Tippe ein Wort an – es springt in die markierte Lücke.")+`
       <div class="wortkasten">${d.reihe.map(i=>`<button class="wort${b.has(i)?" weg":""}" data-w="${i}" ${b.has(i)?"disabled":""}>${esc(woerter[i])}</button>`).join("")}</div>
-      <div class="ltext">${teile.map(t=>`<p>${t.map(x=>typeof x==="number"?`<button class="luecke${d.f[x]!=null?" voll":""}${x===ziel?" ziel":""}${falsch.has(x)?" falsch":""}" data-g="${x}">${d.f[x]!=null?esc(woerter[d.f[x]]):"&nbsp;"}</button>`:esc(x)).join("")}</p>`).join("")}</div>${MLD}`;
+      <ol class="ltext">${teile.map(satz).join("")}</ol>${MLD}`;
     el.querySelectorAll("[data-w]").forEach(k=>k.onclick=()=>{const o=frei();if(!o.length)return;const g=wahl!=null&&d.f[wahl]==null?wahl:o[0];
       d.f[g]=+k.dataset.w;wahl=null;falsch.delete(g);ctx.speichern();zeichne()});
     el.querySelectorAll("[data-g]").forEach(k=>k.onclick=()=>{const g=+k.dataset.g;
