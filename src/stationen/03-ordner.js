@@ -57,12 +57,18 @@ function dateiSuche({titel,punkte=15,merke,text,fragen,art="Ausprobieren"}){retu
   const zeichne=(fokus)=>{
     if(d.r>=fragen.length){el.innerHTML=kopfText(text)+`<div class="msg ok">Alle ${fragen.length} Fragen gelöst. Tippe auf „Weiter“.</div>`;return}
     const F=fragen[d.r],q=d.s.trim().toLowerCase(),treffer=q?DATEIEN.filter(x=>x.toLowerCase().includes(q)):DATEIEN;
-    el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Frage ${d.r+1} von ${fragen.length}</p><p class="frage">${F.frage}</p>
-      <div class="explorer"><div class="ex-leiste">${sym("lupe",24)}<input type="text" id="such" placeholder="Suchen" autocomplete="off" spellcheck="false" value="${esc(d.s)}" aria-label="Dateien durchsuchen"></div>
-        <p class="muted small" style="margin:8px 12px 0">${q?`${treffer.length} ${treffer.length===1?"Treffer":"Treffer"}`:`Alle ${DATEIEN.length} Dateien`}</p>
-        <ul class="treffer">${treffer.map(x=>`<li>${dico(x,20)} ${x}</li>`).join("")||`<li class="muted">Nichts gefunden. Probier ein kürzeres Wort.</li>`}</ul></div>
-      <div class="antw-kasten"><label for="antw"><span class="antw-stift" aria-hidden="true">✎</span> Deine Antwort${F.zahl?` <span class="muted">– nur die Zahl</span>`:""}</label>
-        <input type="text" id="antw" ${F.zahl?'inputmode="numeric" pattern="[0-9]*" maxlength="3"':""} placeholder="${F.zahl?"Zahl":F.platz||"Deine Antwort"}" autocomplete="off" spellcheck="false" value="${esc(d.a||"")}"></div>${MLD}`;
+    /* Aufgeräumt (26.11.2026): Frage oben, darunter zwei nummerierte Schritte nebeneinander – ① Suchen, ② Antworten.
+       Die Dateiliste erscheint erst, wenn das Kind etwas tippt (vorher nur die Anzahl), und scrollt in sich. */
+    el.innerHTML=kopfText(text)+`<div class="such-frage"><span class="eyebrow">Frage ${d.r+1} von ${fragen.length}</span><p class="frage">${F.frage}</p></div>
+      <div class="such-schritte">
+        <div class="such-schritt"><p class="schritt-kopf"><span class="schritt-nr">1</span> Suchen</p>
+          <div class="explorer"><div class="ex-leiste">${sym("lupe",24)}<input type="text" id="such" placeholder="Wort eintippen" autocomplete="off" spellcheck="false" value="${esc(d.s)}" aria-label="Dateien durchsuchen"></div>
+            ${q?`<p class="treffer-zahl">${treffer.length} Treffer</p><ul class="treffer kompakt">${treffer.map(x=>`<li>${dico(x,18)} ${x}</li>`).join("")||`<li class="muted">Nichts gefunden. Probier ein kürzeres Wort.</li>`}</ul>`
+              :`<p class="muted small such-leer">${DATEIEN.length} Dateien im Ordner. Tippe oben ein Wort, dann siehst du die Treffer.</p>`}</div></div>
+        <div class="such-schritt antw-kasten"><p class="schritt-kopf"><span class="schritt-nr">2</span> Antworten${F.zahl?` <span class="muted">– nur die Zahl</span>`:""}</p>
+          <input type="text" id="antw" ${F.zahl?'inputmode="numeric" pattern="[0-9]*" maxlength="3"':""} placeholder="${F.zahl?"Zahl":F.platz||"Deine Antwort"}" autocomplete="off" spellcheck="false" value="${esc(d.a||"")}" aria-label="Deine Antwort">
+          ${MLD}</div>
+      </div>`;
     const s=el.querySelector("#such"),a=el.querySelector("#antw");
     s.oninput=()=>{d.s=s.value;ctx.speichern();zeichne("such")};
     a.oninput=()=>{d.a=a.value;ctx.speichern()};
@@ -73,11 +79,11 @@ function dateiSuche({titel,punkte=15,merke,text,fragen,art="Ausprobieren"}){retu
   const norm=v=>String(v||"").trim().toLowerCase().replace(/\s+/g," ");
   ctx.pruefer=()=>{if(d.r>=fragen.length){ctx.geschafft(punkte);return true}
     const F=fragen[d.r],v=norm(d.a);
-    if(!v){meldung(el,false,"Schreib zuerst deine Antwort ins Feld „Deine Antwort“.");return false}
+    if(!v){meldung(el,false,"Schreib zuerst deine Antwort bei 2 ins Feld.");return false}
     /* Häufiger Verwechsler: Suchwort ins Antwortfeld getippt (oder Buchstaben bei einer Zahl-Frage) – Hinweis, kein Punktabzug */
     const such=norm(d.s).replace(/^\./,""),vv=v.replace(/^\./,"");
     if(!F.antwort.map(norm).includes(v)&&((such&&vv===such)||(F.zahl&&!/^\d+$/.test(v)))){
-      meldung(el,null,F.zahl?"Oben suchst du, unten antwortest du. Zähl die Treffer und schreib nur die Zahl.":"Das ist dein Suchwort. Unten kommt die Antwort auf die Frage hin.");
+      meldung(el,null,F.zahl?"Bei 1 suchst du, bei 2 antwortest du. Zähl die Treffer und schreib hier nur die Zahl.":"Das ist dein Suchwort. Bei 2 kommt die Antwort auf die Frage hin.");
       const a=el.querySelector("#antw");a.classList.add("hinweis");a.select();return false}
     if(F.antwort.map(norm).includes(v)){d.r++;d.a="";d.s="";ctx.speichern();
       if(d.r>=fragen.length){zeichne();ctx.geschafft(punkte);return true}
