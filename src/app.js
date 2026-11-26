@@ -673,7 +673,8 @@ function seiteStation(st){
         speichern(true);const h=$("#hilfe");if(h)h.innerHTML="";
         if(p>0)toast(`Geschafft, +${p} Punkte`);
         $(".pts").textContent=`${summe(prog)} Punkte`;
-        $(".steps").children[i].className="ok"}
+        $(".steps").children[i].className="ok";
+        if(!frei)setTimeout(()=>{if(!sperre)autoWeiter()},0)}   // Teil von selbst gelöst (nicht über „Weiter“): gleich automatisch weiter
       ctx.geloest=true},
     pruefer:null,   // Teil setzt hier eine Prüf-Funktion (true = richtig); „Weiter“ ruft sie auf
     loesung:null,   // Teil setzt hier eine Funktion, die die Lösung zeigt (Lehrer-Vorschau)
@@ -681,6 +682,7 @@ function seiteStation(st){
   };
   window._ctx=ctx;   // für automatische Tests
   sch.zeige($("#body"),ctx);
+  rundenBeobachten($("#body"));
   if(VS&&ctx.loesung){$("#body").insertAdjacentHTML("beforebegin",`<button class="btn ghost noprint" id="loesung" style="margin:0 0 14px;min-height:40px;padding:6px 14px">Lösung zeigen (nur Vorschau)</button>`);
     $("#loesung").onclick=()=>{ctx.loesung();$("#loesung").remove()}}
   const geheZu=k=>{if(vb)vb.schritt=k;else prog.schritt=k;speichern();seiteStation(st);scrollTo(0,0)};
@@ -698,7 +700,16 @@ function seiteStation(st){
     scrollTo(0,0)};
   /* „Weiter“ prüft automatisch: richtig → kurz Erfolg zeigen, dann weiter; falsch → bleiben, Rückmeldung steht da */
   let sperre=false,pause=0,letzterFehler=0,serie=0,pauseTimer=null;
-  function lesePause(sek){const w=$("#weiter");if(!w)return;pause=Date.now()+sek*1000;const text=w.textContent;w.disabled=true;
+  /* Automatisch weiter (seit 26.11.2026): Ist ein Teil gelöst, zählt „Weiter“ 5 Sekunden herunter und geht dann von selbst weiter.
+     Tippt oder klickt das Kind in der Aufgabe, stoppt der Countdown – der Knopf pulsiert aber weiter. */
+  function autoWeiter(){const w=$("#weiter");if(!w||sperre)return;const text=w.disabled?(w.dataset.text||"Weiter"):w.textContent;let n=5,t=null;
+    const stop=()=>{clearInterval(t);if(w.isConnected){w.textContent=text}};
+    w.classList.add("puls");if(!w.disabled)w.textContent=`${text} (${n})`;
+    t=setInterval(()=>{if(!w.isConnected)return clearInterval(t);if(w.disabled)return;   // Lese-Pause läuft: erst danach zählen
+      n--;if(n<=0){clearInterval(t);w.textContent=text;w.click()}else w.textContent=`${text} (${n})`},1000);
+    const b=$("#body");const halt=()=>{stop();b?.removeEventListener("pointerdown",halt);b?.removeEventListener("keydown",halt)};
+    b?.addEventListener("pointerdown",halt);b?.addEventListener("keydown",halt);aufraeumListe.push(()=>clearInterval(t))}
+  function lesePause(sek){const w=$("#weiter");if(!w)return;pause=Date.now()+sek*1000;const text=w.textContent.replace(/ \(\d+\)$/,"");w.dataset.text=text;w.disabled=true;
     const tick=()=>{const r=Math.ceil((pause-Date.now())/1000);if(r<=0||!w.isConnected){clearInterval(pauseTimer);if(w.isConnected){w.disabled=false;w.textContent=text}return}
       w.textContent=`Erst lesen (${r})`};
     tick();pauseTimer=setInterval(tick,500);aufraeumListe.push(()=>clearInterval(pauseTimer));
@@ -708,6 +719,24 @@ function seiteStation(st){
     if(ctx.pruefer){if(ctx.pruefer()){sperre=true;setTimeout(vor,900)}else aufgabeZeigen();return}
     toast("Löse zuerst diesen Teil.");aufgabeZeigen()};
 }
+
+/* Runden-Wechsel deutlich machen (seit 26.11.2026): Viele Teile haben mehrere Runden („Auftrag 2 von 4“).
+   Springt die Zahl hoch, erscheint kurz „✓ Geschafft – jetzt Auftrag 2 von 4“, die neue Aufgabe gleitet herein und leuchtet kurz blau.
+   Neben „… von N“ stehen kleine Punkte für die Runden. Funktioniert für alle Teile, ohne sie einzeln anzufassen. */
+function rundenBeobachten(b){if(!b)return;let letzte=null;
+  const pruefen=()=>{const e=[...b.querySelectorAll(".eyebrow")].find(x=>/\b(\d+) von (\d+)\b/.test(x.textContent));
+    if(!e){return}const [,a,n]=e.textContent.match(/\b(\d+) von (\d+)\b/).map(Number);
+    if(!e.querySelector(".r-punkte")&&n<=12)e.insertAdjacentHTML("beforeend",` <span class="r-punkte" aria-hidden="true">${Array.from({length:n},(_,k)=>`<i class="${k<a-1?"ok":k===a-1?"jetzt":""}"></i>`).join("")}</span>`);
+    if(letzte!==null&&a>letzte){const was=e.textContent.replace(/\s*$/,"").trim();
+      const fr=[...b.querySelectorAll(".frage")].filter(x=>x.offsetParent)[0];
+      b.querySelectorAll(".runde-neu-schild").forEach(x=>x.remove());
+      e.insertAdjacentHTML("beforebegin",`<div class="runde-neu-schild" role="status"><span>✓</span> Geschafft! Jetzt kommt <b>${esc(was)}</b></div>`);
+      [e,fr].forEach(x=>{if(!x)return;x.classList.remove("runde-neu");void x.offsetWidth;x.classList.add("runde-neu")});
+      b.classList.remove("runde-rein");void b.offsetWidth;b.classList.add("runde-rein");
+      const r=e.getBoundingClientRect();if(r.top<60||r.top>innerHeight*.6)e.scrollIntoView({block:"center",behavior:"smooth"})}
+    letzte=a};
+  pruefen();const mo=new MutationObserver(()=>{mo.disconnect();pruefen();mo.observe(b,{childList:true,subtree:true})});
+  mo.observe(b,{childList:true,subtree:true});aufraeumListe.push(()=>mo.disconnect())}
 
 /* „Lies hier!“ (seit 26.11.2026): Bei einem falschen Versuch oder „Weiter“ ohne Lösung leuchtet die Aufgabenstellung kurz auf –
    die letzte Frage (.frage) im Teil, sonst der Text oben (.regel). Fett gedruckte Wörter darin springen kurz größer.

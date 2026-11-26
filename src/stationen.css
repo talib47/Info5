@@ -169,3 +169,19 @@
 @keyframes lies-schild{0%{opacity:0;transform:translateY(6px)}10%,80%{opacity:1;transform:none}100%{opacity:0}}
 @keyframes lies-wort{50%{transform:scale(1.18);color:#D93025}}
 @media (prefers-reduced-motion:reduce){.lies-hier,.lies-hier b{animation:none}.lies-hier{background:color-mix(in srgb,#F2B705 22%,transparent)}}
+/* Runden-Wechsel: Schild, Hereingleiten, kurzes Aufleuchten, Runden-Punkte */
+.r-punkte{display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle}
+.r-punkte i{width:9px;height:9px;border-radius:50%;background:color-mix(in srgb,var(--muted) 30%,transparent)}
+.r-punkte i.ok{background:var(--good)}
+.r-punkte i.jetzt{background:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+.runde-neu-schild{display:flex;align-items:center;gap:10px;margin:12px 0 4px;padding:10px 14px;border-radius:12px;background:color-mix(in srgb,var(--good) 14%,var(--surface));border:1.5px solid var(--good);font-weight:600;animation:schild-weg 3.2s ease forwards}
+.runde-neu-schild span{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--good);color:#fff;font-weight:800}
+@keyframes schild-weg{0%{opacity:0;transform:translateY(-6px)}8%,80%{opacity:1;transform:none}100%{opacity:0;max-height:0;margin:0;padding-top:0;padding-bottom:0;border-width:0;overflow:hidden}}
+#body.runde-rein{animation:rein .35s ease-out}
+@keyframes rein{from{opacity:.2;transform:translateX(24px)}to{opacity:1;transform:none}}
+.runde-neu{border-radius:8px;animation:neu-leuchten 1.8s ease-out}
+@keyframes neu-leuchten{0%,30%{background:color-mix(in srgb,var(--accent) 16%,transparent);box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 16%,transparent)}100%{background:transparent;box-shadow:0 0 0 0 transparent}}
+/* „Weiter“ nach gelöstem Teil: pulsiert und zählt herunter */
+#weiter.puls{animation:weiter-puls 1.1s ease-in-out infinite}
+@keyframes weiter-puls{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 55%,transparent);transform:none}50%{box-shadow:0 0 0 10px transparent;transform:scale(1.04)}}
+@media (prefers-reduced-motion:reduce){.runde-neu-schild,#body.runde-rein,.runde-neu,#weiter.puls{animation:none}.runde-neu-schild{display:none}}
