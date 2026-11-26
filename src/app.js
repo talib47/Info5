@@ -661,7 +661,7 @@ function seiteStation(st){
     geloest,
     speichern:()=>speichern(),
     /* Ein falscher Versuch kostet 1 Punkt, aber höchstens die Hälfte der Punkte dieses Teils (bis 18.11.2026: 2 Punkte) */
-    fehler(){fk[i]=(fk[i]||0)+1;speichern();
+    fehler(){fk[i]=(fk[i]||0)+1;speichern();aufgabeZeigen();
       if(fk[i]>=6)hilfeBox(true);else if(fk[i]%3===0)hilfeBox(false);
       /* Raten erkennen: zwei falsche Versuche innerhalb weniger Sekunden → kurze Lese-Pause statt weiterem Raten */
       const jetzt=Date.now();serie=jetzt-letzterFehler<7000?serie+1:1;letzterFehler=jetzt;
@@ -705,9 +705,20 @@ function seiteStation(st){
     toast("Nicht raten. Lies die Aufgabe noch einmal in Ruhe.")}
   $("#weiter").onclick=()=>{if(sperre)return;
     if(frei||erledigt(i))return vor();
-    if(ctx.pruefer){if(ctx.pruefer()){sperre=true;setTimeout(vor,900)}return}
-    toast("Löse zuerst diesen Teil.")};
+    if(ctx.pruefer){if(ctx.pruefer()){sperre=true;setTimeout(vor,900)}else aufgabeZeigen();return}
+    toast("Löse zuerst diesen Teil.");aufgabeZeigen()};
 }
+
+/* „Lies hier!“ (seit 26.11.2026): Bei einem falschen Versuch oder „Weiter“ ohne Lösung leuchtet die Aufgabenstellung kurz auf –
+   die letzte Frage (.frage) im Teil, sonst der Text oben (.regel). Fett gedruckte Wörter darin springen kurz größer.
+   Höchstens alle 4 Sekunden, damit es beim schnellen Klicken nicht flackert. */
+let lesHierZeit=0;
+function aufgabeZeigen(){if(Date.now()-lesHierZeit<4000)return;lesHierZeit=Date.now();setTimeout(lesHier,30)}   // nach dem Neuzeichnen des Teils
+function lesHier(){const b=$("#body");if(!b)return;
+  const fr=[...b.querySelectorAll(".frage")].filter(x=>x.offsetParent),z=fr[fr.length-1]||b.querySelector(".regel");if(!z)return;
+  z.classList.remove("lies-hier");void z.offsetWidth;z.classList.add("lies-hier");
+  const r=z.getBoundingClientRect();if(r.top<70||r.bottom>innerHeight-90)z.scrollIntoView({block:"center",behavior:"smooth"});
+  setTimeout(()=>z.classList.remove("lies-hier"),2600)}
 
 function konfetti(){
   if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;

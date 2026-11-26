@@ -1158,6 +1158,14 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
 .nn-c.an i::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
 @media (prefers-reduced-motion:reduce){.nn-c,.nn-c i{transition:none}}
 .nn-c.frei{border-style:dashed}
+/* „Lies hier!“: Aufgabenstellung leuchtet auf, wenn ein Kind rät oder ohne Lösung „Weiter“ drückt */
+.lies-hier{position:relative;border-radius:10px;animation:lies-glow 2.4s ease-out;}
+.lies-hier::before{content:"👀 Lies hier!";position:absolute;right:0;top:-24px;padding:2px 10px;border-radius:999px;background:#D93025;color:#fff;font-size:.78rem;font-weight:700;white-space:nowrap;animation:lies-schild 2.4s ease-out forwards}
+.lies-hier b,.lies-hier .nn-wort,.lies-hier .nn-endung{display:inline-block;animation:lies-wort .5s .25s ease-in-out 2}
+@keyframes lies-glow{0%{background:transparent;box-shadow:0 0 0 0 transparent}12%{background:color-mix(in srgb,#F2B705 28%,transparent);box-shadow:0 0 0 6px color-mix(in srgb,#F2B705 28%,transparent);transform:translateX(-4px)}18%{transform:translateX(4px)}24%{transform:translateX(-2px)}30%{transform:none}75%{background:color-mix(in srgb,#F2B705 22%,transparent);box-shadow:0 0 0 6px color-mix(in srgb,#F2B705 22%,transparent)}100%{background:transparent;box-shadow:0 0 0 0 transparent}}
+@keyframes lies-schild{0%{opacity:0;transform:translateY(6px)}10%,80%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes lies-wort{50%{transform:scale(1.18);color:#D93025}}
+@media (prefers-reduced-motion:reduce){.lies-hier,.lies-hier b{animation:none}.lies-hier{background:color-mix(in srgb,#F2B705 22%,transparent)}}
 </style>
 </head>
 <body>
@@ -1172,7 +1180,7 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="9fc84c64e6";
+const VERSION="be0c56a941";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -2047,7 +2055,7 @@ function seiteStation(st){
     geloest,
     speichern:()=>speichern(),
     /* Ein falscher Versuch kostet 1 Punkt, aber höchstens die Hälfte der Punkte dieses Teils (bis 18.11.2026: 2 Punkte) */
-    fehler(){fk[i]=(fk[i]||0)+1;speichern();
+    fehler(){fk[i]=(fk[i]||0)+1;speichern();aufgabeZeigen();
       if(fk[i]>=6)hilfeBox(true);else if(fk[i]%3===0)hilfeBox(false);
       /* Raten erkennen: zwei falsche Versuche innerhalb weniger Sekunden → kurze Lese-Pause statt weiterem Raten */
       const jetzt=Date.now();serie=jetzt-letzterFehler<7000?serie+1:1;letzterFehler=jetzt;
@@ -2091,9 +2099,20 @@ function seiteStation(st){
     toast("Nicht raten. Lies die Aufgabe noch einmal in Ruhe.")}
   $("#weiter").onclick=()=>{if(sperre)return;
     if(frei||erledigt(i))return vor();
-    if(ctx.pruefer){if(ctx.pruefer()){sperre=true;setTimeout(vor,900)}return}
-    toast("Löse zuerst diesen Teil.")};
+    if(ctx.pruefer){if(ctx.pruefer()){sperre=true;setTimeout(vor,900)}else aufgabeZeigen();return}
+    toast("Löse zuerst diesen Teil.");aufgabeZeigen()};
 }
+
+/* „Lies hier!“ (seit 26.11.2026): Bei einem falschen Versuch oder „Weiter“ ohne Lösung leuchtet die Aufgabenstellung kurz auf –
+   die letzte Frage (.frage) im Teil, sonst der Text oben (.regel). Fett gedruckte Wörter darin springen kurz größer.
+   Höchstens alle 4 Sekunden, damit es beim schnellen Klicken nicht flackert. */
+let lesHierZeit=0;
+function aufgabeZeigen(){if(Date.now()-lesHierZeit<4000)return;lesHierZeit=Date.now();setTimeout(lesHier,30)}   // nach dem Neuzeichnen des Teils
+function lesHier(){const b=$("#body");if(!b)return;
+  const fr=[...b.querySelectorAll(".frage")].filter(x=>x.offsetParent),z=fr[fr.length-1]||b.querySelector(".regel");if(!z)return;
+  z.classList.remove("lies-hier");void z.offsetWidth;z.classList.add("lies-hier");
+  const r=z.getBoundingClientRect();if(r.top<70||r.bottom>innerHeight-90)z.scrollIntoView({block:"center",behavior:"smooth"});
+  setTimeout(()=>z.classList.remove("lies-hier"),2600)}
 
 function konfetti(){
   if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
