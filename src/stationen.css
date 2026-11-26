@@ -129,3 +129,9 @@
 .fenster.nein .f-kopf{background:color-mix(in srgb,var(--bad) 10%,var(--surface))}
 @keyframes wackeln{0%,100%{transform:none}25%{transform:translateX(-6px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
 @media (prefers-reduced-motion:reduce){.fenster.erfolg,.ok-haken,.ok-haken path,.funken i,.fenster.nein{animation:none}.ok-haken path{stroke-dashoffset:0}.funken{display:none}}
+/* Datei-Suche: Antwortfeld klar vom Suchfeld getrennt */
+.antw-kasten{margin-top:16px;padding:12px 14px;border-radius:var(--r);background:color-mix(in srgb,#F2B705 12%,var(--surface));border:1.5px dashed color-mix(in srgb,#F2B705 60%,var(--line));max-width:420px}
+.antw-kasten label{display:block;font-weight:700;margin-bottom:8px}
+.antw-stift{display:inline-block;transform:rotate(-10deg)}
+.antw-kasten input{width:100%;font:inherit;font-size:1.15rem;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
+.antw-kasten input.hinweis{border-color:#F2B705;box-shadow:0 0 0 3px color-mix(in srgb,#F2B705 30%,transparent)}

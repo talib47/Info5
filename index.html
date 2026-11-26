@@ -1126,6 +1126,12 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
 .fenster.nein .f-kopf{background:color-mix(in srgb,var(--bad) 10%,var(--surface))}
 @keyframes wackeln{0%,100%{transform:none}25%{transform:translateX(-6px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
 @media (prefers-reduced-motion:reduce){.fenster.erfolg,.ok-haken,.ok-haken path,.funken i,.fenster.nein{animation:none}.ok-haken path{stroke-dashoffset:0}.funken{display:none}}
+/* Datei-Suche: Antwortfeld klar vom Suchfeld getrennt */
+.antw-kasten{margin-top:16px;padding:12px 14px;border-radius:var(--r);background:color-mix(in srgb,#F2B705 12%,var(--surface));border:1.5px dashed color-mix(in srgb,#F2B705 60%,var(--line));max-width:420px}
+.antw-kasten label{display:block;font-weight:700;margin-bottom:8px}
+.antw-stift{display:inline-block;transform:rotate(-10deg)}
+.antw-kasten input{width:100%;font:inherit;font-size:1.15rem;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
+.antw-kasten input.hinweis{border-color:#F2B705;box-shadow:0 0 0 3px color-mix(in srgb,#F2B705 30%,transparent)}
 </style>
 </head>
 <body>
@@ -1140,7 +1146,7 @@ button.nchip.lehrer{outline:2px solid var(--ink);outline-offset:1px}
    Lehrkraft (#lehrer): Stände sehen, Vornamen zuordnen (nur lokal), Klassen von Hand öffnen/schließen.
    Neue Stunde = neue Datei in src/stationen/ (siehe README).
    ===================================================================== */
-const VERSION="cc7c7a25cb";
+const VERSION="d62cae86a1";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=q=>document.querySelector(q);
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -3892,7 +3898,8 @@ function dateiSuche({titel,punkte=15,merke,text,fragen,art="Ausprobieren"}){retu
       <div class="explorer"><div class="ex-leiste">${sym("lupe",24)}<input type="text" id="such" placeholder="Suchen" autocomplete="off" spellcheck="false" value="${esc(d.s)}" aria-label="Dateien durchsuchen"></div>
         <p class="muted small" style="margin:8px 12px 0">${q?`${treffer.length} ${treffer.length===1?"Treffer":"Treffer"}`:`Alle ${DATEIEN.length} Dateien`}</p>
         <ul class="treffer">${treffer.map(x=>`<li>${dico(x,20)} ${x}</li>`).join("")||`<li class="muted">Nichts gefunden. Probier ein kürzeres Wort.</li>`}</ul></div>
-      <div class="eing" style="margin-top:14px"><input type="text" id="antw" ${F.zahl?'inputmode="numeric"':""} placeholder="${F.platz||"Deine Antwort"}" autocomplete="off" spellcheck="false" value="${esc(d.a||"")}"></div>${MLD}`;
+      <div class="antw-kasten"><label for="antw"><span class="antw-stift" aria-hidden="true">✎</span> Deine Antwort${F.zahl?` <span class="muted">– nur die Zahl</span>`:""}</label>
+        <input type="text" id="antw" ${F.zahl?'inputmode="numeric" pattern="[0-9]*" maxlength="3"':""} placeholder="${F.zahl?"Zahl":F.platz||"Deine Antwort"}" autocomplete="off" spellcheck="false" value="${esc(d.a||"")}"></div>${MLD}`;
     const s=el.querySelector("#such"),a=el.querySelector("#antw");
     s.oninput=()=>{d.s=s.value;ctx.speichern();zeichne("such")};
     a.oninput=()=>{d.a=a.value;ctx.speichern()};
@@ -3903,7 +3910,12 @@ function dateiSuche({titel,punkte=15,merke,text,fragen,art="Ausprobieren"}){retu
   const norm=v=>String(v||"").trim().toLowerCase().replace(/\s+/g," ");
   ctx.pruefer=()=>{if(d.r>=fragen.length){ctx.geschafft(punkte);return true}
     const F=fragen[d.r],v=norm(d.a);
-    if(!v){meldung(el,false,"Schreib zuerst deine Antwort ins untere Feld.");return false}
+    if(!v){meldung(el,false,"Schreib zuerst deine Antwort ins Feld „Deine Antwort“.");return false}
+    /* Häufiger Verwechsler: Suchwort ins Antwortfeld getippt (oder Buchstaben bei einer Zahl-Frage) – Hinweis, kein Punktabzug */
+    const such=norm(d.s).replace(/^\./,""),vv=v.replace(/^\./,"");
+    if(!F.antwort.map(norm).includes(v)&&((such&&vv===such)||(F.zahl&&!/^\d+$/.test(v)))){
+      meldung(el,null,F.zahl?"Oben suchst du, unten antwortest du. Zähl die Treffer und schreib nur die Zahl.":"Das ist dein Suchwort. Unten kommt die Antwort auf die Frage hin.");
+      const a=el.querySelector("#antw");a.classList.add("hinweis");a.select();return false}
     if(F.antwort.map(norm).includes(v)){d.r++;d.a="";d.s="";ctx.speichern();
       if(d.r>=fragen.length){zeichne();ctx.geschafft(punkte);return true}
       zeichne();meldung(el,true,"Richtig. Hier kommt die nächste Frage.");return false}
