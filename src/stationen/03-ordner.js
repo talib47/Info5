@@ -39,8 +39,8 @@ function endungProbe({titel,punkte=15,merke,text,runden,art="Ausprobieren"}){ret
       else{ctx.fehler();b.classList.add("falsch");b.disabled=true;meldung(el,false,"Schau noch mal: Was war bei jedem Öffnen anders, was blieb gleich?")}});
   };
   const fenster=z=>{const [ico,prog]=ENDUNG[z.e];
-    const k=dico("a"+z.e,20);return z.ok?`<div class="fenster ok"><div class="f-kopf">${k} ${prog}</div><p>${INHALT[z.echt]}</p></div>`
-      :`<div class="fenster"><div class="f-kopf">${k} ${prog}</div><p><b>Fehler:</b> ${prog} kann diese Datei nicht öffnen.</p></div>`};
+    const k=dico("a"+z.e,20);return z.ok?`<div class="fenster ok erfolg"><div class="f-kopf">${k} ${prog}</div><div class="f-ok"><span class="ok-haken" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span><p><b>Geklappt!</b> ${INHALT[z.echt]}</p></div><span class="funken" aria-hidden="true">${"<i></i>".repeat(10)}</span></div>`
+      :`<div class="fenster nein"><div class="f-kopf">${k} ${prog}</div><p><b>Fehler:</b> ${prog} kann diese Datei nicht öffnen.</p></div>`};
   const weiterRunde=t=>{d.r++;d.e=null;d.offen=false;d.zuletzt=null;d.opt=null;d.probiert=[];ctx.speichern();zeichne();
     if(d.r>=runden.length)ctx.geschafft(punkte);else meldung(el,true,t)};
   zeichne();

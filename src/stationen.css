@@ -108,3 +108,24 @@
 .lz-block #lzm{margin-top:10px}
 .lz-felder{display:contents}
 .lz-form input.zahl{width:8ch}
+/* Erfolgs-Moment (z. B. Endungs-Probe): grün, Haken springt rein, kleine Funken. Fehler: kurzes Wackeln. */
+.fenster.erfolg{position:relative;overflow:visible;border-width:2px;box-shadow:0 0 0 4px color-mix(in srgb,var(--good) 14%,transparent);animation:erfolg-auf .35s cubic-bezier(.2,1.4,.4,1)}
+.fenster.erfolg .f-kopf{background:color-mix(in srgb,var(--good) 16%,var(--surface));border-bottom-color:color-mix(in srgb,var(--good) 40%,var(--line))}
+.f-ok{display:flex;align-items:center;gap:12px;padding:14px 14px;background:color-mix(in srgb,var(--good) 7%,var(--surface))}
+.f-ok p{padding:0!important;font-size:1.05rem}
+.f-ok p b{color:var(--good);margin-right:4px}
+.ok-haken{flex:0 0 auto;display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:var(--good);color:#fff;animation:haken-rein .45s .1s cubic-bezier(.2,1.6,.4,1) both}
+.ok-haken path{stroke-dasharray:24;stroke-dashoffset:24;animation:haken-zug .35s .35s ease-out forwards}
+.funken{position:absolute;left:34px;top:62%;width:0;height:0;pointer-events:none}
+.funken i{position:absolute;width:8px;height:8px;border-radius:2px;opacity:0;animation:funke .8s .15s ease-out forwards}
+.funken i:nth-child(odd){background:var(--good)}.funken i:nth-child(even){background:#F2B705}.funken i:nth-child(3n){background:var(--accent);border-radius:50%}
+.funken i:nth-child(1){--x:-46px;--y:-40px}.funken i:nth-child(2){--x:-20px;--y:-58px}.funken i:nth-child(3){--x:14px;--y:-60px}.funken i:nth-child(4){--x:44px;--y:-42px}.funken i:nth-child(5){--x:62px;--y:-12px}
+.funken i:nth-child(6){--x:-60px;--y:-6px}.funken i:nth-child(7){--x:-40px;--y:30px}.funken i:nth-child(8){--x:50px;--y:26px}.funken i:nth-child(9){--x:-6px;--y:44px}.funken i:nth-child(10){--x:28px;--y:-74px}
+@keyframes funke{0%{opacity:1;transform:translate(0,0) scale(.6) rotate(0)}70%{opacity:1}100%{opacity:0;transform:translate(var(--x),var(--y)) scale(1) rotate(160deg)}}
+@keyframes haken-rein{from{transform:scale(0)}to{transform:scale(1)}}
+@keyframes haken-zug{to{stroke-dashoffset:0}}
+@keyframes erfolg-auf{from{transform:scale(.97);opacity:.4}to{transform:none;opacity:1}}
+.fenster.nein{border-color:color-mix(in srgb,var(--bad) 55%,var(--line));animation:wackeln .35s ease-in-out}
+.fenster.nein .f-kopf{background:color-mix(in srgb,var(--bad) 10%,var(--surface))}
+@keyframes wackeln{0%,100%{transform:none}25%{transform:translateX(-6px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+@media (prefers-reduced-motion:reduce){.fenster.erfolg,.ok-haken,.ok-haken path,.funken i,.fenster.nein{animation:none}.ok-haken path{stroke-dashoffset:0}.funken{display:none}}
