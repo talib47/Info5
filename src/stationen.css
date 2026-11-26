@@ -148,3 +148,16 @@
 .treffer-zahl{margin:8px 12px 0;font-weight:700;font-size:.9rem}
 .treffer.kompakt{max-height:190px;overflow:auto;font-size:.9rem}
 .such-leer{margin:10px 12px 12px}
+/* Du gibst den Namen: Wort und Endung hervorgehoben, Live-Häkchen */
+.nn-wort,.nn-endung{display:inline-block;padding:0 7px;border-radius:7px;font-family:var(--mono,monospace);font-weight:700;line-height:1.5}
+.nn-wort{background:color-mix(in srgb,var(--accent) 14%,var(--surface));color:var(--accent);border:1.5px solid color-mix(in srgb,var(--accent) 45%,transparent)}
+.nn-endung{background:color-mix(in srgb,#F2B705 22%,var(--surface));color:var(--ink);border:1.5px solid #E0A800}
+.nn-check{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
+.nn-c{display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:999px;border:1.5px solid var(--line);color:var(--muted);font-size:.9rem;transition:all .2s}
+.nn-c b{font-family:var(--mono,monospace)}
+.nn-c i{width:16px;height:16px;border-radius:50%;border:2px solid #C5CCD8;transition:all .2s;position:relative}
+.nn-c.an{border-color:var(--good);color:var(--ink);background:color-mix(in srgb,var(--good) 10%,var(--surface))}
+.nn-c.an i{background:var(--good);border-color:var(--good)}
+.nn-c.an i::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+@media (prefers-reduced-motion:reduce){.nn-c,.nn-c i{transition:none}}
+.nn-c.frei{border-style:dashed}

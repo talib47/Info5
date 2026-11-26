@@ -122,12 +122,15 @@ function namenGeben({titel,punkte=15,merke,text,runden,art="Selbst schreiben"}){
     const R=runden[d.r];
     el.innerHTML=kopfText(text)+`<p class="eyebrow" style="margin-top:12px">Datei ${d.r+1} von ${runden.length}</p>
       <div class="szene"><span class="sz-bild">${R.bild}</span><div class="sz-text">${R.was}</div></div>
-      <p class="frage">${R.auftrag}</p>
+      <p class="frage">${R.auftrag.replace(`„${R.wort}“`,`<span class="nn-wort">${R.wort}</span>`).replace(R.endung,`<span class="nn-endung">${R.endung}</span>`)}</p>
       <div class="eing"><input type="text" id="nn" placeholder="Dateiname" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="50" value="${esc(d.v||"")}"></div>
+      <div class="nn-check" aria-live="polite"><span class="nn-c" id="nnw"><i></i>Wort <b>${R.wort}</b></span>${R.auftrag.includes(R.endung)?`<span class="nn-c" id="nne"><i></i>Endung <b>${R.endung}</b></span>`:`<span class="nn-c frei" id="nne">Endung: selbst überlegen</span>`}</div>
       <ul class="regeln" id="rg"></ul>${MLD}`;
     const inp=el.querySelector("#nn"),rg=el.querySelector("#rg");
     const zeig=()=>{rg.innerHTML=d.geprueft?pruef(R,inp.value).map(([ok,t])=>`<li class="${ok?"ok":"no"}">${ok?"✓":"✗"} ${ok?t:t.replace("kommt vor","fehlt noch").replace("passt zur Datei","fehlt oder passt nicht")}</li>`).join(""):""};
-    inp.oninput=()=>{d.v=inp.value;ctx.speichern()};
+    /* Live-Häkchen: färben sich grün, sobald Wort bzw. Endung stimmen (kostet nichts, hilft beim Schreiben) */
+    const live=()=>{const [w,e]=pruef(R,inp.value);el.querySelector("#nnw").classList.toggle("an",w[0]);if(R.auftrag.includes(R.endung))el.querySelector("#nne").classList.toggle("an",e[0])};
+    inp.oninput=()=>{d.v=inp.value;ctx.speichern();live()};live();
     inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();document.getElementById("weiter")?.click()}};
     zeig();
   };
