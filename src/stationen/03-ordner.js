@@ -63,15 +63,17 @@ function dateiSuche({titel,punkte=15,merke,text,fragen,art="Ausprobieren"}){retu
       <div class="such-schritte">
         <div class="such-schritt"><p class="schritt-kopf"><span class="schritt-nr">1</span> Suchen</p>
           <div class="explorer"><div class="ex-leiste">${sym("lupe",24)}<input type="text" id="such" placeholder="Wort eintippen" autocomplete="off" spellcheck="false" value="${esc(d.s)}" aria-label="Dateien durchsuchen"></div>
-            ${q?`<p class="treffer-zahl">${treffer.length} Treffer</p><ul class="treffer kompakt">${treffer.map(x=>`<li>${dico(x,18)} ${x}</li>`).join("")||`<li class="muted">Nichts gefunden. Probier ein kürzeres Wort.</li>`}</ul>`
+            ${q?`<p class="treffer-zahl">${treffer.length} Treffer</p><ul class="treffer kompakt${F.waehlen?" waehlbar":""}">${treffer.map(x=>F.waehlen?`<li><button class="tr-wahl" data-n="${esc(x)}">${dico(x,18)} ${x}</button></li>`:`<li>${dico(x,18)} ${x}</li>`).join("")||`<li class="muted">Nichts gefunden. Probier ein kürzeres Wort.</li>`}</ul>`
               :`<p class="muted small such-leer">${DATEIEN.length} Dateien im Ordner. Tippe oben ein Wort, dann siehst du die Treffer.</p>`}</div></div>
         <div class="such-schritt antw-kasten"><p class="schritt-kopf"><span class="schritt-nr">2</span> Antworten${F.zahl?` <span class="muted">– nur die Zahl</span>`:""}</p>
-          <input type="text" id="antw" ${F.zahl?'inputmode="numeric" pattern="[0-9]*" maxlength="3"':""} placeholder="${F.zahl?"Zahl":F.platz||"Deine Antwort"}" autocomplete="off" spellcheck="false" value="${esc(d.a||"")}" aria-label="Deine Antwort">
+          <input type="text" id="antw" ${F.zahl?'inputmode="numeric" pattern="[0-9]*" maxlength="3"':""} placeholder="${F.zahl?"Zahl":F.waehlen?"Datei antippen oder tippen":F.platz||"Deine Antwort"}" autocomplete="off" spellcheck="false" value="${esc(d.a||"")}" aria-label="Deine Antwort">
           ${MLD}</div>
       </div>`;
     const s=el.querySelector("#such"),a=el.querySelector("#antw");
     s.oninput=()=>{d.s=s.value;ctx.speichern();zeichne("such")};
     a.oninput=()=>{d.a=a.value;ctx.speichern()};
+    /* Fragen nach einem Dateinamen: Treffer antippen = Name ins Antwortfeld (kein Abtippen nötig) */
+    el.querySelectorAll(".tr-wahl").forEach(b=>b.onclick=()=>{d.a=a.value=b.dataset.n;ctx.speichern();el.querySelectorAll(".tr-wahl").forEach(x=>x.classList.toggle("an",x===b))});
     a.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();document.getElementById("weiter")?.click()}};
     if(fokus==="such"){s.focus();s.setSelectionRange(s.value.length,s.value.length)}
   };
@@ -275,7 +277,7 @@ station({
         {frage:"Wie viele Videos hat der Trainer? Such nach <b>.mp4</b>.",antwort:["4","vier"],zahl:true,platz:"Anzahl",tipp:"Tippe oben .mp4 ins Suchfeld und zähl die Treffer."},
         {frage:"In welchem Monat ist das Turnier? Such nach <b>turnier</b>.",antwort:["Mai","im Mai"],platz:"Monat",tipp:"Tippe oben turnier ins Suchfeld. Der Monat steht im Dateinamen."},
         {frage:"Wie viele Dateien haben „training“ im Namen?",antwort:["3","drei"],zahl:true,platz:"Anzahl",tipp:"Such nach training und zähl alle Treffer, egal welche Endung."},
-        {frage:"Zwei Dateien haben einen schlechten Namen. Man weiß nicht, was drin ist. Schreib den Namen von dem <b>Bild</b> auf.",antwort:["bild.jpg","bild"],platz:"Dateiname",tipp:"Such nach .jpg. Welcher Name verrät nicht, was auf dem Bild ist?"},
+        {frage:"Fotos enden auf <b>.jpg</b>. Such nach <b>.jpg</b>. Ein Foto hat einen <b>schlechten Namen</b>: Er verrät nicht, was auf dem Foto zu sehen ist. Welches?",antwort:["bild.jpg","bild","bild jpg"],platz:"Dateiname",waehlen:true,tipp:"Tippe oben .jpg ein. Bei „mannschaftsfoto“ weißt du, was drauf ist. Bei welchem Namen weißt du es nicht?"},
       ],
       merke:"Die Suche durchsucht alle Ordner. Ein Wort aus dem Namen reicht."}),
     dateiListe({titel:"Der Datei-Detektiv",punkte:15,

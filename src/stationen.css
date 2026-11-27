@@ -182,3 +182,8 @@
 #weiter.puls{animation:weiter-puls 1.6s ease-in-out infinite}
 @keyframes weiter-puls{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 45%,transparent)}50%{box-shadow:0 0 0 7px transparent}}
 @media (prefers-reduced-motion:reduce){.r-geschafft,.runde-neu,#weiter.puls{animation:none}.r-geschafft{opacity:1}}
+/* Suche: Treffer antippen, um den Namen zu übernehmen */
+.treffer.waehlbar li{padding:0}
+.tr-wahl{display:flex;align-items:center;gap:8px;width:100%;padding:7px 12px;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;border-radius:8px}
+.tr-wahl:hover{background:var(--tint)}
+.tr-wahl.an{background:color-mix(in srgb,#F2B705 22%,transparent);font-weight:700}
