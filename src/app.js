@@ -1195,6 +1195,11 @@ async function versionPruefen(){if(!/github\.io$/.test(location.hostname))return
     let schon=null;try{schon=sessionStorage.getItem("if5-neu")}catch(e){}
     if(schon===v)return;try{sessionStorage.setItem("if5-neu",v)}catch(e){}
     await hochladen();location.replace(location.pathname+"?v="+v+location.hash)}catch(e){}}
-document.addEventListener("visibilitychange",()=>{if(!document.hidden)versionPruefen();else if(sitzung){clearTimeout(pushTimer);hochladen()}});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){versionPruefen();if(sitzung)db.lebt(sitzung.token).catch(()=>{})}else if(sitzung){clearTimeout(pushTimer);hochladen()}});
+/* Tab oder Fenster zu (seit 27.11.2026): Tier sofort wieder frei. Beim nächsten Öffnen tippt das Kind einfach wieder auf sein Tier.
+   Solange die Seite offen ist, meldet sie sich jede Minute („lebt“) – sonst gilt das Tier nach 4 Minuten als frei. */
+addEventListener("pagehide",()=>{if(!sitzung)return;clearTimeout(pushTimer);hochladen();db.pause(sitzung.token)});
+setInterval(()=>{if(sitzung&&!document.hidden)db.lebt(sitzung.token).catch(()=>{})},60000);
+if(sitzung)db.lebt(sitzung.token).catch(()=>{});
 versionPruefen();
 if("serviceWorker"in navigator&&/github\.io$/.test(location.hostname))navigator.serviceWorker.register("sw.js").catch(()=>{});

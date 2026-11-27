@@ -48,7 +48,7 @@ function offenAus(klasse,fg){const n=Date.now();fg=fg||{};
   if((fg.zu_bis||0)>n)return false;if((fg.offen_bis||0)>n)return true;return planOffen(klasse)}
 
 /* ---------- Vorschau-Datenbank im Browser (bildet die Supabase-Funktionen nach) ---------- */
-const MIN75=75*60000;
+const MIN75=4*60000;   // „besetzt“: Lebenszeichen in den letzten 4 Minuten (seit 27.11.2026, vorher 75 Min.)
 const vdb={
   lesen(){const d=lsGet("if5-vdb")||{kinder:[],staende:{},freigaben:{}};
     /* Erste Füllung der Vorschau: Klassen und Stundenplan aus START_KLASSEN / START_PLAN */
@@ -57,7 +57,7 @@ const vdb={
   schreiben(d){lsSet("if5-vdb",d)},
 };
 const jetztMs=()=>Date.now();
-const vBesetzt=k=>!!(k.token&&jetztMs()-k.aktiv<MIN75);
+const vBesetzt=k=>!!(k.token&&k.geraet&&jetztMs()-k.aktiv<MIN75);
 
 const db={
   online:CLOUD,
@@ -100,6 +100,16 @@ const db={
   async plan(){
     if(CLOUD){const {data,error}=await sb.rpc("plan_alle");if(error)throw error;return data}
     const d=vdb.lesen();return{klassen:Object.entries(d.klassen).map(([klasse,r])=>({klasse,...r})),plan:d.plan};
+  },
+  /* Lebenszeichen (jede Minute, solange die Seite offen ist): hält das Tier besetzt */
+  async lebt(token){
+    if(CLOUD){const {data}=await sb.rpc("kind_lebt",{p_token:token,p_geraet:GERAET});return data}
+    const d=vdb.lesen();const k=d.kinder.find(x=>x.token===token);if(k){k.aktiv=jetztMs();k.geraet=GERAET;vdb.schreiben(d)}return!!k;
+  },
+  /* Tab/Fenster wird geschlossen: Tier sofort frei (muss auch während des Schließens noch ankommen → keepalive) */
+  pause(token){
+    if(CLOUD){try{fetch(ONLINE.url+"/rest/v1/rpc/kind_pause",{method:"POST",keepalive:true,headers:{apikey:ONLINE.key,Authorization:"Bearer "+ONLINE.key,"Content-Type":"application/json"},body:JSON.stringify({p_token:token})})}catch(e){}return}
+    const d=vdb.lesen();const k=d.kinder.find(x=>x.token===token);if(k){k.geraet=null;k.aktiv=0;vdb.schreiben(d)}
   },
   async abmelden(token){
     if(CLOUD){await sb.rpc("kind_abmelden",{p_token:token});return}
