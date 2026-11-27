@@ -729,10 +729,9 @@ function rundenBeobachten(b){if(!b)return;let letzte=null;
     if(!e.querySelector(".r-punkte")&&n<=12)e.insertAdjacentHTML("beforeend",` <span class="r-punkte" aria-hidden="true">${Array.from({length:n},(_,k)=>`<i class="${k<a-1?"ok":k===a-1?"jetzt":""}"></i>`).join("")}</span>`);
     if(letzte!==null&&a>letzte){const was=e.textContent.replace(/\s*$/,"").trim();
       const fr=[...b.querySelectorAll(".frage")].filter(x=>x.offsetParent)[0];
-      b.querySelectorAll(".runde-neu-schild").forEach(x=>x.remove());
-      e.insertAdjacentHTML("beforebegin",`<div class="runde-neu-schild" role="status"><span>✓</span> Geschafft! Jetzt kommt <b>${esc(was)}</b></div>`);
+      /* ruhig (27.11.): kleines „✓ Geschafft“ in derselben Zeile, nichts verschiebt sich; die neue Aufgabe wird sanft hinterlegt */
+      e.insertAdjacentHTML("beforeend",`<span class="r-geschafft" role="status">✓ Geschafft</span>`);
       [e,fr].forEach(x=>{if(!x)return;x.classList.remove("runde-neu");void x.offsetWidth;x.classList.add("runde-neu")});
-      b.classList.remove("runde-rein");void b.offsetWidth;b.classList.add("runde-rein");
       const r=e.getBoundingClientRect();if(r.top<60||r.top>innerHeight*.6)e.scrollIntoView({block:"center",behavior:"smooth"})}
     letzte=a};
   pruefen();const mo=new MutationObserver(()=>{mo.disconnect();pruefen();mo.observe(b,{childList:true,subtree:true})});
