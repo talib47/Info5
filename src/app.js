@@ -178,7 +178,8 @@ function stoppPruefen(){
   if(!location.hash.includes("s/spiel"))render();
 }
 /* Welche Teile einer fertigen Station lassen sich verbessern? (nur Teile aus dem eigenen Durchgang, bei denen Punkte fehlen) */
-const verbesserbar=(st,p)=>p?.fertig&&!p.gestoppt&&!p.lnote&&!stoppZeit()&&(VS||inWoche(regelVon(sitzung?.klasse),PFAD().indexOf(st))||schalterFuer(regelVon(sitzung?.klasse).stationen,st.id,aktuelleGruppe(sitzung?.klasse))===true)?st.schritte.map((_,k)=>k).filter(k=>k in (p.punkte||{})&&p.punkte[k]<st.schritte[k].punkte):[];
+const verbesserbar=(st,p)=>p?.fertig&&!p.gestoppt&&!p.lnote&&!stoppZeit()&&(VS||inWoche(regelVon(sitzung?.klasse),PFAD().indexOf(st))||(()=>{const rg=regelVon(sitzung?.klasse),v=schalterFuer(rg.stationen,st.id,aktuelleGruppe(sitzung?.klasse)),von=wocheVon(rg,PFAD().indexOf(st)).von;
+    return v===true||(v==="frueh"&&!!von&&von>isoTag(new Date()))})())?st.schritte.map((_,k)=>k).filter(k=>k in (p.punkte||{})&&p.punkte[k]<st.schritte[k].punkte):[];
 const kartenHinweis=()=>{const a=spielAb(),kann=heuteFertig().some(x=>verbesserbar(x,meineStaende()[x.id]).length);
   return(a!==null?`Der Spielplatz öffnet um <b>${uhr(a)} Uhr</b>. `:"")+(kann?"Bis dahin kannst du deine Note noch verbessern: Tippe unten im Lernpfad auf deine Station von heute.":"")};
 /* Aufräumen beim Verlassen eines Teils (z. B. Tastatur-Abhörer, Zeitgeber) */
